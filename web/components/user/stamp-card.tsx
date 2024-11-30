@@ -30,6 +30,8 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
                                 src={stamp.imageUrl}
                                 alt={stamp.name}
                                 fill
+                                priority
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover rounded-lg transition-opacity duration-300"
                                 style={{ opacity: isImageLoading ? 0 : 1 }}
                                 onLoad={() => setIsImageLoading(false)}
