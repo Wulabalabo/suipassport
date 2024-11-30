@@ -24,7 +24,25 @@ const mockStamps = [
     name: "Stamp 3",
     type: "Stamp",
     imageUrl: "https://via.placeholder.com/150",
-  }
+  },
+  {
+    id: 4,
+    name: "Stamp 4",
+    type: "Stamp",
+    imageUrl: "https://via.placeholder.com/150",
+  },
+  {
+    id: 5,
+    name: "Stamp 5",
+    type: "Stamp",
+    imageUrl: "https://via.placeholder.com/150",
+  },
+  {
+    id: 6,
+    name: "Stamp 6",
+    type: "Stamp",
+    imageUrl: "https://via.placeholder.com/150",
+  },
 ]
 
 export default function UserPage() {
@@ -39,7 +57,7 @@ export default function UserPage() {
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamp
         </p>
-        <StampGrid items={mockStamps} currentPage={1} totalPages={5} onPageChange={() => {}} />
+        <StampGrid items={mockStamps}/>
       </div>
     </div>
   )

@@ -16,10 +16,10 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
 
     return (
         <Card 
-            className="cursor-pointer hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+            className="cursor-pointer hover:shadow-md transition-all duration-300 hover:-translate-y-1 rounded lg:rounded-2xl bg-gray-100"
             onClick={onClick}
         >
-            <CardContent className="p-4">
+            <CardContent className="p-3 lg:p-6">
                 <div className="aspect-square rounded-lg relative overflow-hidden mb-2">
                     {stamp.imageUrl && !imageError ? (
                         <>
