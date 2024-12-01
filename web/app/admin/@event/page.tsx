@@ -14,7 +14,7 @@ interface AdminEventProps {
 export default function AdminEvent({ mockEvent }: AdminEventProps) {
     const [currentPage, setCurrentPage] = useState(1)
     
-    const ITEMS_PER_PAGE = 5
+    const ITEMS_PER_PAGE = 6
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
     const currentEvents = mockEvent.slice(startIndex, endIndex)
