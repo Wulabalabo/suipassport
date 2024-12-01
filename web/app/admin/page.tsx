@@ -32,7 +32,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isClient && media) {
-      router.replace('/admin/event')
+      router.replace('/admin/events')
     }
   }, [media, isClient, router])
 

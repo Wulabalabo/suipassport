@@ -41,7 +41,7 @@ export function StampGrid({ items }: StampGridProps) {
             <div className="flex flex-col lg:flex-row gap-3">
                 <Tabs
                     value="all"
-                    onValueChange={(value) => setCurrentPage(parseInt(value))}
+                    onValueChange={(value) => console.log('Tab:', value)}
                     className="flex-shrink-0"
                 >
                     <TabsList>

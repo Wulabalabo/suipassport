@@ -6,6 +6,9 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { EditIcon } from "lucide-react"
+import { CreateStampDialog } from "./create-stamp-dialog"
+import { StampDialog } from "@/components/user/stamp-dialog"
+import { StampItem } from "@/types/stamp"
 
 interface EventDetailsProps {
   event: {
@@ -35,6 +38,7 @@ export function EventDetails({ event }: EventDetailsProps) {
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 5
+  const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -68,12 +72,12 @@ export function EventDetails({ event }: EventDetailsProps) {
             <div>{event.mintType}</div>
           </div>
         </div>
-        <div className="divide-y w-full h-full"/>
+        
           {/* Event Stamp Section */}
           <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold">Event Stamp</h3>
-            <Button>Create</Button>
+            <CreateStampDialog />
           </div>
 
           {/* Stamps Grid */}
@@ -106,7 +110,18 @@ export function EventDetails({ event }: EventDetailsProps) {
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="grid grid-cols-3 gap-4 p-4 border-b hover:bg-gray-50"
+                className="grid grid-cols-3 gap-4 p-4 border-b hover:bg-gray-50 cursor-pointer"
+                onClick={() => setSelectedStamp({
+                  id: index.toString(),
+                  name: `Stamp ${index}`,
+                  description: "Sample description",
+                  imageUrl: "/sample-image.jpg",
+                  eventName: event.name,
+                  totalSupply: 100,
+                  point: 50,
+                  attribution: "Sample Attribution",
+                  type: "Sample Type"
+                })}
               >
                 <div>Data</div>
                 <div>Data</div>
@@ -114,6 +129,14 @@ export function EventDetails({ event }: EventDetailsProps) {
               </div>
             ))}
           </div>
+
+          {/* Add StampDialog */}
+          <StampDialog
+            stamp={selectedStamp}
+            open={!!selectedStamp}
+            admin={true}
+            onOpenChange={(open) => !open && setSelectedStamp(null)}
+          />
 
           {/* Pagination */}
           <div className="mt-4">

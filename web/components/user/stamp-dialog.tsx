@@ -7,10 +7,13 @@ import { useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
+import { Button } from "../ui/button"
+import { Input } from "../ui/input"
 
 interface StampDialogProps {
     stamp: StampItem | null
     open: boolean
+    admin?: boolean
     onOpenChange: (open: boolean) => void
 }
 
@@ -38,7 +41,7 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, onOpenChange }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [imageError, setImageError] = useState(false)
 
@@ -114,6 +117,18 @@ export function StampDialog({ stamp, open, onOpenChange }: StampDialogProps) {
                             value={stamp?.attribution}
                         />
                     </div>
+                    {admin && (
+                        <div className="flex flex-col gap-4 gap-y-6 pt-6">
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm text-gray-500 flex-shrink-0">
+                                Send To
+                            </p>
+                            <Input placeholder="Address" />
+                            <Button className="rounded-full" variant="outline">Upload</Button>
+                        </div>
+                            <Button className="rounded-full text-xl font-bold">Send</Button>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>
