@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
   Pagination,
   PaginationContent,
@@ -22,6 +23,23 @@ export function PaginationControls({
   onPageChange,
   className,
 }: PaginationControlsProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    // 初始化检查
+    setIsMobile(window.innerWidth < 640)
+
+    // 添加resize监听
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    // 清理监听器
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   if (totalPages <= 1) return null
 
   const handlePageChange = (newPage: number) => {
@@ -32,8 +50,8 @@ export function PaginationControls({
   function getPageNumbers() {
     const pages: (number | string)[] = []
     
-    // 在移动端只显示当前页码
-    if (window.innerWidth < 640) {
+    // 使用 isMobile 状态而不是直接检查 window
+    if (isMobile) {
       return [currentPage]
     }
     
