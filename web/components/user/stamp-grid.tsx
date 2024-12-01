@@ -7,9 +7,7 @@ import { StampCard } from "./stamp-card"
 import { StampItem } from "@/types/stamp"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "../ui/input"
-import { Select, SelectTrigger, SelectValue } from "../ui/select"
-import { Search } from "lucide-react"
+import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 
 interface StampGridProps {
     items: StampItem[]
@@ -32,6 +30,12 @@ export function StampGrid({ items }: StampGridProps) {
 
     const totalPages = Math.ceil(items.length / itemsPerPage)
 
+    const filterOptions = [
+        { value: "all", label: "All Events" },
+        { value: "upcoming", label: "Upcoming Events" },
+        { value: "past", label: "Past Events" },
+    ]
+
     return (
         <div className="space-y-6 px-6 py-4">
             <div className="flex flex-col lg:flex-row gap-3">
@@ -46,22 +50,13 @@ export function StampGrid({ items }: StampGridProps) {
                         <TabsTrigger value="best">Best Stamps</TabsTrigger>
                     </TabsList>
                 </Tabs>
-                <div className="flex items-center justify-between gap-x-4 flex-shrink-0">
-                    <div className="relative flex-1 w-1/2">
-                        <Input
-                            placeholder="Name / ID"
-                            className="pr-10"
-                        />
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="w-1/2">
-                        <Select>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Event Type" />
-                            </SelectTrigger>
-                        </Select>
-                    </div>
-                </div>
+                <SearchFilterBar
+                    searchPlaceholder="Name / ID"
+                    filterPlaceholder="Event Type"
+                    filterOptions={filterOptions}
+                    onSearchChange={(value) => console.log('Search:', value)}
+                    onFilterChange={(value) => console.log('Filter:', value)}
+                />
                 <PaginationControls
                     currentPage={currentPage}
                     totalPages={totalPages}

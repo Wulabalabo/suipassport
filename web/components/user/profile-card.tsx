@@ -41,7 +41,7 @@ export function ProfileCard({
                     <UserAvatar avatarUrl={avatarUrl} size={160} />
                     <div className="flex flex-col justify-between gap-y-2 max-w-sm">
                         <h2 className="text-3xl font-bold">{name}</h2>
-                        <p className="text-blue-900 font-normal leading-tight tracking-tight overflow-hidden">{intro}</p>
+                        <p className="font-normal leading-tight tracking-tight overflow-hidden">{intro}</p>
                     </div>
                     <div className="self-start flex-1 flex justify-end">
                         <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={onEdit}><EditIcon className="w-4 h-4 text-gray-400" /> Edit</Button>
