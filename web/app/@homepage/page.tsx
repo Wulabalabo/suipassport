@@ -1,6 +1,5 @@
 'use client'
 
-import { useMediaQuery } from "@/hooks/use-media-query"
 import AdminEvent from "../admin/@event/page"
 import AdminDashboard from "../admin/@dashboard/page"
 
@@ -18,14 +17,11 @@ const mockEvent = [
 ]
 
 export default function HomePage() {
-    const media = useMediaQuery('(max-width: 1024px)')
-    return <div className="w-full p-24 pb-48 bg-gray-100 space-y-24">
-        {!media && (
+    return <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 lg:space-y-24">
         <>
           <AdminEvent mockEvent={mockEvent} />
           <AdminDashboard />
         </>
-      )}
     </div>
 }
 
