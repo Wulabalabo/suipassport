@@ -19,8 +19,8 @@ const mockEvent = [
 export default function HomePage() {
     return <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 lg:space-y-24">
         <>
-          <AdminEvent mockEvent={mockEvent} />
-          <AdminDashboard />
+            <AdminEvent mockEvent={mockEvent} admin={false} />
+            <AdminDashboard />
         </>
     </div>
 }

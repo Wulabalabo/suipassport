@@ -8,10 +8,10 @@ import Link from "next/link"
 
 interface AdminEventProps {
     mockEvent: Array<{ id: number; name: string }>
-    admin?: boolean
+    admin: boolean
 }
 
-export default function AdminEvent({ mockEvent, admin = false }: AdminEventProps) {
+export default function AdminEvent({ mockEvent, admin }: AdminEventProps) {
     const [currentPage, setCurrentPage] = useState(1)
 
     const ITEMS_PER_PAGE = 6

@@ -40,7 +40,7 @@ export default function AdminPage() {
     <div className="w-full p-24 pb-48 bg-gray-100 space-y-24">
       {!media && (
         <>
-          <AdminEvent admin={true} mockEvent={mockEvent} />
+          <AdminEvent mockEvent={mockEvent} admin={true} />
           <AdminDashboard />
         </>
       )}

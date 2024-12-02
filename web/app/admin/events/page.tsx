@@ -16,5 +16,5 @@ const mockEvent = [
 ]
 
 export default function AdminEventPage() {
-  return <AdminEvent mockEvent={mockEvent} />
+  return <AdminEvent mockEvent={mockEvent} admin={true} />
 }
