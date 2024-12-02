@@ -137,7 +137,6 @@ export function CreateStampDialog() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="image"

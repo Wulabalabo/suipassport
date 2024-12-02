@@ -1,7 +1,6 @@
 'use client'
 
 import { useMediaQuery } from '@/hooks/use-media-query'
-import { useCurrentAccount } from '@mysten/dapp-kit'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import AdminEvent from './@event/page'
@@ -21,7 +20,6 @@ const mockEvent = [
 ]
 
 export default function AdminPage() {
-  const account = useCurrentAccount()
   const router = useRouter()
   const media = useMediaQuery('(max-width: 1024px)')
   const [isClient, setIsClient] = useState(false)
@@ -39,10 +37,10 @@ export default function AdminPage() {
   if (!isClient) return null
 
   return (
-    <div className="w-full">
+    <div className="w-full p-24 pb-48 bg-gray-100 space-y-24">
       {!media && (
         <>
-          <AdminEvent mockEvent={mockEvent} />
+          <AdminEvent admin={true} mockEvent={mockEvent} />
           <AdminDashboard />
         </>
       )}
