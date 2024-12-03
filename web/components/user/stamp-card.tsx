@@ -14,6 +14,7 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [imageError, setImageError] = useState(false)
 
+
     return (
         <Card 
             className="cursor-pointer hover:shadow-md transition-all duration-300 hover:-translate-y-1 rounded lg:rounded-2xl bg-gray-100"
@@ -32,8 +33,8 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
                                 fill
                                 priority
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                className="object-cover rounded-lg transition-opacity duration-300"
-                                style={{ opacity: isImageLoading ? 0 : 1 }}
+                                className="rounded-lg object-fill transition-opacity duration-300"
+                                style={{ opacity: isImageLoading ? 0 : 1}}
                                 onLoad={() => setIsImageLoading(false)}
                                 onError={() => setImageError(true)}
                             />
@@ -43,7 +44,7 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
                     )}
                 </div>
                 <h4 className="font-semibold truncate">{stamp.name}</h4>
-                <p className="text-sm text-blue-500 truncate">{stamp.type}</p>
+                <p className="text-sm text-blue-500">{stamp.description}</p>
             </CardContent>
         </Card>
     )

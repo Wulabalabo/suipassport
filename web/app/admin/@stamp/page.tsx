@@ -31,7 +31,7 @@ export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
                         {admin && <CreateStampDialog />}
                     </div>
                 </div>
-                <p className="text-lg py-9">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur vehicula nisl vel risus facilisis, ac facilisis erat suscipit. Fusce sed nulla et justo luctus blandit. Nulla facilisi. Proin egestas justo nec ullamcorper volutpat.</p>
+                <p className="text-lg py-9">Here are the latest stamps awarded to the Sui community, celebrating  achievements and contributions.</p>
                 <div className="lg:block hidden mt-auto">
                     {admin && <CreateStampDialog />}
                 </div>

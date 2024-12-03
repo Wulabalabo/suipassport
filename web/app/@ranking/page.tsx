@@ -9,15 +9,20 @@ import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
 
 interface RankItem {
-  address: string
+  rank: number
+  user: string
   points: number
   stampsCount: number
 }
 
 const columns: ColumnDef<RankItem>[] = [
   {
-    accessorKey: "address",
-    header: "Address",
+    accessorKey: "rank",
+    header: "Rank",
+  },
+  {
+    accessorKey: "user",
+    header: "User",
   },
   {
     accessorKey: "points",
@@ -29,9 +34,15 @@ const columns: ColumnDef<RankItem>[] = [
   },
 ]
 
+const randomUser = () => {
+  const users = ["anto.sui", "john.sui", "jane.sui", "alice.sui", "bob.sui"]
+  return users[Math.floor(Math.random() * users.length)]
+}
+
 // 示例数据
 const mockData: RankItem[] = Array.from({ length: 15 }, (_, i) => ({
-  address: `0x${i + 1}...abc${i}`,
+  rank: i + 1,
+  user: randomUser(),
   points: Math.floor(Math.random() * 1000),
   stampsCount: Math.floor(Math.random() * 20),
 }))
@@ -50,7 +61,7 @@ export default function RankingPage() {
 
   // 处理搜索过滤
   const filteredData = mockData.filter(item =>
-    item.address.toLowerCase().includes(searchQuery.toLowerCase())
+    item.user.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   // 处理分页
@@ -80,7 +91,7 @@ export default function RankingPage() {
   return (
     <div className="p-6 space-y-6 lg:bg-white lg:rounded-3xl lg:p-12">
       <div className="lg:flex lg:justify-between lg:items-center space-y-6 lg:space-y-0 pb-6">
-        <h1 className="text-4xl font-bold">Ranking</h1>
+        <h1 className="text-4xl font-bold">Top Contributors</h1>
         <Button 
           onClick={handleSync} 
           className="rounded-full"
@@ -96,6 +107,7 @@ export default function RankingPage() {
           <SearchFilterBar
             searchPlaceholder="Search by address"
             onSearchChange={setSearchQuery}
+            filterOptions={[{label: "All", value: "all"}, {label: "Stamps", value: "stamps"}]}
           />
           <div className="hidden lg:block">
             <PaginationControls

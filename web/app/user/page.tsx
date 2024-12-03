@@ -5,45 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { ProfileCard } from '@/components/user/profile-card'
 import { StampGrid } from '@/components/user/stamp-grid'
+import { mockStamp } from '@/app/mock'
 
-const mockStamps = [
-  {
-    id: 1,
-    name: "Stamp 1",
-    type: "Stamp",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-  {
-    id: 2,
-    name: "Stamp 2",
-    type: "Stamp",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-  {
-    id: 3,
-    name: "Stamp 3",
-    type: "Stamp",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-  {
-    id: 4,
-    name: "Stamp 4",
-    type: "Stamp",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-  {
-    id: 5,
-    name: "Stamp 5",
-    type: "Stamp",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-  {
-    id: 6,
-    name: "Stamp 6",
-    type: "Stamp",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-]
+
 
 export default function UserPage() {
   const account = useCurrentAccount()
@@ -57,7 +21,7 @@ export default function UserPage() {
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamp
         </p>
-        <StampGrid items={mockStamps}/>
+        <StampGrid items={mockStamp}/>
       </div>
     </div>
   )
