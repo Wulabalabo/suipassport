@@ -1,0 +1,3 @@
+[submodule "sui-passport"]
+	path = sui-passport
+	url = https://github.com/Wulabalabo/sui-passport.git

@@ -113,11 +113,8 @@ export function StampDetails({ stamp }: StampDetailsProps) {
                   name: `Stamp ${index}`,
                   description: "Sample description",
                   imageUrl: "/sample-image.jpg",
-                  eventName: stamp.name,
                   totalSupply: 100,
                   point: 50,
-                  attribution: "Sample Attribution",
-                  type: "Sample Type"
                 })}
               >
                 <div>Data</div>
