@@ -83,7 +83,7 @@ export function CreateStampDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-full text-lg px-4 py-2">Create</Button>
+        <Button className="rounded-full text-sm px-4 py-2 lg:text-base">Create new Stamp</Button>
       </DialogTrigger>
       <DialogContent hideCloseButton className="sm:max-w-[425px] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6">

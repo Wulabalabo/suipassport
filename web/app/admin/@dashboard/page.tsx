@@ -176,6 +176,7 @@ export default function AdminDashboard() {
             <SearchFilterBar
               searchPlaceholder="Search by name or ID"
               onSearchChange={setSearchQuery}
+              filterOptions={[{ value: "createdAt", label: "Created At" },{ value: "name", label: "Name" }]}
             />
             <div className="hidden lg:block lg:ml-auto">
               <PaginationControls

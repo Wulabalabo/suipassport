@@ -38,7 +38,7 @@ export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
             </div>
             <div className="py-6 lg:w-full lg:py-0">
                 <div className="lg:flex justify-between ">
-                    <SearchFilterBar searchPlaceholder="Name / ID" filterPlaceholder="Sort By" />
+                    <SearchFilterBar searchPlaceholder="Name / ID" filterPlaceholder="Sort By" filterOptions={[{ value: "createdAt", label: "Created At" },{ value: "name", label: "Name" }]} />
                     <div className="py-4 lg:block hidden">
                         <PaginationControls
                             currentPage={currentPage}
@@ -79,7 +79,7 @@ export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
                                     Description Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur.
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                        DD/MM/YYYY - DD/MM/YYYY
+                                        Created at: DD/MM/YYYY
                                     </div>
                                 </div>
                             </Link>
