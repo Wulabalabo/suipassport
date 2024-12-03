@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import AdminStamp from './@stamp/page'
 import AdminDashboard from './@dashboard/page'
-import { mockStamp } from '../mock'
+import { mockStamp } from '../../mock'
 
 export default function AdminPage() {
   const router = useRouter()

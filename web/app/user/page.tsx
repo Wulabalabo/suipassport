@@ -1,17 +1,12 @@
 'use client'
 
-import { useCurrentAccount } from '@mysten/dapp-kit'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 import { ProfileCard } from '@/components/user/profile-card'
 import { StampGrid } from '@/components/user/stamp-grid'
-import { mockStamp } from '@/app/mock'
+import { mockStamp } from '@/mock'
 
 
 
 export default function UserPage() {
-  const account = useCurrentAccount()
-  const router = useRouter()
 
 
   return (

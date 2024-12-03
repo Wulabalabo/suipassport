@@ -2,7 +2,7 @@
 
 import RankingPage from './@ranking/page'
 import AdminStamp from './admin/@stamp/page'
-import { mockStamp } from './mock'
+import { mockStamp } from '../mock'
 
 
 export default function Home() {

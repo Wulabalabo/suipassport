@@ -9,7 +9,7 @@ import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
 
 interface AdminStampProps {
-    mockStamp: Array<{ id: number; name: string }>
+    mockStamp: Array<{ id: number; name: string, active: boolean }>
     admin: boolean
 }
 
@@ -59,7 +59,7 @@ export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
                                 totalSupply: 100,
                                 point: 50,
                             })}
-                            className="block bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer"
+                            className={`block bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer ${!stamp.active ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <div className="font-bold text-lg">{stamp.name}</div>
                         </div>
@@ -68,21 +68,38 @@ export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
                 <div className="lg:block hidden">
                     <div className="grid grid-cols-3 gap-6">
                         {currentStamps.map((stamp) => (
-                            <Link
-                                key={stamp.id}
-                                href={`/admin/stamps/${stamp.id}`}
-                                className="block bg-white rounded-lg p-5 hover:bg-gray-300 transition-colors"
-                            >
-                                <div className="flex flex-col justify-start items-start min-h-[100px] p-6 gap-y-2">
-                                    <div className="font-bold text-lg">{stamp.name}</div>
-                                    <div className="text-blue-400">
-                                    Description Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur.
+                            admin || stamp.active ? (
+                                <Link
+                                    key={stamp.id}
+                                    href={`/admin/stamp/${stamp.id}`}
+                                    className={`block bg-white rounded-lg p-5 hover:bg-gray-300 transition-colors`}
+                                >
+                                    <div className="flex flex-col justify-start items-start min-h-[100px] p-6 gap-y-2">
+                                        <div className="font-bold text-lg">{stamp.name}</div>
+                                        <div className="text-blue-400">
+                                            Description Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur.
+                                        </div>
+                                        <div className="text-sm text-gray-500">
+                                            Created at: DD/MM/YYYY
+                                        </div>
                                     </div>
-                                    <div className="text-sm text-gray-500">
-                                        Created at: DD/MM/YYYY
+                                </Link>
+                            ) : (
+                                <div
+                                    key={stamp.id}
+                                    className={`block bg-white rounded-lg p-5 ${!stamp.active ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="flex flex-col justify-start items-start min-h-[100px] p-6 gap-y-2">
+                                        <div className="font-bold text-lg">{stamp.name}</div>
+                                        <div className="text-blue-400">
+                                            Description Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur.
+                                        </div>
+                                        <div className="text-sm text-gray-500">
+                                            Created at: DD/MM/YYYY
+                                        </div>
                                     </div>
                                 </div>
-                            </Link>
+                            )
                         ))}
                     </div>
                 </div>
