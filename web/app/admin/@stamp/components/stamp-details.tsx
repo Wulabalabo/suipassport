@@ -4,14 +4,13 @@ import { Button } from "@/components/ui/button"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { EditIcon } from "lucide-react"
 import { CreateStampDialog } from "./create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
 
-interface EventDetailsProps {
-  event: {
+interface StampDetailsProps {
+  stamp: {
     id: number
     name: string
     description: string
@@ -33,11 +32,9 @@ const mockStamps: StampData[] = [
   { id: "B", value: 100, name: "Stamp B" },
   { id: "C", value: 100, name: "Stamp C" },
 ]
-
-export function EventDetails({ event }: EventDetailsProps) {
-  const router = useRouter()
+    
+export function StampDetails({ stamp }: StampDetailsProps) {
   const [currentPage, setCurrentPage] = useState(1)
-  const ITEMS_PER_PAGE = 5
   const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
 
   return (
@@ -45,7 +42,7 @@ export function EventDetails({ event }: EventDetailsProps) {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{event.name}</h1>
+          <h1 className="text-2xl font-bold">{stamp.name}</h1>
         </div>
         <Button className="rounded-full" variant="outline" size="sm">
           <span className="mr-2">Edit</span>
@@ -55,21 +52,21 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       <div className="space-y-8 ">
         {/* Description */}
-        <p className="text-gray-600">{event.description}</p>
+        <p className="text-gray-600">{stamp.description}</p>
 
         {/* Event Details */}
         <div className="flex flex-col gap-4">
           <div>
             <div className="text-sm text-gray-500 mb-1">Date</div>
-            <div>{`${event.startDate} - ${event.endDate}`}</div>
+            <div>{`${stamp.startDate} - ${stamp.endDate}`}</div>
           </div>
           <div>
             <div className="text-sm text-gray-500 mb-1">Event Type</div>
-            <div>{event.eventType}</div>
+            <div>{stamp.eventType}</div>
           </div>
           <div>
             <div className="text-sm text-gray-500 mb-1">Mint by</div>
-            <div>{event.mintType}</div>
+            <div>{stamp.mintType}</div>
           </div>
         </div>
         
@@ -116,7 +113,7 @@ export function EventDetails({ event }: EventDetailsProps) {
                   name: `Stamp ${index}`,
                   description: "Sample description",
                   imageUrl: "/sample-image.jpg",
-                  eventName: event.name,
+                  eventName: stamp.name,
                   totalSupply: 100,
                   point: 50,
                   attribution: "Sample Attribution",

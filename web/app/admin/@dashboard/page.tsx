@@ -16,43 +16,13 @@ interface BaseItem {
   createdAt: string
 }
 
-interface EventItem extends BaseItem {
-  location: string
-}
-
 interface StampItem extends BaseItem {
-  eventId: string
+  type: string
 }
 
 interface PassportItem extends BaseItem {
   userId: string
 }
-
-
-
-// 定义不同表格的列
-const eventColumns: ColumnDef<EventItem>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-  },
-  {
-    accessorKey: "name",
-    header: "Name",
-  },
-  {
-    accessorKey: "location",
-    header: "Location",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Created At",
-  },
-]
 
 const stampColumns: ColumnDef<StampItem>[] = [
   {
@@ -64,8 +34,8 @@ const stampColumns: ColumnDef<StampItem>[] = [
     header: "Name",
   },
   {
-    accessorKey: "eventId",
-    header: "Event ID",
+    accessorKey: "type",
+    header: "Type",
   },
   {
     accessorKey: "status",
@@ -102,18 +72,11 @@ const passportColumns: ColumnDef<PassportItem>[] = [
 
 // 示例数据
 const mockData = {
-  events: Array.from({ length: 23 }, (_, i) => ({
-    id: `${i + 1}`,
-    name: `Event ${i + 1}`,
-    location: `Location ${i + 1}`,
-    status: "Active",
-    createdAt: "2024-03-20",
-  })),
   stamps: Array.from({ length: 15 }, (_, i) => ({
     id: `${i + 1}`,
     name: `Stamp ${i + 1}`,
-    eventId: `event-${i + 1}`,
     status: "Active",
+    type: "Sample Type",
     createdAt: "2024-03-20",
   })),
   passports: Array.from({ length: 18 }, (_, i) => ({
@@ -126,7 +89,7 @@ const mockData = {
 }
 
 // 定义 Tab 值的类型
-type TabValue = 'events' | 'stamps' | 'passports'
+type TabValue = 'stamps' | 'passports'
 
 // 修改 getCurrentConfig 的返回类型
 type TableConfig<T> = {
@@ -135,29 +98,24 @@ type TableConfig<T> = {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<TabValue>('events')
+  const [activeTab, setActiveTab] = useState<TabValue>('stamps')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
 
   const ITEMS_PER_PAGE = 7
 
   // 修改 getCurrentConfig 函数
-  const getCurrentConfig = (): TableConfig<EventItem | StampItem | PassportItem> => {
+  const getCurrentConfig = (): TableConfig<StampItem | PassportItem> => {
     switch (activeTab) {
-      case 'events':
-        return {
-          data: mockData.events,
-          columns: eventColumns as ColumnDef<EventItem | StampItem | PassportItem, unknown>[]
-        }
       case 'stamps':
         return {
           data: mockData.stamps,
-          columns: stampColumns as ColumnDef<EventItem | StampItem | PassportItem, unknown>[]
+          columns: stampColumns as ColumnDef<StampItem | PassportItem, unknown>[]
         }
       case 'passports':
         return {
           data: mockData.passports,
-          columns: passportColumns as ColumnDef<EventItem | StampItem | PassportItem, unknown>[]
+          columns: passportColumns as ColumnDef<StampItem | PassportItem, unknown>[]
         }
     }
   }
@@ -190,8 +148,7 @@ export default function AdminDashboard() {
         <h1 className="text-4xl font-bold">Dashboard</h1>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-4">
-          <StatsCard value={mockData.events.length} label="Events" />
+        <div className="grid grid-cols-2 gap-4">
           <StatsCard value={mockData.stamps.length} label="Stamps" />
           <StatsCard value={mockData.passports.length} label="Passports" />
         </div>
@@ -202,19 +159,17 @@ export default function AdminDashboard() {
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
-        className="w-full lg:pt-12"
+        className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-3 lg:hidden">
-          <TabsTrigger value="events">Events</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 lg:hidden">
           <TabsTrigger value="stamps">Stamps</TabsTrigger>
           <TabsTrigger value="passports">Passports</TabsTrigger>
         </TabsList>
         <div className="mt-6 space-y-4">
           <div className="lg:flex lg:justify-start lg:items-center lg:gap-8">
             <div className="lg:block hidden">
-              <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="events">Events</TabsTrigger>
-              <TabsTrigger value="stamps">Stamps</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="stamps">Stamps</TabsTrigger>
                 <TabsTrigger value="passports">Passports</TabsTrigger>
               </TabsList>
             </div>

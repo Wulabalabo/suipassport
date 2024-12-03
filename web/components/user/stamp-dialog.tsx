@@ -94,15 +94,10 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
 
 
                     {/* Details */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex flex-col">
                         <DetailItem
                             label="Description"
                             value={stamp?.description}
-                        />
-
-                        <DetailItem
-                            label="Event"
-                            value={stamp?.eventName}
                         />
                         <DetailItem
                             label="Total Supply"
@@ -112,24 +107,21 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                             label="Point"
                             value={stamp?.point}
                         />
-                        <DetailItem
-                            label="Attribution"
-                            value={stamp?.attribution}
-                        />
                     </div>
-                    {admin && (
-                        <div className="flex flex-col gap-4 gap-y-6 pt-6">
-                            <div className="flex items-center gap-2">
-                                <p className="text-sm text-gray-500 flex-shrink-0">
+                </div>
+
+                {admin && (
+                    <div className="flex flex-col gap-4 gap-y-6 pt-6">
+                        <div className="flex items-center gap-2">
+                            <p className="text-sm text-gray-500 flex-shrink-0">
                                 Send To
                             </p>
                             <Input placeholder="Address" />
                             <Button className="rounded-full" variant="outline">Upload</Button>
                         </div>
-                            <Button className="rounded-full text-xl font-bold">Send</Button>
-                        </div>
-                    )}
-                </div>
+                        <Button className="rounded-full text-xl font-bold">Send</Button>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     )

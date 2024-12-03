@@ -1,7 +1,6 @@
 'use client'
 
-import AdminStamp from "../admin/@stamp/page"
-import AdminDashboard from "../admin/@dashboard/page"
+import AdminStamp from "../@stamp/page"
 
 const mockStamp = [
     { id: 1, name: "Stamp 1" },
@@ -16,12 +15,6 @@ const mockStamp = [
     { id: 10, name: "Stamp 10" },
 ]
 
-export default function HomePage() {
-    return <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 lg:space-y-24">
-        <>
-            <AdminStamp mockStamp={mockStamp} admin={false} />
-            <AdminDashboard />
-        </>
-    </div>
+export default function AdminStampPage() {
+  return <AdminStamp mockStamp={mockStamp} admin={true} />
 }
-
