@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,6 +25,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
 import Image from "next/image";
 import { RainbowButton } from "../ui/rainbow-button";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import { checkPassport } from "@/contracts";
+import { useNetworkVariables } from "@/config";
+import { useRouter } from "next/navigation";
+import { isValidSuiAddress } from "@mysten/sui/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export const passportFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -42,8 +48,39 @@ interface PassportFormDialogProps {
 }
 
 export function PassportFormDialog({ onSubmit }: PassportFormDialogProps) {
+  const currentAccount = useCurrentAccount();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasPassport, setHasPassport] = useState(false);
+  const networkVariables = useNetworkVariables();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (currentAccount && isValidSuiAddress(currentAccount.address)) {
+      checkPassport(currentAccount.address, networkVariables).then(setHasPassport);
+    } else {
+      setHasPassport(false);
+    }
+  }, [currentAccount, networkVariables]);
+
+  const handleViewProfile = () => {
+    if (currentAccount) {
+      router.push(`/user/${currentAccount.address}`);
+    }
+  }
+
+  const handleOpen = () => {
+    if (currentAccount && isValidSuiAddress(currentAccount.address)) {
+      setOpen(true);
+    } else {
+      toast({
+        title: "Please connect your wallet first",
+        description: "Please connect your wallet to create your passport",
+      });
+      setOpen(false);
+    }
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(passportFormSchema),
@@ -71,141 +108,147 @@ export function PassportFormDialog({ onSubmit }: PassportFormDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <RainbowButton>Get Your Passport</RainbowButton>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create Your Passport</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form 
-            onSubmit={form.handleSubmit(handleSubmit)} 
-            className="space-y-6"
-          >
-            <FormField
-              control={form.control}
-              name="avatar"
-              render={({ field }) => (
-                <FormItem className="flex flex-col items-center justify-center space-y-4">
-                  <FormLabel>Avatar</FormLabel>
-                  <FormControl>
-                    <div className="flex flex-col items-center gap-4">
-                      {field.value && (
-                        <div className="relative h-24 w-24 rounded-full overflow-hidden">
-                          <Image
-                            src={field.value}
-                            alt="Avatar"
-                            fill
-                            className="object-cover"
+    <>
+      {!hasPassport ? (
+        <Dialog open={open} onOpenChange={handleOpen}>
+          <DialogTrigger asChild>
+            <RainbowButton>Get Your Passport</RainbowButton>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Create Your Passport</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                className="space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="avatar"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center justify-center space-y-4">
+                      <FormLabel>Avatar</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-col items-center gap-4">
+                          {field.value && (
+                            <div className="relative h-24 w-24 rounded-full overflow-hidden">
+                              <Image
+                                src={field.value}
+                                alt="Avatar"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                          <ImageUpload
+                            value={field.value}
+                            onChange={field.onChange}
+                            disabled={isSubmitting}
                           />
                         </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="introduction"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Introduction</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Brief introduction about yourself"
+                            className="resize-none h-24"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="x"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>X (Twitter)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="@username" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                      <ImageUpload
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    />
 
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <FormField
+                      control={form.control}
+                      name="github"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>GitHub</FormLabel>
+                          <FormControl>
+                            <Input placeholder="GitHub username" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="introduction"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Introduction</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Brief introduction about yourself"
-                        className="resize-none h-24"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="your@email.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="x"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>X (Twitter)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="@username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="github"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>GitHub</FormLabel>
-                      <FormControl>
-                        <Input placeholder="GitHub username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="your@email.com" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Create Passport"}
-            </Button>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Create Passport"}
+                </Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <RainbowButton onClick={handleViewProfile}>Your Profile</RainbowButton>
+      )}
+    </>
   );
 } 

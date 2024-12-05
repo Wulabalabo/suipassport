@@ -27,6 +27,7 @@ export function mint_passport(networkVariables: NetworkVariables, name: string, 
             tx.pure.string(x),
             tx.pure.string(github),
             tx.pure.string(email),  
+            tx.object("0x6"),
         ],
     });
     return tx;

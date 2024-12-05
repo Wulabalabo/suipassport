@@ -5,10 +5,28 @@ import AdminStamp from './admin/@stamp/page'
 import { mockStamp } from '../mock'
 import { PassportFormDialog, passportFormSchema } from '@/components/passport/passport-form-dialog'
 import { z } from 'zod'
+import { useNetworkVariables } from '@/config'
+import { mint_passport } from '@/contracts/passport'
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { toast } from '@/hooks/use-toast'
 
 export default function Home() {
+  const networkVariables = useNetworkVariables();
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
-    console.log(values)
+    const tx = await mint_passport(networkVariables, values.name, values.avatar, values.introduction, values.x ?? '', values.github ?? '', values.email ?? '');
+    await signAndExecuteTransaction({ transaction: tx },{onSuccess: () => {
+      toast({
+        title: "Passport minted successfully",
+        description: "You can now view your passport in the ranking page",
+      });
+    },onError: () => {
+      toast({
+        title: "Failed to mint passport",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }});
   }
   return (
     <div className="">
