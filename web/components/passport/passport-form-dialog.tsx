@@ -28,7 +28,7 @@ import { RainbowButton } from "../ui/rainbow-button";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useNetworkVariables } from "@/config";
 import { useRouter } from "next/navigation";
-import { isValidSuiAddress } from "@mysten/sui/utils";
+import { isValidSuiAddress, isValidSuiObjectId } from "@mysten/sui/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/contexts/user-profile-context";
 export const passportFormSchema = z.object({
@@ -54,18 +54,23 @@ export function PassportFormDialog({ onSubmit }: PassportFormDialogProps) {
   const networkVariables = useNetworkVariables();
   const router = useRouter();
   const { toast } = useToast();
-  const { refreshProfile, userProfile } = useUserProfile();
+  const { userProfile } = useUserProfile();
+
   useEffect(() => {
-    if (currentAccount && isValidSuiAddress(currentAccount.address)) {
-      if(userProfile){
-        setHasPassport(true)
+    async function checkProfile() {
+      if (currentAccount?.address && isValidSuiAddress(currentAccount.address)) {
+        if (userProfile && isValidSuiObjectId(userProfile.id.id)) {
+          setHasPassport(true);
+        } else {
+          setHasPassport(false);
+        }
       } else {
-        refreshProfile(currentAccount.address, networkVariables)
+        setHasPassport(false);
       }
-    } else {
-      setHasPassport(false);
     }
-  }, [currentAccount, networkVariables, refreshProfile, userProfile]);
+
+    checkProfile();
+  }, [currentAccount, networkVariables, userProfile]);
 
   const handleViewProfile = () => {
     if (currentAccount) {

@@ -2,13 +2,14 @@
 
 import { createContext, useContext, useCallback, useMemo, useState } from 'react';
 import { UserProfile, NetworkVariables } from '@/types';
-import { checkPassport } from '@/contracts';
+import { checkUserState } from '@/contracts';
 
 interface UserProfileContextType {
   userProfile: UserProfile | null;
   isLoading: boolean;
   error: Error | null;
   refreshProfile: (address: string, networkVariables: NetworkVariables) => Promise<void>;
+  clearProfile: () => void;
 }
 
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
@@ -26,7 +27,8 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
     try {
       setIsLoading(true);
       setError(null);
-      const profile = await checkPassport(address, networkVariables);
+      const profile = await checkUserState(address, networkVariables);
+      console.log(profile);
       setUserProfile(profile);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
@@ -35,12 +37,18 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
     }
   }, []);
 
+  const clearProfile = useCallback(() => {
+    setUserProfile(null);
+    setError(null);
+  }, []);
+
   const value = useMemo(() => ({
     userProfile,
     isLoading,
     error,
     refreshProfile,
-  }), [userProfile, isLoading, error, refreshProfile]);
+    clearProfile,
+  }), [userProfile, isLoading, error, refreshProfile, clearProfile]);
 
   return (
     <UserProfileContext.Provider value={value}>

@@ -17,4 +17,5 @@ export type UserProfile = {
     points: number,
     x: string,
     current_user:string,
+    admincap:string | undefined | null
   }
