@@ -26,12 +26,11 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import Image from "next/image";
 import { RainbowButton } from "../ui/rainbow-button";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { checkPassport } from "@/contracts";
 import { useNetworkVariables } from "@/config";
 import { useRouter } from "next/navigation";
 import { isValidSuiAddress } from "@mysten/sui/utils";
 import { useToast } from "@/hooks/use-toast";
-
+import { useUserProfile } from "@/contexts/user-profile-context";
 export const passportFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   avatar: z.string().min(1, "Please upload an avatar"),
@@ -55,14 +54,18 @@ export function PassportFormDialog({ onSubmit }: PassportFormDialogProps) {
   const networkVariables = useNetworkVariables();
   const router = useRouter();
   const { toast } = useToast();
-
+  const { refreshProfile, userProfile } = useUserProfile();
   useEffect(() => {
     if (currentAccount && isValidSuiAddress(currentAccount.address)) {
-      checkPassport(currentAccount.address, networkVariables).then(setHasPassport);
+      if(userProfile){
+        setHasPassport(true)
+      } else {
+        refreshProfile(currentAccount.address, networkVariables)
+      }
     } else {
       setHasPassport(false);
     }
-  }, [currentAccount, networkVariables]);
+  }, [currentAccount, networkVariables, refreshProfile, userProfile]);
 
   const handleViewProfile = () => {
     if (currentAccount) {

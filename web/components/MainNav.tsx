@@ -12,8 +12,8 @@ export function MainNav() {
     <header className="sticky top-0 z-50 w-full bg-background dark:bg-black">
       <div className="lg:h-28 lg:px-24 w-full h-[68px] px-6 border-border flex items-center justify-between border-b">
         <div className="text-center">
-          <span className="text-primary text-2xl font-medium leading-loose tracking-tight lg:font-bold lg:text-4xl">Sui </span>
-          <span className="text-2xl font-medium leading-loose tracking-tight lg:font-bold lg:text-4xl">Passport</span>
+          <span className="text-primary text-xl font-medium leading-loose tracking-tight lg:font-bold lg:text-4xl">Sui </span>
+          <span className="text-xl font-medium leading-loose tracking-tight lg:font-bold lg:text-4xl">Passport</span>
         </div>
         <div className="flex items-center gap-4">
           <Button
