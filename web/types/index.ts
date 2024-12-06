@@ -16,4 +16,5 @@ export type UserProfile = {
     name: string,
     points: number,
     x: string,
+    current_user:string,
   }

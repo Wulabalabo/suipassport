@@ -23,12 +23,12 @@ export function ProfileCard({
     const currentAccount = useCurrentAccount()
 
     useEffect(() => {
-        if (currentAccount?.address && isValidSuiAddress(currentAccount.address)) {
+        if (currentAccount?.address && isValidSuiAddress(currentAccount.address) && userProfile?.current_user === currentAccount.address) {
             setIsEditing(true)
         }else{
             setIsEditing(false)
         }
-    }, [currentAccount?.address])
+    }, [currentAccount?.address, userProfile?.current_user])
     return (
         userProfile && <div className="relative p-6 mt-12 lg:p-0 lg:mt-0">
             {/* Avatar */}

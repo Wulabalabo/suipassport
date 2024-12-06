@@ -47,7 +47,7 @@ export const checkPassport = async (address: string, networkVariables: NetworkVa
   const data =  objects.data[0].data as unknown as SuiObjectData
   if(data.content?.dataType === "moveObject"){
     const profile = data.content.fields as UserProfile
-    console.log(profile);
+    profile.current_user = address
     return profile
   }
   return null

@@ -15,18 +15,20 @@ export default function Home() {
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
     const tx = await mint_passport(networkVariables, values.name, values.avatar, values.introduction, values.x ?? '', values.github ?? '', values.email ?? '');
-    await signAndExecuteTransaction({ transaction: tx },{onSuccess: () => {
-      toast({
-        title: "Passport minted successfully",
-        description: "You can now view your passport in the ranking page",
-      });
-    },onError: () => {
-      toast({
-        title: "Failed to mint passport",
-        description: "Please try again",
-        variant: "destructive"
-      });
-    }});
+    await signAndExecuteTransaction({ transaction: tx }, {
+      onSuccess: () => {
+        toast({
+          title: "Passport minted successfully",
+          description: "You can now view your passport in the ranking page",
+        });
+      }, onError: () => {
+        toast({
+          title: "Failed to mint passport",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
+    });
   }
   return (
     <div className="">
