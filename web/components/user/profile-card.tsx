@@ -38,11 +38,11 @@ export function ProfileCard({
             {/* Mobile View */}
             <div className="mt-6 bg-blue-200 max-h-48 rounded-2xl lg:hidden">
                 <div className="pl-6 pr-4 py-4">
-                    {isEditing && (
+                    {isEditing ? (
                         <div className="flex justify-end">
                             <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={onEdit}><EditIcon className="w-4 h-4 text-gray-400" /> Edit</Button>
                         </div>
-                    )}
+                    ) : <div className="flex justify-end min-h-9"></div>}
                     {/* Avatar */}
                     <div className="flex flex-col justify-between gap-y-2 mt-6">
                         <h2 className="text-2xl font-medium">{userProfile.name}</h2>
