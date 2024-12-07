@@ -1,10 +1,10 @@
 export interface StampItem {
-    id: string | number
+    id: string 
     name: string
     imageUrl?: string
     description?: string
-    totalSupply?: number
-    point?: number
+    points?: number
+    timestamp?: number
 }
 
 export interface StampGridProps {

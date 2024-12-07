@@ -1,21 +1,24 @@
 export type NetworkVariables = {
-    package: string;
-    stampAdminCap: string;
-    suiPassportRecord: string;
+    package: string,
+    suiPassportRecord: string,
+    stampDisplay: string,
+    passportDisplay: string,
+    stampOnlineEventRecord: string,
+    stampOfflineEventRecord: string,
 }
 
 export type UserProfile = {
     avatar: string
-    collections:{fields:{ id:{id:string},size:number}},
+    collections: { fields: { id: { id: string }, size: number } },
     email: string,
-    exhibit:string[],
+    exhibit: string[],
     github: string,
-    id: {id:string},
+    id: { id: string },
     introduction: string,
     last_time: number,
     name: string,
     points: number,
     x: string,
-    current_user:string,
-    admincap:string | undefined | null
-  }
+    current_user: string,
+    admincap: string | undefined | null
+}

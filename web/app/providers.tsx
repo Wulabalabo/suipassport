@@ -6,6 +6,7 @@ import { networkConfig, network } from "../config"
 import "@mysten/dapp-kit/dist/index.css";
 import { ThemeProvider } from "next-themes";
 import { UserProfileProvider } from "@/contexts/user-profile-context";
+import { PassportsStampsProvider } from "@/contexts/passports-stamps-context";
 
 const queryClient = new QueryClient();
 
@@ -14,11 +15,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
-          <UserProfileProvider>
-            <WalletProvider>
+          <PassportsStampsProvider>
+            <UserProfileProvider>
+              <WalletProvider>
               {children}
             </WalletProvider>
-          </UserProfileProvider>
+            </UserProfileProvider>
+          </PassportsStampsProvider>
         </SuiClientProvider>
       </QueryClientProvider>
     </ThemeProvider>

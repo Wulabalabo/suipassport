@@ -7,6 +7,8 @@ import { StatsCard } from "@/components/ui/stats-card"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { PaginationControls } from "@/components/ui/pagination-controls"
+import { StampItem } from "@/types/stamp"
+import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 
 // 定义基础接口
 interface BaseItem {
@@ -16,9 +18,8 @@ interface BaseItem {
   createdAt: string
 }
 
-interface StampItem extends BaseItem {
-  type: string
-}
+
+
 
 interface PassportItem extends BaseItem {
   userId: string
@@ -28,22 +29,35 @@ const stampColumns: ColumnDef<StampItem>[] = [
   {
     accessorKey: "id",
     header: "ID",
+    cell: ({ row }) => {
+      return <span className="text-sm">{row.original.id.slice(0, 6)}...</span>
+    }
   },
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => {
+      return <div className="truncate max-w-xs">{row.original.name}</div>
+    }
   },
   {
-    accessorKey: "type",
-    header: "Type",
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => {
+      return <div className="text-nowrap truncate max-w-xs">{row.original.description}</div>
+    }
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "points",
+    header: "Points",
   },
   {
-    accessorKey: "createdAt",
-    header: "Created At",
+    accessorKey: "timestamp",
+    header: () => <div className="text-right text-nowrap">Created At</div>,
+    cell: ({ row }) => {
+      const createdAt = new Date(row.original.timestamp ?? 0).toLocaleDateString()
+      return <div className="text-nowrap text-right">{createdAt}</div>
+    }
   },
 ]
 
@@ -70,24 +84,6 @@ const passportColumns: ColumnDef<PassportItem>[] = [
   },
 ]
 
-// 示例数据
-const mockData = {
-  stamps: Array.from({ length: 15 }, (_, i) => ({
-    id: `${i + 1}`,
-    name: `Stamp ${i + 1}`,
-    status: "Active",
-    type: "Sample Type",
-    createdAt: "2024-03-20",
-  })),
-  passports: Array.from({ length: 18 }, (_, i) => ({
-    id: `${i + 1}`,
-    name: `Passport ${i + 1}`,
-    userId: `user-${i + 1}`,
-    status: "Active",
-    createdAt: "2024-03-20",
-  })),
-}
-
 // 定义 Tab 值的类型
 type TabValue = 'stamps' | 'passports'
 
@@ -101,6 +97,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabValue>('stamps')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
+  const { stamps} = usePassportsStamps()
 
   const ITEMS_PER_PAGE = 7
 
@@ -109,12 +106,12 @@ export default function AdminDashboard() {
     switch (activeTab) {
       case 'stamps':
         return {
-          data: mockData.stamps,
+          data: stamps ?? [],
           columns: stampColumns as ColumnDef<StampItem | PassportItem, unknown>[]
         }
       case 'passports':
         return {
-          data: mockData.passports,
+          data: [],
           columns: passportColumns as ColumnDef<StampItem | PassportItem, unknown>[]
         }
     }
@@ -149,8 +146,8 @@ export default function AdminDashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <StatsCard value={mockData.stamps.length} label="Stamps" />
-          <StatsCard value={mockData.passports.length} label="Passports" />
+          <StatsCard value={stamps?.length ?? 0} label="Stamps" />
+          <StatsCard value={0} label="Passports" />
         </div>
       </div>
 

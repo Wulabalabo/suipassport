@@ -2,25 +2,64 @@
 
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CreateStampDialog } from "./components/create-stamp-dialog"
-import Link from "next/link"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
+import { CreateStampFormValues } from "@/types/form"
+import { create_event_stamp } from "@/contracts/stamp"
+import { useNetworkVariables } from "@/config"
+import { useUserProfile } from "@/contexts/user-profile-context"
+import { useSignAndExecuteTransaction } from "@mysten/dapp-kit"
+import { useToast } from "@/hooks/use-toast"
 
 interface AdminStampProps {
-    mockStamp: Array<{ id: number; name: string, active: boolean }>
+    stamps: StampItem[] | null;
     admin: boolean
 }
 
-export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
+export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
+    const networkVariables = useNetworkVariables();
+    const { userProfile } = useUserProfile();
+    const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+    const { toast } = useToast();
+
+    const handleCreateStamp = async (values: CreateStampFormValues) => {
+        if (!userProfile?.admincap) return;
+        const tx = await create_event_stamp(
+            networkVariables,
+            userProfile.admincap,
+            values.name,
+            values.description,
+            values.image,
+            Number(values.point)
+        );
+        await signAndExecuteTransaction({ transaction: tx }, {
+            onSuccess: () => {
+                toast({
+                    title: "Stamp created successfully",
+                    description: "Stamp created successfully",
+                });
+            }, onError: (e) => {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: e.message,
+                });
+            }
+        });
+    }
 
     const ITEMS_PER_PAGE = 6
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
-    const currentStamps = mockStamp.slice(startIndex, endIndex)
+    const currentStamps = stamps?.slice(startIndex, endIndex)
+
+    useEffect(() => {
+        console.log(stamps);
+    }, [stamps]);
 
     return (
         <div className="p-6 lg:flex lg:gap-16">
@@ -28,74 +67,67 @@ export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
                 <div className="flex justify-between items-center">
                     <p className="text-4xl font-bold py-6">Stamps</p>
                     <div className="lg:hidden">
-                        {admin && <CreateStampDialog />}
+                        {admin && <CreateStampDialog handleCreateStamp={handleCreateStamp} />}
                     </div>
                 </div>
                 <p className="text-lg py-9">Here are the latest stamps awarded to the Sui community, celebrating  achievements and contributions.</p>
                 <div className="lg:block hidden mt-auto">
-                    {admin && <CreateStampDialog />}
+                    {admin && <CreateStampDialog handleCreateStamp={handleCreateStamp} />}
                 </div>
             </div>
             <div className="py-6 lg:w-full lg:py-0">
                 <div className="lg:flex justify-between ">
-                    <SearchFilterBar searchPlaceholder="Name / ID" filterPlaceholder="Sort By" filterOptions={[{ value: "createdAt", label: "Created At" },{ value: "name", label: "Name" }]} />
+                    <SearchFilterBar searchPlaceholder="Name / ID" filterPlaceholder="Sort By" filterOptions={[{ value: "createdAt", label: "Created At" }, { value: "name", label: "Name" }]} />
                     <div className="py-4 lg:block hidden">
                         <PaginationControls
                             currentPage={currentPage}
-                            totalPages={Math.ceil(mockStamp.length / ITEMS_PER_PAGE)}
+                            totalPages={Math.ceil(stamps?.length ?? 0 / ITEMS_PER_PAGE)}
                             onPageChange={setCurrentPage}
                         />
                     </div>
                 </div>
                 <div className="pt-6 space-y-2 lg:hidden">
-                    {currentStamps.map((stamp) => (
+                    {currentStamps?.map((stamp) => (
                         <div
                             key={stamp.id}
-                            onClick={() => setSelectedStamp({
-                                id: stamp.id.toString(),
-                                name: stamp.name,
-                                description: "Sample description",
-                                imageUrl: "/sample-image.jpg",
-                                totalSupply: 100,
-                                point: 50,
-                            })}
-                            className={`block bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer ${!stamp.active ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={() => setSelectedStamp(stamp)}
+                            className={`block bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer`}
                         >
                             <div className="font-bold text-lg">{stamp.name}</div>
                         </div>
                     ))}
                 </div>
-                <div className="lg:block hidden">
+                <div className="lg:block hidden pt-6">
                     <div className="grid grid-cols-3 gap-6">
-                        {currentStamps.map((stamp) => (
-                            admin || stamp.active ? (
-                                <Link
+                        {currentStamps?.map((stamp) => (
+                            admin ? (
+                                <div
                                     key={stamp.id}
-                                    href={`/admin/stamp/${stamp.id}`}
-                                    className={`block bg-white rounded-lg p-5 hover:bg-gray-300 transition-colors`}
+                                    onClick={() => setSelectedStamp(stamp)}
+                                    className={`block bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer`}
                                 >
-                                    <div className="flex flex-col justify-start items-start min-h-[100px] p-6 gap-y-2">
+                                    <div className="flex flex-col justify-start items-start min-h-[100px] p-4 gap-y-2">
                                         <div className="font-bold text-lg">{stamp.name}</div>
-                                        <div className="text-blue-400">
-                                            Description Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur.
+                                        <div className="text-blue-400 max-w-48">
+                                            <p className="truncate">{stamp.description}</p>
                                         </div>
                                         <div className="text-sm text-gray-500">
-                                            Created at: DD/MM/YYYY
+                                            Created at: {stamp.timestamp ? new Date(stamp.timestamp).toLocaleDateString() : "N/A"}
                                         </div>
                                     </div>
-                                </Link>
+                                </div>
                             ) : (
                                 <div
                                     key={stamp.id}
-                                    className={`block bg-white rounded-lg p-5 ${!stamp.active ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={`block bg-white rounded-lg p-5`}
                                 >
                                     <div className="flex flex-col justify-start items-start min-h-[100px] p-6 gap-y-2">
                                         <div className="font-bold text-lg">{stamp.name}</div>
                                         <div className="text-blue-400">
-                                            Description Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur.
+                                            {stamp.description}
                                         </div>
                                         <div className="text-sm text-gray-500">
-                                            Created at: DD/MM/YYYY
+                                            Created at: {stamp.timestamp ? new Date(stamp.timestamp).toLocaleDateString() : "N/A"}
                                         </div>
                                     </div>
                                 </div>
@@ -108,7 +140,7 @@ export default function AdminStamp({ mockStamp, admin }: AdminStampProps) {
             <div className="py-4 lg:hidden">
                 <PaginationControls
                     currentPage={currentPage}
-                    totalPages={Math.ceil(mockStamp.length / ITEMS_PER_PAGE)}
+                    totalPages={Math.ceil(stamps?.length ?? 0 / ITEMS_PER_PAGE)}
                     onPageChange={setCurrentPage}
                 />
             </div>

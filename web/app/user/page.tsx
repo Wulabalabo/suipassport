@@ -8,21 +8,25 @@ import { mockStamp } from '@/mock'
 import { useCurrentAccount } from '@mysten/dapp-kit'
 import { isValidSuiAddress } from '@mysten/sui/utils'
 import { useEffect } from 'react'
-
+import { useRouter } from 'next/navigation'
 
 
 export default function UserPage() {
-
+  const router = useRouter();
   const currentAccount = useCurrentAccount()
   const { userProfile, refreshProfile } = useUserProfile();
   const networkVariables = useNetworkVariables();
   useEffect(() => {
+    if (!userProfile || userProfile?.last_time === 0) {
+      router.push("/")
+      return
+    }
     if (currentAccount?.address && isValidSuiAddress(currentAccount.address)) {
       if (!userProfile) {
         refreshProfile(currentAccount.address, networkVariables)
       }
     }
-  }, [currentAccount?.address, networkVariables, refreshProfile, userProfile])
+  }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router])
 
   return (
     <div className="lg:p-24 bg-gray-50 dark:bg-gray-900">

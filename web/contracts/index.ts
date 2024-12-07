@@ -1,8 +1,9 @@
 import { isValidSuiAddress } from "@mysten/sui/utils";
 import { suiClient } from "@/config";
-import { SuiObjectData, SuiObjectResponse } from "@mysten/sui/client";
+import { EventId, SuiObjectData, SuiObjectResponse } from "@mysten/sui/client";
 import { categorizeSuiObjects, CategorizedObjects } from "@/utils/assetsHelpers";
 import { NetworkVariables, UserProfile } from "@/types";
+import { StampItem } from "@/types/stamp";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
   if (!isValidSuiAddress(address)) {
@@ -43,7 +44,7 @@ export const checkUserState = async (
         },
         size: 0
       }
-    },  
+    },
     email: "",
     exhibit: [],
     github: "",
@@ -70,7 +71,7 @@ export const checkUserState = async (
           StructType: `${networkVariables.package}::stamp::AdminCap`
         },
         {
-          StructType: `${networkVariables.package}::sui_passport::SuiPassport` 
+          StructType: `${networkVariables.package}::sui_passport::SuiPassport`
         },
       ]
     },
@@ -99,13 +100,30 @@ export const checkUserState = async (
   return profile;
 };
 
-export const getUserProfileByObjectId = async (objectId: string): Promise<SuiObjectResponse> => {
-  const tx = await suiClient.getObject({
-    id: objectId,
-    options: {
-      showContent: true
-    }
-  });
-  console.log(tx.data);
-  return tx
+export const getStampsData = async (networkVariables: NetworkVariables) => {
+  let hasNextPage = true;
+  let nextCursor: EventId | null = null;
+  let stamps: StampItem[] = [];
+  while (hasNextPage) {
+    const stampsEvent = await suiClient.queryEvents({
+      query: {
+        MoveEventType: `${networkVariables.package}::stamp::SetOnlineEventStampEvent`
+      },
+      cursor: nextCursor,
+    });
+    console.log(stampsEvent);
+    nextCursor = stampsEvent.nextCursor ?? null;
+    hasNextPage = stampsEvent.hasNextPage;
+    stamps = stamps.concat(stampsEvent.data.map((event) => {
+      if (event.type === `${networkVariables.package}::stamp::SetOnlineEventStampEvent`) {
+        const stamp = event.parsedJson as StampItem;
+        stamp.timestamp = event.timestampMs ? parseInt(event.timestampMs) : undefined;
+        stamp.id = (event.parsedJson as unknown as { online_event: string }).online_event;
+        stamp.imageUrl = (event.parsedJson as unknown as { image_url: string }).image_url;
+        return stamp;
+      }
+      return undefined;
+    }).filter((stamp) => stamp !== undefined) as StampItem[]);
+  }
+  return stamps;
 }

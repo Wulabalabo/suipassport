@@ -17,20 +17,6 @@ interface StampDialogProps {
     onOpenChange: (open: boolean) => void
 }
 
-function ImagePlaceholder() {
-    return (
-        <div className="text-gray-400">
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-            </svg>
-        </div>
-    )
-}
 
 function DetailItem({ label, value }: { label: string; value?: string | number }) {
     return (
@@ -43,11 +29,13 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
 
 export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
-    const [imageError, setImageError] = useState(false)
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="lg:h-auto lg:p-12 pb-20 lg:max-w-screen-lg" hideCloseButton={true}>
+            <DialogContent 
+                className="h-[90vh] overflow-y-auto lg:h-auto lg:max-h-[90vh] lg:p-6 lg:max-w-screen-md"
+                hideCloseButton={true}
+            >
                 <DialogHeader className="flex flex-row justify-between items-center">
                     <DialogTitle className="flex justify-between items-center text-3xl font-bold">
                         {stamp?.name}
@@ -60,35 +48,23 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 lg:space-y-0 lg:flex lg:py-9">
+                <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:gap-x-12 lg:py-9">
                     {/* Image Container */}
-                    <div className="lg:flex-col lg:w-1/2 lg:items-center lg:justify-center lg:space-y-6">
-                        <div className="lg:min-w-80 lg:max-h-40 aspect-[2/1] bg-gray-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-                            {stamp?.imageUrl && !imageError ? (
-                                <>
-                                    {isImageLoading && (
-                                        <Skeleton className="absolute inset-0" />
-                                    )}
-                                    <Image
-                                        src={stamp.imageUrl}
-                                        alt={stamp.name}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        className="rounded-lg object-cover transition-opacity duration-300"
-                                        style={{ opacity: isImageLoading ? 0 : 1, objectFit: 'contain' }}
-                                        onLoad={() => setIsImageLoading(false)}
-                                        onError={() => setImageError(true)}
-                                    />
-                                </>
-                            ) : (
-                                <ImagePlaceholder />
+                    <div className="w-full lg:w-1/2 flex flex-col">
+                        <div className="w-full min-w-40 max-h-40 aspect-square bg-gray-100 rounded-lg flex items-center justify-center relative overflow-hidden">
+                            {isImageLoading && (
+                                <Skeleton className="absolute inset-0" />
                             )}
-                        </div>
-                        <div className="lg:w-1/2 lg:block hidden">
-                            <DetailItem
-                                label="Description"
-                                value={stamp?.description}
+                            <Image
+                                src={stamp?.imageUrl ?? '/mockStamp.png'}
+                                alt={stamp?.name ?? ''}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="rounded-lg object-cover transition-opacity duration-300"
+                                style={{ opacity: isImageLoading ? 0 : 1, objectFit: 'contain' }}
+                                onLoad={() => setIsImageLoading(false)}
                             />
+
                         </div>
                     </div>
 
@@ -100,12 +76,8 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                             value={stamp?.description}
                         />
                         <DetailItem
-                            label="Total Supply"
-                            value={stamp?.totalSupply}
-                        />
-                        <DetailItem
                             label="Point"
-                            value={stamp?.point}
+                            value={stamp?.points}
                         />
                     </div>
                 </div>

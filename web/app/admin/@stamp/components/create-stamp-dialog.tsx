@@ -20,25 +20,21 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import * as z from "zod"
 import { useState } from "react"
 import Image from "next/image"
+import { createStampFormSchema, CreateStampFormValues } from "@/types/form"
+import { ImageUpload } from "@/components/ui/image-upload"
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  point: z.string().min(1, "Point is required"),
-  image: z.any().optional(),
-})
+interface CreateStampDialogProps {
+  handleCreateStamp: (values: CreateStampFormValues) => void;
+}
 
-type FormValues = z.infer<typeof formSchema>
-
-export function CreateStampDialog() {
+export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<CreateStampFormValues>({
+    resolver: zodResolver(createStampFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -47,38 +43,16 @@ export function CreateStampDialog() {
     },
   })
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: CreateStampFormValues) => {
     console.log(values)
+    setIsSubmitting(true);
     // Handle form submission
     setIsOpen(false)
     form.reset()
-    setPreviewImage(null)
+    handleCreateStamp(values);
   }
 
-  const handleImageDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreviewImage(reader.result as string)
-        form.setValue('image', file)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreviewImage(reader.result as string)
-        form.setValue('image', file)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -124,36 +98,24 @@ export function CreateStampDialog() {
                 control={form.control}
                 name="image"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col items-center justify-center space-y-4">
                     <FormLabel>Image</FormLabel>
                     <FormControl>
-                      <div
-                        className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50"
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={handleImageDrop}
-                        onClick={() => document.getElementById('image-upload')?.click()}
-                      >
-                        {previewImage ? (
-                          <div className="relative w-full h-40">
+                      <div className="flex flex-col items-center gap-4">
+                        {field.value && (
+                          <div className="relative h-24 w-24 rounded-full overflow-hidden">
                             <Image
-                              src={previewImage}
-                              alt="Preview"
+                              src={field.value}
+                              alt="Avatar"
                               fill
-                              className="object-contain"
+                              className="object-cover"
                             />
                           </div>
-                        ) : (
-                          <div className="text-gray-500">
-                            Drag & drop to upload
-                          </div>
                         )}
-                        <Input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageChange}
-                          value={field.value?.fileName}
+                        <ImageUpload
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
                         />
                       </div>
                     </FormControl>
@@ -161,9 +123,6 @@ export function CreateStampDialog() {
                   </FormItem>
                 )}
               />
-
-
-
               <FormField
                 control={form.control}
                 name="point"
@@ -177,8 +136,6 @@ export function CreateStampDialog() {
                   </FormItem>
                 )}
               />
-
-
             </form>
           </Form>
         </div>
@@ -191,7 +148,6 @@ export function CreateStampDialog() {
               onClick={() => {
                 setIsOpen(false)
                 form.reset()
-                setPreviewImage(null)
               }}
             >
               Cancel

@@ -1,34 +1,24 @@
 'use client'
-
-import { useMediaQuery } from '@/hooks/use-media-query'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+  
+import { useEffect } from 'react'
 import AdminStamp from './@stamp/page'
 import AdminDashboard from './@dashboard/page'
-import { mockStamp } from '../../mock'
+import { useNetworkVariables } from '@/config'
+import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 
 export default function AdminPage() {
-  const router = useRouter()
-  const media = useMediaQuery('(max-width: 1024px)')
-  const [isClient, setIsClient] = useState(false)
+  const networkVariables = useNetworkVariables()
+  const { refreshStamps, stamps } = usePassportsStamps()
 
   useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  useEffect(() => {
-    if (isClient && media) {
-      router.replace('/admin/stamp')
-    }
-  }, [media, isClient, router])
-
-  if (!isClient) return null
+    refreshStamps(networkVariables)
+  }, [networkVariables, refreshStamps])
 
   return (
-    <div className="w-full p-24 pb-48 bg-gray-100 space-y-24">
-      {!media && (
+    <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 space-y-24">
+      {(
         <>
-          <AdminStamp mockStamp={mockStamp} admin={true} />
+          <AdminStamp stamps={stamps} admin={true} />
           <AdminDashboard />
         </>
       )}

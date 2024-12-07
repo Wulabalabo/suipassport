@@ -49,7 +49,7 @@ export default function Home() {
             </div>
             <p className="text-base lg:text-lg">The Sui community flourishes because of passionate members like you. Through content, conferences, events, and hackathons, your contributions help elevate our Sui Community. Now it&apos;s time to showcase your impact, gain recognition, and unlock rewards for your active participation. Connect your wallet today and claim your first stamp!</p>
           </div>
-          <AdminStamp mockStamp={mockStamp} admin={false} />
+          <AdminStamp stamps={mockStamp} admin={false} />
           <RankingPage />
         </>
       </div>
