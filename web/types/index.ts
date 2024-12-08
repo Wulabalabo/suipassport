@@ -1,3 +1,5 @@
+import { StampItem } from "@/types/stamp"
+
 export type NetworkVariables = {
     package: string,
     suiPassportRecord: string,
@@ -20,5 +22,6 @@ export type UserProfile = {
     points: number,
     x: string,
     current_user: string,
-    admincap: string | undefined | null
+    admincap: string | undefined | null,
+    stamps?: StampItem[]
 }

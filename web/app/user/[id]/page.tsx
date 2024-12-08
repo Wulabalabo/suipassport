@@ -47,7 +47,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamp
         </p>
-        <StampGrid items={mockStamp} />
+        <StampGrid items={userProfile?.stamps || []} />
       </div>
     </div> : null
   )

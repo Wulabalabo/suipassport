@@ -9,6 +9,12 @@ import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
+import { isValidSuiAddress } from "@mysten/sui/utils"
+import { send_stamp } from "@/contracts/stamp"
+import { useNetworkVariables } from "@/config"
+import { useUserProfile } from "@/contexts/user-profile-context"
+import { useSignAndExecuteTransaction } from "@mysten/dapp-kit"
+import { useToast } from "@/hooks/use-toast"
 
 interface StampDialogProps {
     stamp: StampItem | null
@@ -29,10 +35,28 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
 
 export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
+    const [recipient, setRecipient] = useState('')
+    const networkVariables = useNetworkVariables()
+    const { userProfile } = useUserProfile()
+    const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
+    const { toast } = useToast()
 
+    const handleSendStamp = async () => {
+        if (!recipient || !isValidSuiAddress(recipient) || !userProfile?.admincap || !stamp?.id) return
+        const tx = await send_stamp(networkVariables, userProfile?.admincap, stamp?.id, stamp?.name, recipient)
+        await signAndExecuteTransaction({ transaction: tx }, {
+            onSuccess: () => {
+                toast({
+                    title: 'Stamp sent successfully',
+                    description: 'Stamp sent successfully',
+                })
+                onOpenChange(false)
+            }
+        })
+    }
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent 
+            <DialogContent
                 className="h-[90vh] overflow-y-auto lg:h-auto lg:max-h-[90vh] lg:p-6 lg:max-w-screen-md"
                 hideCloseButton={true}
             >
@@ -88,10 +112,10 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                             <p className="text-sm text-gray-500 flex-shrink-0">
                                 Send To
                             </p>
-                            <Input placeholder="Address" />
+                            <Input placeholder="Address" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
                             <Button className="rounded-full" variant="outline">Upload</Button>
                         </div>
-                        <Button className="rounded-full text-xl font-bold">Send</Button>
+                        <Button className="rounded-full text-xl font-bold" onClick={handleSendStamp}>Send</Button>
                     </div>
                 )}
             </DialogContent>

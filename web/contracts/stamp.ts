@@ -56,3 +56,26 @@ export const create_event_stamp = async (networkVariables: NetworkVariables, adm
     return tx;
 }
 
+/*public fun send_stamp(
+    _admin: &AdminCap, 
+    online_event: &mut OnlineEvent,
+    name: String,
+    recipient: address,
+    ctx: &mut TxContext
+)*/
+export const send_stamp = async (networkVariables: NetworkVariables, adminCap: string, online_event: string, name: string, recipient: string) => {
+    const tx = new Transaction();
+    tx.moveCall({
+        package: `${networkVariables.package}`,
+        module: `stamp`,
+        function: `send_stamp`,
+        arguments: [
+            tx.object(adminCap),
+            tx.object(online_event),
+            tx.pure.string(name),
+            tx.pure.address(recipient)
+        ]
+    });
+    return tx;
+}
+

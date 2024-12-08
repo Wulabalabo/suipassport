@@ -44,7 +44,7 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
                     )}
                 </div>
                 <h4 className="font-semibold truncate">{stamp.name}</h4>
-                <p className="text-sm text-blue-500">{stamp.description}</p>
+                <p className="text-sm text-blue-500 truncate">{stamp.description}</p>
             </CardContent>
         </Card>
     )

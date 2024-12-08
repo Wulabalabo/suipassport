@@ -26,6 +26,7 @@ export default function UserPage() {
         refreshProfile(currentAccount.address, networkVariables)
       }
     }
+    console.log(userProfile)
   }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router])
 
   return (
@@ -35,7 +36,7 @@ export default function UserPage() {
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamp
         </p>
-        <StampGrid items={mockStamp} />
+        <StampGrid items={userProfile?.stamps || []} />
       </div>
     </div>
   )

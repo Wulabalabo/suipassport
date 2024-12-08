@@ -60,43 +60,60 @@ export const checkUserState = async (
     points: 0,
     x: ""
   }
+  let hasNextPage = true;
+  let nextCursor: string | null = null;
+  let stamps: StampItem[] = [];
   // Get owned objects filtered by AdminCap and SuiPassport types
-  const objects = await suiClient.getOwnedObjects({
-    owner: address,
-    options: {
-      showContent: true
-    },
-    filter: {
-      MatchAny: [
-        {
-          StructType: `${networkVariables.package}::stamp::AdminCap`
-        },
-        {
-          StructType: `${networkVariables.package}::sui_passport::SuiPassport`
-        },
-      ]
-    },
-  });
-  // Process each object to find passport and admin status
-  objects.data.forEach((obj) => {
-    const data = obj.data as unknown as SuiObjectData;
-    if (data.content?.dataType !== "moveObject") {
-      return;
-    }
-    const contentType = data.content?.type;
-    if (contentType === `${networkVariables.package}::sui_passport::SuiPassport`) {
-      profile = data.content.fields as UserProfile;
-      profile.current_user = address;
-    }
+  while (hasNextPage) {
+    const objects = await suiClient.getOwnedObjects({
+      owner: address,
+      options: {
+        showContent: true
+      },
+      filter: {
+        MatchAny: [
+          {
+            StructType: `${networkVariables.package}::stamp::AdminCap`
+          },
+          {
+            StructType: `${networkVariables.package}::sui_passport::SuiPassport`
+          },
+          {
+            StructType: `${networkVariables.package}::stamp::Stamp`
+          }
+        ]
+      },
+      cursor: nextCursor,
+    });
+    nextCursor = objects.nextCursor ?? null;
+    hasNextPage = objects.hasNextPage;
+    // Process each object to find passport and admin status
+    objects.data.forEach((obj) => {
+      const data = obj.data as unknown as SuiObjectData;
+      if (data.content?.dataType !== "moveObject") {
+        return;
+      }
+      const contentType = data.content?.type;
+      if (contentType === `${networkVariables.package}::sui_passport::SuiPassport`) {
+        profile = data.content.fields as UserProfile;
+        profile.current_user = address;
+      }
 
-    if (contentType === `${networkVariables.package}::stamp::AdminCap`) {
-      console.log(data);
-      const adminCap = data as unknown as { objectId: string };
-      profile.admincap = adminCap.objectId;
-    } else {
-      profile.admincap = undefined;
-    }
-  });
+      if (contentType === `${networkVariables.package}::stamp::AdminCap`) {
+        const adminCap = data as unknown as { objectId: string };
+        profile.admincap = adminCap.objectId;
+      } else {
+        profile.admincap = undefined;
+      }
+      if (contentType === `${networkVariables.package}::stamp::Stamp`) {
+        const stamp = data.content.fields as unknown as StampItem;
+        stamp.id = (data.content.fields as unknown as { id: { id: string } }).id.id;
+        stamp.imageUrl = (data.content.fields as unknown as { image_url: string }).image_url;
+        stamps.push(stamp);
+      }
+    });
+  }
+  profile.stamps = stamps;
 
   return profile;
 };
