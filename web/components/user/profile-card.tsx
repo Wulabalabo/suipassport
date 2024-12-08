@@ -46,7 +46,7 @@ export function ProfileCard({
                     {/* Avatar */}
                     <div className="flex flex-col justify-between gap-y-2 mt-6">
                         <h2 className="text-2xl font-medium">{userProfile.name}</h2>
-                        <p className="text-blue-900 text-sm font-normal leading-tight tracking-tight overflow-hidden">{userProfile.introduction}</p>
+                        <p className="text-blue-900 text-sm font-normal tracking-tight leading-tight overflow-hidden">{userProfile.introduction}</p>
                     </div>
                 </div>
             </div>
@@ -56,7 +56,7 @@ export function ProfileCard({
                     <UserAvatar avatarUrl={userProfile.avatar} size={160} />
                     <div className="flex flex-col justify-between gap-y-2 max-w-sm">
                         <h2 className="text-3xl font-bold">{userProfile.name}</h2>
-                        <p className="font-normal leading-tight tracking-tight overflow-hidden">{userProfile.introduction}</p>
+                        <p className="font-normal tracking-tight leading-loose overflow-hidden">{userProfile.introduction}</p>
                     </div>
                     {isEditing && (
                         <div className="self-start flex-1 flex justify-end">

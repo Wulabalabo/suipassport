@@ -21,11 +21,12 @@ interface AdminStampProps {
 export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
     const networkVariables = useNetworkVariables();
     const { userProfile } = useUserProfile();
     const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
     const { toast } = useToast();
-
     const handleCreateStamp = async (values: CreateStampFormValues) => {
         if (!userProfile?.admincap) return;
         const tx = await create_event_stamp(
@@ -51,15 +52,28 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             }
         });
     }
+    const handleFilterChange = (value: string) => {
+        setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')
+    }
+
+    // Filter and sort stamps
+    const filteredStamps = stamps
+        ?.filter(stamp => 
+            stamp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            stamp.id.includes(searchQuery)
+        )
+        .sort((a, b) => {
+            const dateA = new Date(a.timestamp ?? 0).getTime()
+            const dateB = new Date(b.timestamp ?? 0).getTime()
+            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA
+        })
 
     const ITEMS_PER_PAGE = 6
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
-    const currentStamps = stamps?.slice(startIndex, endIndex)
-
-    useEffect(() => {
-        console.log(stamps);
-    }, [stamps]);
+    const currentStamps = filteredStamps?.slice(startIndex, endIndex)
+    const totalPages = Math.max(1, Math.ceil((filteredStamps?.length ?? 0) / ITEMS_PER_PAGE))
+    const shouldShowPagination = (filteredStamps?.length ?? 0) > ITEMS_PER_PAGE
 
     return (
         <div className="p-6 lg:flex lg:gap-16">
@@ -77,13 +91,29 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             </div>
             <div className="py-6 lg:w-full lg:py-0">
                 <div className="lg:flex justify-between ">
-                    <SearchFilterBar searchPlaceholder="Name / ID" filterPlaceholder="Sort By" filterOptions={[{ value: "createdAt", label: "Created At" }, { value: "name", label: "Name" }]} />
+                    <SearchFilterBar
+                        searchPlaceholder="Search by name or ID"
+                        onSearchChange={setSearchQuery}
+                        filterOptions={[
+                            {
+                                value: "createdAt↑",
+                                label: "Created At ↑"
+                            },
+                            {
+                                value: "createdAt↓",
+                                label: "Created At ↓"
+                            }
+                        ]}
+                        onFilterChange={handleFilterChange}
+                    />
                     <div className="py-4 lg:block hidden">
-                        <PaginationControls
-                            currentPage={currentPage}
-                            totalPages={Math.ceil(stamps?.length ?? 0 / ITEMS_PER_PAGE)}
-                            onPageChange={setCurrentPage}
-                        />
+                        {shouldShowPagination && (
+                            <PaginationControls
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
                     </div>
                 </div>
                 <div className="pt-6 space-y-2 lg:hidden">
@@ -100,49 +130,34 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 <div className="lg:block hidden pt-6">
                     <div className="grid grid-cols-3 gap-6">
                         {currentStamps?.map((stamp) => (
-                            admin ? (
-                                <div
-                                    key={stamp.id}
-                                    onClick={() => setSelectedStamp(stamp)}
-                                    className={`block bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer`}
-                                >
-                                    <div className="flex flex-col justify-start items-start min-h-[100px] p-4 gap-y-2">
-                                        <div className="font-bold text-lg">{stamp.name}</div>
-                                        <div className="text-blue-400 max-w-48">
-                                            <p className="truncate">{stamp.description}</p>
-                                        </div>
-                                        <div className="text-sm text-gray-500">
-                                            Created at: {stamp.timestamp ? new Date(stamp.timestamp).toLocaleDateString() : "N/A"}
-                                        </div>
+                            <div
+                                key={stamp.id}
+                                onClick={() => setSelectedStamp(stamp)}
+                                className={`block bg-white rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer`}
+                            >
+                                <div className="flex flex-col justify-start items-start min-h-[100px] p-4 gap-y-2">
+                                    <div className="font-bold text-lg">{stamp.name}</div>
+                                    <div className="text-blue-400 max-w-48">
+                                        <p className="truncate">{stamp.description}</p>
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                        Created at: {stamp.timestamp ? new Date(stamp.timestamp).toLocaleDateString() : "N/A"}
                                     </div>
                                 </div>
-                            ) : (
-                                <div
-                                    key={stamp.id}
-                                    className={`block bg-white rounded-lg p-5`}
-                                >
-                                    <div className="flex flex-col justify-start items-start min-h-[100px] p-6 gap-y-2">
-                                        <div className="font-bold text-lg">{stamp.name}</div>
-                                        <div className="text-blue-400">
-                                            {stamp.description}
-                                        </div>
-                                        <div className="text-sm text-gray-500">
-                                            Created at: {stamp.timestamp ? new Date(stamp.timestamp).toLocaleDateString() : "N/A"}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
+                            </div>
                         ))}
                     </div>
                 </div>
             </div>
 
             <div className="py-4 lg:hidden">
-                <PaginationControls
-                    currentPage={currentPage}
-                    totalPages={Math.ceil(stamps?.length ?? 0 / ITEMS_PER_PAGE)}
-                    onPageChange={setCurrentPage}
-                />
+                {shouldShowPagination && (
+                    <PaginationControls
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
+                )}
             </div>
 
             <StampDialog

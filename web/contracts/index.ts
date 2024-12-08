@@ -4,6 +4,7 @@ import { EventId, SuiObjectData, SuiObjectResponse } from "@mysten/sui/client";
 import { categorizeSuiObjects, CategorizedObjects } from "@/utils/assetsHelpers";
 import { NetworkVariables, UserProfile } from "@/types";
 import { StampItem } from "@/types/stamp";
+import { PassportItem } from "@/types/passport";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
   if (!isValidSuiAddress(address)) {
@@ -111,7 +112,6 @@ export const getStampsData = async (networkVariables: NetworkVariables) => {
       },
       cursor: nextCursor,
     });
-    console.log(stampsEvent);
     nextCursor = stampsEvent.nextCursor ?? null;
     hasNextPage = stampsEvent.hasNextPage;
     stamps = stamps.concat(stampsEvent.data.map((event) => {
@@ -126,4 +126,27 @@ export const getStampsData = async (networkVariables: NetworkVariables) => {
     }).filter((stamp) => stamp !== undefined) as StampItem[]);
   }
   return stamps;
+}
+
+export const getPassportData = async (networkVariables: NetworkVariables) => {
+  let hasNextPage = true;
+  let nextCursor: EventId | null = null;
+  let passport: PassportItem[] = [];
+  while (hasNextPage) {
+    const passportEvent = await suiClient.queryEvents({
+      query: {
+        MoveEventType: `${networkVariables.package}::sui_passport::MintPassportEvent`
+      },
+      cursor: nextCursor,
+    });
+    nextCursor = passportEvent.nextCursor ?? null;
+    hasNextPage = passportEvent.hasNextPage;
+    passport = passport.concat(passportEvent.data.map((event) => {
+      const passport = event.parsedJson as PassportItem;
+      passport.timestamp = event.timestampMs ? parseInt(event.timestampMs) : undefined;
+      passport.id = (event.parsedJson as unknown as { passport: string }).passport;
+      return passport;
+    }));
+  }
+  return passport;
 }

@@ -5,14 +5,23 @@ import AdminStamp from './@stamp/page'
 import AdminDashboard from './@dashboard/page'
 import { useNetworkVariables } from '@/config'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
+import { useUserProfile } from '@/contexts/user-profile-context'
+import { isValidSuiObjectId } from '@mysten/sui/utils'
+import { useRouter } from 'next/navigation'
 
 export default function AdminPage() {
   const networkVariables = useNetworkVariables()
-  const { refreshStamps, stamps } = usePassportsStamps()
-
+  const { refreshPassportStamps, stamps} = usePassportsStamps()
+  const { userProfile } = useUserProfile()
+  const router = useRouter()
+  
   useEffect(() => {
-    refreshStamps(networkVariables)
-  }, [networkVariables, refreshStamps])
+    if (!userProfile?.admincap || !isValidSuiObjectId(userProfile.admincap)) {
+      router.push('/')
+      return
+    }
+    refreshPassportStamps(networkVariables)
+  }, [networkVariables, refreshPassportStamps, userProfile])
 
   return (
     <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 space-y-24">

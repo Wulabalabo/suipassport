@@ -7,12 +7,18 @@ import { PassportFormDialog, passportFormSchema } from '@/components/passport/pa
 import { z } from 'zod'
 import { useNetworkVariables } from '@/config'
 import { mint_passport } from '@/contracts/passport'
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit'
 import { toast } from '@/hooks/use-toast'
+import { useUserProfile } from '@/contexts/user-profile-context'
+import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const { stamps } = usePassportsStamps()
+  const { refreshProfile } = useUserProfile()
+  const currentAccount = useCurrentAccount()
+
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
     const tx = await mint_passport(networkVariables, values.name, values.avatar, values.introduction, values.x ?? '', values.github ?? '', values.email ?? '');
     await signAndExecuteTransaction({ transaction: tx }, {
@@ -21,6 +27,9 @@ export default function Home() {
           title: "Passport minted successfully",
           description: "You can now view your passport in the ranking page",
         });
+        if (currentAccount?.address) {
+          refreshProfile(currentAccount?.address ?? '', networkVariables)
+        }
       }, onError: () => {
         toast({
           title: "Failed to mint passport",
@@ -49,7 +58,7 @@ export default function Home() {
             </div>
             <p className="text-base lg:text-lg">The Sui community flourishes because of passionate members like you. Through content, conferences, events, and hackathons, your contributions help elevate our Sui Community. Now it&apos;s time to showcase your impact, gain recognition, and unlock rewards for your active participation. Connect your wallet today and claim your first stamp!</p>
           </div>
-          <AdminStamp stamps={mockStamp} admin={false} />
+          <AdminStamp stamps={stamps} admin={false} />
           <RankingPage />
         </>
       </div>

@@ -139,16 +139,6 @@ export function PassportFormDialog({ onSubmit }: PassportFormDialogProps) {
                       <FormLabel>Avatar</FormLabel>
                       <FormControl>
                         <div className="flex flex-col items-center gap-4">
-                          {field.value && (
-                            <div className="relative h-24 w-24 rounded-full overflow-hidden">
-                              <Image
-                                src={field.value}
-                                alt="Avatar"
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          )}
                           <ImageUpload
                             value={field.value}
                             onChange={field.onChange}

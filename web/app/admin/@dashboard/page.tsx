@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StatsCard } from "@/components/ui/stats-card"
@@ -9,21 +9,8 @@ import { ColumnDef } from "@tanstack/react-table"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StampItem } from "@/types/stamp"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
-
-// 定义基础接口
-interface BaseItem {
-  id: string
-  name: string
-  status: string
-  createdAt: string
-}
-
-
-
-
-interface PassportItem extends BaseItem {
-  userId: string
-}
+import { PassportItem } from "@/types/passport"
+import { useRouter } from "next/navigation"
 
 const stampColumns: ColumnDef<StampItem>[] = [
   {
@@ -65,22 +52,32 @@ const passportColumns: ColumnDef<PassportItem>[] = [
   {
     accessorKey: "id",
     header: "ID",
+    cell: ({ row }) => {
+      return <span className="text-sm">{row.original.id.slice(0, 6)}...</span>
+    }
   },
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: "sender",
+    header: "Sender",
+    cell: ({ row }) => {
+      const router = useRouter()
+      return (
+        <div 
+          className="max-w-xs cursor-pointer underline text-blue-600" 
+          onClick={() => window.open(`/user/${row.original.sender}`, '_blank')}
+        >
+          {row.original.sender}
+        </div>
+      )
+    }
   },
   {
-    accessorKey: "userId",
-    header: "User ID",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Created At",
+    accessorKey: "timestamp",
+    header: () => <div className="text-right text-nowrap">Created At</div>,
+    cell: ({ row }) => {
+      const createdAt = new Date(row.original.timestamp ?? 0).toLocaleDateString()
+      return <div className="text-nowrap text-right">{createdAt}</div>
+    }
   },
 ]
 
@@ -93,11 +90,16 @@ type TableConfig<T> = {
   columns: ColumnDef<T, unknown>[]
 }
 
+// 简化排序类型
+type SortDirection = 'asc' | 'desc'
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabValue>('stamps')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
-  const { stamps} = usePassportsStamps()
+  // 简化排序状态
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const { stamps, passport } = usePassportsStamps()
 
   const ITEMS_PER_PAGE = 7
 
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
         }
       case 'passports':
         return {
-          data: [],
+          data: passport ?? [],
           columns: passportColumns as ColumnDef<StampItem | PassportItem, unknown>[]
         }
     }
@@ -119,11 +121,22 @@ export default function AdminDashboard() {
 
   const { data, columns } = getCurrentConfig()
 
-  // 处理搜索过滤
-  const filteredData = data.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.id.includes(searchQuery)
-  )
+  // 简化排序处理函数
+  const handleFilterChange = (value: string) => {
+    setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')
+  }
+
+  // 简化数据过滤和排序逻辑
+  const filteredData = data
+    .filter(item =>
+      'name' in item && item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      'id' in item && item.id.includes(searchQuery)
+    )
+    .sort((a, b) => {
+      const dateA = new Date('timestamp' in a && a.timestamp ? a.timestamp : 0).getTime()
+      const dateB = new Date('timestamp' in b && b.timestamp ? b.timestamp : 0).getTime()
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA
+    })
 
   // 处理分页
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE)
@@ -147,7 +160,7 @@ export default function AdminDashboard() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
           <StatsCard value={stamps?.length ?? 0} label="Stamps" />
-          <StatsCard value={0} label="Passports" />
+          <StatsCard value={passport?.length ?? 0} label="Passports" />
         </div>
       </div>
 
@@ -173,7 +186,17 @@ export default function AdminDashboard() {
             <SearchFilterBar
               searchPlaceholder="Search by name or ID"
               onSearchChange={setSearchQuery}
-              filterOptions={[{ value: "createdAt", label: "Created At" },{ value: "name", label: "Name" }]}
+              filterOptions={[
+                {
+                  value: "createdAt↑",
+                  label: "Created At ↑"
+                },
+                {
+                  value: "createdAt↓",
+                  label: "Created At ↓"
+                }
+              ]}
+              onFilterChange={handleFilterChange}
             />
             <div className="hidden lg:block lg:ml-auto">
               <PaginationControls
