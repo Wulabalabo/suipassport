@@ -39,7 +39,7 @@ export function StampGrid({ items }: StampGridProps) {
     return (
         <div className="space-y-6 px-6 py-4">
             <div className="flex flex-col lg:flex-row gap-3">
-                <Tabs
+                {/* <Tabs
                     value="all"
                     onValueChange={(value) => console.log('Tab:', value)}
                     className="flex-shrink-0"
@@ -49,14 +49,14 @@ export function StampGrid({ items }: StampGridProps) {
                         <TabsTrigger value="private">Private Stamps</TabsTrigger>
                         <TabsTrigger value="best">Best Stamps</TabsTrigger>
                     </TabsList>
-                </Tabs>
-                <SearchFilterBar
+                </Tabs> */}
+                {/* <SearchFilterBar
                     searchPlaceholder="Name / ID"
                     filterPlaceholder="Event Type"
                     filterOptions={filterOptions}
                     onSearchChange={(value) => console.log('Search:', value)}
                     onFilterChange={(value) => console.log('Filter:', value)}
-                />
+                /> */}
                 <PaginationControls
                     currentPage={currentPage}
                     totalPages={totalPages}

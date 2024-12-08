@@ -1,8 +1,6 @@
 'use client'
 
-import RankingPage from './@ranking/page'
 import AdminStamp from './admin/@stamp/page'
-import { mockStamp } from '../mock'
 import { PassportFormDialog, passportFormSchema } from '@/components/passport/passport-form-dialog'
 import { z } from 'zod'
 import { useNetworkVariables } from '@/config'
@@ -11,11 +9,13 @@ import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-ki
 import { toast } from '@/hooks/use-toast'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
+import AdminDashboard from './admin/@dashboard/page'
+import { useEffect } from 'react'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
-  const { stamps } = usePassportsStamps()
+  const { stamps,refreshPassportStamps } = usePassportsStamps()
   const { refreshProfile } = useUserProfile()
   const currentAccount = useCurrentAccount()
 
@@ -39,6 +39,11 @@ export default function Home() {
       }
     });
   }
+
+  useEffect(() => {
+    refreshPassportStamps(networkVariables)
+  }, [networkVariables, refreshPassportStamps])
+
   return (
     <div className="">
       <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 lg:space-y-24">
@@ -59,7 +64,7 @@ export default function Home() {
             <p className="text-base lg:text-lg">The Sui community flourishes because of passionate members like you. Through content, conferences, events, and hackathons, your contributions help elevate our Sui Community. Now it&apos;s time to showcase your impact, gain recognition, and unlock rewards for your active participation. Connect your wallet today and claim your first stamp!</p>
           </div>
           <AdminStamp stamps={stamps} admin={false} />
-          <RankingPage />
+          <AdminDashboard/>
         </>
       </div>
     </div>

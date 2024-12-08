@@ -26,8 +26,8 @@ export default function RootLayout({
         <Providers>
           <MainNav />
           {children}
-          <footer className="fixed bottom-0 w-full bg-white hidden lg:block">
-            <div className="px-24 py-10 flex justify-end items-center">
+          <footer className="w-full bg-white">
+            <div className="px-6 md:px-12 lg:px-24 py-6 lg:py-10 flex justify-center lg:justify-end items-center">
               <p className="text-gray-500 text-sm font-medium leading-loose tracking-tight lg:text-base text-center">
                 @2024 Sui Passport
               </p>
