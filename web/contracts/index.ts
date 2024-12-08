@@ -98,13 +98,11 @@ export const checkUserState = async (
         profile = data.content.fields as UserProfile;
         profile.current_user = address;
       }
-
       if (contentType === `${networkVariables.package}::stamp::AdminCap`) {
-        const adminCap = data as unknown as { objectId: string };
-        profile.admincap = adminCap.objectId;
-      } else {
-        profile.admincap = undefined;
-      }
+        const adminCap = data.content.fields as unknown as { id: { id: string } };
+        console.log(adminCap.id.id)
+        profile.admincap = adminCap.id.id;
+      } 
       if (contentType === `${networkVariables.package}::stamp::Stamp`) {
         const stamp = data.content.fields as unknown as StampItem;
         stamp.id = (data.content.fields as unknown as { id: { id: string } }).id.id;
