@@ -1,7 +1,7 @@
 'use client'
 
 import AdminStamp from './admin/@stamp/page'
-import { PassportFormDialog, passportFormSchema } from '@/components/passport/passport-form-dialog'
+import { PassportFormDialog } from '@/components/passport/passport-form-dialog'
 import { z } from 'zod'
 import { useNetworkVariables } from '@/config'
 import { mint_passport } from '@/contracts/passport'
@@ -11,6 +11,7 @@ import { useUserProfile } from '@/contexts/user-profile-context'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 import AdminDashboard from './admin/@dashboard/page'
 import { useEffect } from 'react'
+import { passportFormSchema } from '@/components/passport/passport-form'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
