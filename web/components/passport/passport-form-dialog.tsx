@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
-import Image from "next/image";
 import { RainbowButton } from "../ui/rainbow-button";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useNetworkVariables } from "@/config";
@@ -31,6 +31,8 @@ import { useRouter } from "next/navigation";
 import { isValidSuiAddress, isValidSuiObjectId } from "@mysten/sui/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/contexts/user-profile-context";
+import { X } from "lucide-react";
+
 export const passportFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   avatar: z.string().min(1, "Please upload an avatar"),
@@ -118,13 +120,20 @@ export function PassportFormDialog({ onSubmit }: PassportFormDialogProps) {
   return (
     <>
       {!hasPassport ? (
-        <Dialog open={open} onOpenChange={handleOpen}>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <RainbowButton>Get Your Passport</RainbowButton>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent hideCloseButton className="sm:max-w-[500px] h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create Your Passport</DialogTitle>
+              <div className="flex justify-between items-center">
+                <DialogTitle>Create Your Passport</DialogTitle>
+                <DialogClose className="">
+                  <Button variant="ghost" size={"icon"}>
+                    <X className="font-bold" />
+                  </Button>
+                </DialogClose>
+              </div>
             </DialogHeader>
             <Form {...form}>
               <form
