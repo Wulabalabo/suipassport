@@ -1,167 +1,52 @@
-import { isValidSuiAddress } from "@mysten/sui/utils";
-import { suiClient } from "@/config";
-import { EventId, SuiObjectData, SuiObjectResponse } from "@mysten/sui/client";
-import { categorizeSuiObjects, CategorizedObjects } from "@/utils/assetsHelpers";
-import { NetworkVariables, UserProfile } from "@/types";
-import { StampItem } from "@/types/stamp";
-import { PassportItem } from "@/types/passport";
 
-export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
-  if (!isValidSuiAddress(address)) {
-    throw new Error("Invalid Sui address");
-  }
+import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
+import { createNetworkConfig } from "@mysten/dapp-kit";
+import { Transaction } from "@mysten/sui/transactions";
 
-  let hasNextPage = true;
-  let nextCursor: string | null = null;
-  let allObjects: SuiObjectResponse[] = [];
+export type NetworkVariables = ReturnType<typeof useNetworkVariables>;
 
-  while (hasNextPage) {
-    const response = await suiClient.getOwnedObjects({
-      owner: address,
-      options: {
-        showContent: true,
-      },
-      cursor: nextCursor,
-    });
+export function createBetterTxFactory<T extends unknown[]>(
+    fn: (tx: Transaction, networkVariables: NetworkVariables, ...args: T) => void
+) {
+    return (networkVariables: NetworkVariables, ...args: T) => {
+        const tx = new Transaction();
+        fn(tx, networkVariables, ...args);
+        return tx;
+    };
+}
 
-    allObjects = allObjects.concat(response.data);
-    hasNextPage = response.hasNextPage;
-    nextCursor = response.nextCursor ?? null;
-  }
 
-  return categorizeSuiObjects(allObjects);
-};
 
-export const checkUserState = async (
-  address: string,
-  networkVariables: NetworkVariables
-): Promise<UserProfile | null> => {
-  let profile: UserProfile = {
-    avatar: "",
-    collections: {
-      fields: {
-        id: {
-          id: ""
+type Network = "mainnet" | "testnet"
+
+const network = (process.env.NEXT_PUBLIC_NETWORK as Network) || "testnet";
+
+const { networkConfig, useNetworkVariable, useNetworkVariables } = createNetworkConfig({
+    testnet: {
+        url: getFullnodeUrl("testnet"),
+        variables: {
+            package: "0x9239f9d1f27b49e6d2f3ef1c039ac8c18d83f7ecb99182f89ed95a254314bc9c",
+            suiPassportRecord: "0x394531382ea559d7b11453f32354ab73c5308fcd2ea14a374d30ad0bdd6993c3",
+            stampDisplay: "0xd8576d7d17322f22ff015c5ad4a7e9a3e7351305fd5a7b360e0bfea62f03a657",
+            passportDisplay: "0x23724bb7fe4bf71fced3e2fc5cce8db568375d51e3099c9674d37112a49eb7bf",
+            stampOnlineEventRecord: "0xfe6c115a0b686b96c651940d6cbb5f9506cfac9fc3f6410eb2b3a2fd2d8f43f6",
+            stampOfflineEventRecord: "0xaf13b32c5c8d8772f3f54b453bcad1f98babf81ad6cac8f635ecb268d6f81aae",
         },
-        size: 0
-      }
     },
-    email: "",
-    exhibit: [],
-    github: "",
-    current_user: address,
-    admincap: undefined,
-    id: {
-      id: ""
-    },
-    introduction: "",
-    last_time: 0,
-    name: "",
-    points: 0,
-    x: ""
-  }
-  let hasNextPage = true;
-  let nextCursor: string | null = null;
-  let stamps: StampItem[] = [];
-  // Get owned objects filtered by AdminCap and SuiPassport types
-  while (hasNextPage) {
-    const objects = await suiClient.getOwnedObjects({
-      owner: address,
-      options: {
-        showContent: true
-      },
-      filter: {
-        MatchAny: [
-          {
-            StructType: `${networkVariables.package}::stamp::AdminCap`
-          },
-          {
-            StructType: `${networkVariables.package}::sui_passport::SuiPassport`
-          },
-          {
-            StructType: `${networkVariables.package}::stamp::Stamp`
-          }
-        ]
-      },
-      cursor: nextCursor,
-    });
-    nextCursor = objects.nextCursor ?? null;
-    hasNextPage = objects.hasNextPage;
-    // Process each object to find passport and admin status
-    objects.data.forEach((obj) => {
-      const data = obj.data as unknown as SuiObjectData;
-      if (data.content?.dataType !== "moveObject") {
-        return;
-      }
-      const contentType = data.content?.type;
-      if (contentType === `${networkVariables.package}::sui_passport::SuiPassport`) {
-        profile = data.content.fields as UserProfile;
-        profile.current_user = address;
-      }
-      if (contentType === `${networkVariables.package}::stamp::AdminCap`) {
-        const adminCap = data.content.fields as unknown as { id: { id: string } };
-        console.log(adminCap.id.id)
-        profile.admincap = adminCap.id.id;
-      } 
-      if (contentType === `${networkVariables.package}::stamp::Stamp`) {
-        const stamp = data.content.fields as unknown as StampItem;
-        stamp.id = (data.content.fields as unknown as { id: { id: string } }).id.id;
-        stamp.imageUrl = (data.content.fields as unknown as { image_url: string }).image_url;
-        stamps.push(stamp);
-      }
-    });
-  }
-  profile.stamps = stamps;
+    mainnet: {
+        url: getFullnodeUrl("mainnet"),
+        variables: {
+            package: "0x3ddf8aa51ac76da95fa935e0d9ef31e28795a72228eb04fedac63bcf3716d20b",
+            suiPassportRecord: "0x1927af58c824221432a9534a0b8dd0aa843f365f90b9d059bc796e755b3be783",
+            stampDisplay: "0x2411283eb31a77a811d9cc22e471976c13a7de03bdae244da4f0013851a96682",
+            passportDisplay: "0x9e753b65c85340d6bcf313ab7f3f9851d165995e35a767f3ec07968444277a5d",
+            stampOnlineEventRecord: "0xe824719c4a84c52fc607f775a62f5f2a639c9f0db81d34f60504a68b603cfdf2",
+            stampOfflineEventRecord: "0xca4b603ed6f5661a71b87d62e372c1604f2e95513ce4cf0d0a3333d1709c0768",
+        },
+    }
+});
 
-  return profile;
-};
+// 创建全局 SuiClient 实例
+const suiClient = new SuiClient({ url: networkConfig[network].url });
 
-export const getStampsData = async (networkVariables: NetworkVariables) => {
-  let hasNextPage = true;
-  let nextCursor: EventId | null = null;
-  let stamps: StampItem[] = [];
-  while (hasNextPage) {
-    const stampsEvent = await suiClient.queryEvents({
-      query: {
-        MoveEventType: `${networkVariables.package}::stamp::SetOnlineEventStampEvent`
-      },
-      cursor: nextCursor,
-    });
-    nextCursor = stampsEvent.nextCursor ?? null;
-    hasNextPage = stampsEvent.hasNextPage;
-    stamps = stamps.concat(stampsEvent.data.map((event) => {
-      if (event.type === `${networkVariables.package}::stamp::SetOnlineEventStampEvent`) {
-        const stamp = event.parsedJson as StampItem;
-        stamp.timestamp = event.timestampMs ? parseInt(event.timestampMs) : undefined;
-        stamp.id = (event.parsedJson as unknown as { online_event: string }).online_event;
-        stamp.imageUrl = (event.parsedJson as unknown as { image_url: string }).image_url;
-        return stamp;
-      }
-      return undefined;
-    }).filter((stamp) => stamp !== undefined) as StampItem[]);
-  }
-  return stamps;
-}
-
-export const getPassportData = async (networkVariables: NetworkVariables) => {
-  let hasNextPage = true;
-  let nextCursor: EventId | null = null;
-  let passport: PassportItem[] = [];
-  while (hasNextPage) {
-    const passportEvent = await suiClient.queryEvents({
-      query: {
-        MoveEventType: `${networkVariables.package}::sui_passport::MintPassportEvent`
-      },
-      cursor: nextCursor,
-    });
-    nextCursor = passportEvent.nextCursor ?? null;
-    hasNextPage = passportEvent.hasNextPage;
-    passport = passport.concat(passportEvent.data.map((event) => {
-      const passport = event.parsedJson as PassportItem;
-      passport.timestamp = event.timestampMs ? parseInt(event.timestampMs) : undefined;
-      passport.id = (event.parsedJson as unknown as { passport: string }).passport;
-      return passport;
-    }));
-  }
-  return passport;
-}
+export { useNetworkVariable, useNetworkVariables, networkConfig, network, suiClient };

@@ -1,7 +1,7 @@
 'use client'
 
 import { StampItem } from "@/types/stamp"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useState } from "react"
 import Image from "next/image"
@@ -57,25 +57,25 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="h-[90vh] overflow-y-auto lg:h-auto lg:max-h-[90vh] lg:p-6 lg:max-w-screen-md"
+                className="overflow-y-auto lg:p-6 lg:max-w-screen-md w-11/12"
                 hideCloseButton={true}
+                aria-description="Stamp Dialog"
+                aria-describedby={undefined}
             >
-                <DialogHeader className="flex flex-row justify-between items-center">
+                <DialogHeader className="flex flex-row justify-between">
                     <DialogTitle className="flex justify-between items-center text-3xl font-bold">
                         {stamp?.name}
                     </DialogTitle>
-                    <DialogDescription>
-                        <X
-                            className="w-6 h-6 font-bold cursor-pointer hover:opacity-70"
-                            onClick={() => onOpenChange(false)}
-                        />
-                    </DialogDescription>
+                    <X
+                        className="w-6 h-6 cursor-pointer hover:opacity-70"
+                        onClick={() => onOpenChange(false)}
+                    />
                 </DialogHeader>
 
                 <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:gap-x-12 lg:py-9">
                     {/* Image Container */}
                     <div className="w-full lg:w-1/2 flex flex-col">
-                        <div className="w-full min-w-40 max-h-40 aspect-square bg-gray-100 rounded-lg flex items-center justify-center relative overflow-hidden">
+                        <div className="w-40 h-40 aspect-square rounded-full bg-gray-100 flex items-center justify-center relative overflow-hidden self-center">
                             {isImageLoading && (
                                 <Skeleton className="absolute inset-0" />
                             )}
@@ -84,7 +84,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                                 alt={stamp?.name ?? ''}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                className="rounded-lg object-cover transition-opacity duration-300"
+                                className="object-cover transition-opacity duration-300 rounded-full"
                                 style={{ opacity: isImageLoading ? 0 : 1, objectFit: 'contain' }}
                                 onLoad={() => setIsImageLoading(false)}
                             />
@@ -94,7 +94,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
 
 
                     {/* Details */}
-                    <div className="space-y-4 flex flex-col">
+                    <div className="lg:w-1/2 space-y-4 flex flex-col">
                         <DetailItem
                             label="Description"
                             value={stamp?.description}

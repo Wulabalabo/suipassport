@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useCallback, useMemo, useState } from 'react';
-import { NetworkVariables } from '@/types';
-import { getPassportData, getStampsData } from '@/contracts';
+import { NetworkVariables } from '@/contracts';
+import { getPassportData, getStampsData } from '@/contracts/query';
 import { StampItem } from '@/types/stamp';
 import { PassportItem } from '@/types/passport';
 

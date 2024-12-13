@@ -103,7 +103,6 @@ export function ProfileCard({
                             introduction: userProfile?.introduction,
                             x: userProfile?.x,
                             github: userProfile?.github,
-                            email: userProfile?.email,
                         }}
                     />
                 </DialogContent>

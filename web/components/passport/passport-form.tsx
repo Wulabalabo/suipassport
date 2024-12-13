@@ -22,7 +22,6 @@ export const passportFormSchema = z.object({
   introduction: z.string().min(10, "Introduction must be at least 10 characters"),
   x: z.string().optional(),
   github: z.string().optional(),
-  email: z.string().email("Invalid email address"),
 });
 
 export type PassportFormValues = z.infer<typeof passportFormSchema>;
@@ -48,7 +47,6 @@ export function PassportForm({
       introduction: "",
       x: "",
       github: "",
-      email: "",
     },
   });
 
@@ -60,7 +58,6 @@ export function PassportForm({
           name="avatar"
           render={({ field }) => (
             <FormItem className="flex flex-col items-center justify-center space-y-4">
-              <FormLabel>Avatar</FormLabel>
               <FormControl>
                 <div className="flex flex-col items-center gap-4">
                   <ImageUpload
@@ -137,24 +134,6 @@ export function PassportForm({
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <Button

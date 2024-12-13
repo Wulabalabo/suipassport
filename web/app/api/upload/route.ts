@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
-// 使用 Web Crypto API 生成随机 UUID
+// use Web Crypto API to generate random UUID
 function generateUUID() {
   return crypto.randomUUID();
 }
 
-// 添加文件大小限制和允许的文件类型
+// add file size limit and allowed file types
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = new Set([
   'image/jpeg',
@@ -32,53 +32,54 @@ export async function POST(request: Request) {
     
     if (!file) {
       return NextResponse.json(
-        { error: '请提供文件' },
+        { error: 'please provide file' },
         { status: 400 }
       );
     }
 
-    // 验证文件类型
+    // validate file type
     if (!ALLOWED_FILE_TYPES.has(file.type)) {
       return NextResponse.json(
-        { error: '不支持的文件类型' },
+        { error: 'unsupported file type' },
         { status: 400 }
       );
     }
 
-    // 验证文件大小
+    // validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: '文件大小超过限制' },
+        { error: 'file size exceeds the limit' },
         { status: 400 }
       );
     }
 
-    // 生成更安全的文件名
+    // generate more secure file name
     const fileExtension = file.name.split('.').pop();
     const randomName = generateUUID();
     const fileName = `${randomName}.${fileExtension}`;
     
-    // 读取文件内容
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // modify: directly use arrayBuffer() without converting to Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
 
-    // 上传到 R2
+    // upload to r2
     await S3.send(
       new PutObjectCommand({
         Bucket: process.env.CLOUDFLARE_R2_BUCKET!,
         Key: fileName,
-        Body: buffer,
+        Body: uint8Array,
         ContentType: file.type,
       })
     );
 
-    // 构建公共访问URL
+    // build public access url
     const fileUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${fileName}`;
 
     return NextResponse.json({ url: fileUrl });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Upload failed' },
+      { error: 'upload failed, please try again later' }, 
       { status: 500 }
     );
   }

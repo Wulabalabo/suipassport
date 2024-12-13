@@ -3,42 +3,41 @@
 import AdminStamp from './admin/@stamp/page'
 import { PassportFormDialog } from '@/components/passport/passport-form-dialog'
 import { z } from 'zod'
-import { useNetworkVariables } from '@/config'
+import { useNetworkVariables } from '@/contracts'
 import { mint_passport } from '@/contracts/passport'
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit'
-import { toast } from '@/hooks/use-toast'
+import { useCurrentAccount } from '@mysten/dapp-kit'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 import AdminDashboard from './admin/@dashboard/page'
 import { useEffect } from 'react'
 import { passportFormSchema } from '@/components/passport/passport-form'
+import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
+import { toast } from '@/hooks/use-toast'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const { stamps,refreshPassportStamps } = usePassportsStamps()
   const { refreshProfile } = useUserProfile()
   const currentAccount = useCurrentAccount()
+  const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
+    tx: mint_passport,
+    onSuccess: () => {
+      toast({
+        title: "Passport minted successfully",
+        description: "You can now view your passport in the profile page",
+      })
+    },
+    onSettled: () => {      
+      if (currentAccount?.address) {
+        refreshProfile(currentAccount?.address ?? '', networkVariables)
+        refreshPassportStamps(networkVariables)
+      }
+    }
+    
+  })
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
-    const tx = await mint_passport(networkVariables, values.name, values.avatar, values.introduction, values.x ?? '', values.github ?? '', values.email ?? '');
-    await signAndExecuteTransaction({ transaction: tx }, {
-      onSuccess: () => {
-        toast({
-          title: "Passport minted successfully",
-          description: "You can now view your passport in the ranking page",
-        });
-        if (currentAccount?.address) {
-          refreshProfile(currentAccount?.address ?? '', networkVariables)
-        }
-      }, onError: () => {
-        toast({
-          title: "Failed to mint passport",
-          description: "Please try again",
-          variant: "destructive"
-        });
-      }
-    });
+    await handleSignAndExecuteTransaction(values.name, values.avatar, values.introduction, values.x ?? '', values.github ?? '');
   }
 
   useEffect(() => {

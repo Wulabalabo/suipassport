@@ -2,16 +2,16 @@
 
 import { ProfileCard } from '@/components/user/profile-card'
 import { StampGrid } from '@/components/user/stamp-grid'
-import { useNetworkVariables } from '@/config'
+import { useNetworkVariables } from '@/contracts'
 import { useUserProfile } from '@/contexts/user-profile-context'
-import { mockStamp } from '@/mock'
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { useCurrentAccount } from '@mysten/dapp-kit'
 import { isValidSuiAddress } from '@mysten/sui/utils'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PassportFormValues } from '@/components/passport/passport-form'
 import { edit_passport } from '@/contracts/passport'
-import { useToast } from '@/hooks/use-toast'
+import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
+import { toast } from '@/hooks/use-toast'
 
 
 export default function UserPage() {
@@ -19,26 +19,26 @@ export default function UserPage() {
   const currentAccount = useCurrentAccount()
   const { userProfile, refreshProfile } = useUserProfile();
   const networkVariables = useNetworkVariables();
-  const { mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction()
-  const { toast } = useToast()
+  const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
+    tx: edit_passport,
+    onSuccess: () => {
+      toast({
+        title: "Edit passport success",
+        description: "Your passport has been updated",
+      })     
+    },
+    onSettled: () => {
+      refreshProfile(currentAccount?.address ?? '', networkVariables)
+    }
+  })
 
   const handleEdit = async (passportFormValues: PassportFormValues) => {
-    if (!userProfile?.id.id || !passportFormValues.x || !passportFormValues.github || !passportFormValues.email || !currentAccount?.address) {
+    if (!userProfile?.id.id || !passportFormValues.x || !passportFormValues.github || !currentAccount?.address) {
       return
     }
-    const tx = edit_passport(networkVariables, userProfile?.id.id, passportFormValues.name, passportFormValues.avatar, passportFormValues.introduction, passportFormValues.x, passportFormValues.github, passportFormValues.email)
-    await signAndExecuteTransaction({
-      transaction: tx,
-    },{onSuccess:async ()=> {
-        toast({
-          title: "Edit passport success",
-          description: "Your passport has been updated",
-        })
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        await refreshProfile(currentAccount.address, networkVariables)
-      }
-    })
+    await handleSignAndExecuteTransaction(userProfile?.id.id, passportFormValues.name, passportFormValues.avatar, passportFormValues.introduction, passportFormValues.x, passportFormValues.github)
   }
+
   useEffect(() => {
     if (!userProfile || userProfile?.last_time === 0) {
       router.push("/")

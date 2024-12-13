@@ -1,13 +1,5 @@
 import { StampItem } from "@/types/stamp"
 
-export type NetworkVariables = {
-    package: string,
-    suiPassportRecord: string,
-    stampDisplay: string,
-    passportDisplay: string,
-    stampOnlineEventRecord: string,
-    stampOfflineEventRecord: string,
-}
 
 export type UserProfile = {
     avatar: string

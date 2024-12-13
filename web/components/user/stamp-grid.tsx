@@ -6,8 +6,6 @@ import { StampDialog } from "./stamp-dialog"
 import { StampCard } from "./stamp-card"
 import { StampItem } from "@/types/stamp"
 import { PaginationControls } from "@/components/ui/pagination-controls"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 
 interface StampGridProps {
     items: StampItem[]
@@ -29,12 +27,6 @@ export function StampGrid({ items }: StampGridProps) {
     }, [items, currentPage, itemsPerPage])
 
     const totalPages = Math.ceil(items.length / itemsPerPage)
-
-    const filterOptions = [
-        { value: "all", label: "All Events" },
-        { value: "upcoming", label: "Upcoming Events" },
-        { value: "past", label: "Past Events" },
-    ]
 
     return (
         <div className="space-y-6 px-6 py-4">

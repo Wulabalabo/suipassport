@@ -2,13 +2,13 @@
 
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { CreateStampDialog } from "./components/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
 import { create_event_stamp } from "@/contracts/stamp"
-import { useNetworkVariables } from "@/config"
+import { useNetworkVariables } from "@/contracts"
 import { useUserProfile } from "@/contexts/user-profile-context"
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit"
 import { useToast } from "@/hooks/use-toast"
@@ -58,7 +58,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
 
     // Filter and sort stamps
     const filteredStamps = stamps
-        ?.filter(stamp => 
+        ?.filter(stamp =>
             stamp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             stamp.id.includes(searchQuery)
         )
@@ -159,7 +159,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                     />
                 )}
             </div>
-
             <StampDialog
                 stamp={selectedStamp}
                 open={!!selectedStamp}

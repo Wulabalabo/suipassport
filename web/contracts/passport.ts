@@ -10,11 +10,19 @@
     ctx: &mut TxContext
 )*/
 
+import { createBetterTxFactory, NetworkVariables } from "@/contracts";
 import { Transaction } from "@mysten/sui/transactions";
-import { NetworkVariables } from "@/types";
 
-export function mint_passport(networkVariables: NetworkVariables, name: string, avatar: string, introduction: string, x: string, github: string, email: string) {
-    const tx = new Transaction();
+export const mint_passport = createBetterTxFactory((
+    tx: Transaction, 
+    networkVariables: NetworkVariables, 
+    name: string, 
+    avatar: string, 
+    introduction: string, 
+    x: string, 
+    github: string, 
+    email: string = ""
+) => {
     tx.moveCall({
         package: networkVariables.package,
         module: "sui_passport",
@@ -30,8 +38,7 @@ export function mint_passport(networkVariables: NetworkVariables, name: string, 
             tx.object("0x6"),
         ],
     });
-    return tx;
-}
+});
 
 /*public fun edit_passport(
     passport: &mut SuiPassport,
@@ -45,8 +52,17 @@ export function mint_passport(networkVariables: NetworkVariables, name: string, 
     ctx: &TxContext
 )*/
 
-export function edit_passport(networkVariables: NetworkVariables, passport: string, name: string, avatar: string, introduction: string, x: string, github: string, email: string) {
-    const tx = new Transaction();
+export const edit_passport = createBetterTxFactory((
+    tx: Transaction,
+    networkVariables: NetworkVariables,
+    passport: string,
+    name: string,
+    avatar: string,
+    introduction: string,
+    x: string,
+    github: string,
+    email: string = ""
+) => {
     tx.moveCall({
         package: networkVariables.package,
         module: "sui_passport",
@@ -62,5 +78,4 @@ export function edit_passport(networkVariables: NetworkVariables, passport: stri
             tx.object("0x6"),
         ],
     });
-    return tx;
-}
+});

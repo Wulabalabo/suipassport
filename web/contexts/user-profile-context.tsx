@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext, useCallback, useMemo, useState } from 'react';
-import { UserProfile, NetworkVariables } from '@/types';
-import { checkUserState } from '@/contracts';
+import { UserProfile } from '@/types';
+import { checkUserState } from '@/contracts/query';
+import { NetworkVariables } from '@/contracts';
 
 interface UserProfileContextType {
   userProfile: UserProfile | null;

@@ -1,4 +1,4 @@
-export interface StampItem {
+export type StampItem = {
     id: string 
     name: string
     imageUrl?: string

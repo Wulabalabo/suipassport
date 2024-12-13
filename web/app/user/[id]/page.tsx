@@ -2,13 +2,12 @@
 
 import { ProfileCard } from '@/components/user/profile-card'
 import { StampGrid } from '@/components/user/stamp-grid'
-import { mockStamp } from '@/mock'
 import { useCurrentAccount } from '@mysten/dapp-kit'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
 import { isValidSuiAddress } from '@mysten/sui/utils'
 import { useUserProfile } from '@/contexts/user-profile-context'
-import { useNetworkVariables } from '@/config'
+import { useNetworkVariables } from '@/contracts'
 
 interface UserProfilePageProps {
   params: Promise<{

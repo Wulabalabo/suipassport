@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StatsCard } from "@/components/ui/stats-card"
@@ -10,7 +10,6 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StampItem } from "@/types/stamp"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { PassportItem } from "@/types/passport"
-import { useRouter } from "next/navigation"
 
 const stampColumns: ColumnDef<StampItem>[] = [
   {
@@ -60,7 +59,6 @@ const passportColumns: ColumnDef<PassportItem>[] = [
     accessorKey: "sender",
     header: "Sender",
     cell: ({ row }) => {
-      const router = useRouter()
       return (
         <div 
           className="max-w-xs cursor-pointer underline text-blue-600" 

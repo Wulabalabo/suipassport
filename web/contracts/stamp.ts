@@ -10,7 +10,7 @@
 )*/
 
 import { Transaction } from "@mysten/sui/transactions";
-import { NetworkVariables } from "@/types";
+import { createBetterTxFactory, NetworkVariables } from "@/contracts";
 /*public fun create_online_event(
     _admin: &AdminCap, 
     online_event_record: &mut OnlineEventRecord,
@@ -18,8 +18,15 @@ import { NetworkVariables } from "@/types";
     description: String,
     ctx: &mut TxContext
 )*/
-export const create_event_stamp = async (networkVariables: NetworkVariables, adminCap: string, event: string, description: string, image_url: string, points: number) => {
-    const tx = new Transaction();
+export const create_event_stamp = createBetterTxFactory((
+    tx: Transaction,
+    networkVariables: NetworkVariables,
+    adminCap: string,
+    event: string,
+    description: string,
+    image_url: string,
+    points: number
+) => {
     const [OnlineEvent] = tx.moveCall({
         package: `${networkVariables.package}`,
         module: "stamp",
@@ -52,9 +59,7 @@ export const create_event_stamp = async (networkVariables: NetworkVariables, adm
             OnlineEvent
         ]
     });
-    
-    return tx;
-}
+});
 
 /*public fun send_stamp(
     _admin: &AdminCap, 
@@ -63,8 +68,14 @@ export const create_event_stamp = async (networkVariables: NetworkVariables, adm
     recipient: address,
     ctx: &mut TxContext
 )*/
-export const send_stamp = async (networkVariables: NetworkVariables, adminCap: string, online_event: string, name: string, recipient: string) => {
-    const tx = new Transaction();
+export const send_stamp = createBetterTxFactory((
+    tx: Transaction,
+    networkVariables: NetworkVariables,
+    adminCap: string,
+    online_event: string,
+    name: string,
+    recipient: string
+) => {
     tx.moveCall({
         package: `${networkVariables.package}`,
         module: `stamp`,
@@ -76,6 +87,4 @@ export const send_stamp = async (networkVariables: NetworkVariables, adminCap: s
             tx.pure.address(recipient)
         ]
     });
-    return tx;
-}
-
+});

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { RainbowButton } from "../ui/rainbow-button";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { useNetworkVariables } from "@/config";
+import { useNetworkVariables } from "@/contracts";
 import { useRouter } from "next/navigation";
 import { isValidSuiAddress, isValidSuiObjectId } from "@mysten/sui/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -81,7 +81,7 @@ export function PassportFormDialog({ onSubmit }: { onSubmit: (values: PassportFo
           <DialogTrigger asChild>
             <RainbowButton>Get Your Passport</RainbowButton>
           </DialogTrigger>
-          <DialogContent hideCloseButton className="sm:max-w-[500px] h-[90vh] overflow-y-auto">
+          <DialogContent hideCloseButton className="sm:max-w-[500px] overflow-y-auto">
             <DialogHeader>
               <div className="flex justify-between items-center">
                 <DialogTitle>Create Your Passport</DialogTitle>

@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import AdminStamp from './@stamp/page'
 import AdminDashboard from './@dashboard/page'
-import { useNetworkVariables } from '@/config'
+import { useNetworkVariables } from '@/contracts'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { isValidSuiObjectId } from '@mysten/sui/utils'
@@ -21,7 +21,7 @@ export default function AdminPage() {
       return
     }
     refreshPassportStamps(networkVariables)
-  }, [networkVariables, refreshPassportStamps, userProfile])
+  }, [networkVariables, refreshPassportStamps, userProfile,router])
 
   return (
     <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 space-y-24">
