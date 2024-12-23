@@ -5,6 +5,15 @@ import { NetworkVariables } from '@/contracts';
 import { getPassportData, getStampsData } from '@/contracts/query';
 import { StampItem } from '@/types/stamp';
 import { PassportItem } from '@/types/passport';
+import { useClaimStamps } from '@/hooks/use-stamp-crud';
+
+
+type QueryClaimStamp = {
+  stamp_id: string;
+  claim_code_start_timestamp: number;
+  claim_code_end_timestamp: number;
+  has_claim_code: boolean;
+}
 
 
 
@@ -28,14 +37,26 @@ export function PassportsStampsProvider({ children}: PassportsStampsProviderProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [passport, setPassport] = useState<PassportItem[] | null>(null);
+  const { listClaimStamps } = useClaimStamps()
   const refreshPassportStamps = useCallback(async (networkVariables: NetworkVariables) => {
     try {
       setIsLoading(true);
       setError(null);
       const stamps = await getStampsData(networkVariables);
       const passport = await getPassportData(networkVariables);
+      const claimStamps = await listClaimStamps(networkVariables);
+      console.log(claimStamps)
+      claimStamps[0].results.forEach((claimStamp: QueryClaimStamp) => {
+        const stamp = stamps?.find(stamp => stamp.id === claimStamp.stamp_id);
+        if (stamp) {
+          stamp.hasClaimCode = claimStamp.has_claim_code;
+          stamp.claimCodeStartTimestamp = claimStamp.claim_code_start_timestamp.toString();
+          stamp.claimCodeEndTimestamp = claimStamp.claim_code_end_timestamp.toString();
+        }
+      });
       setStamps(stamps as StampItem[]);
       setPassport(passport as PassportItem[]);
+      console.log(stamps)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
     } finally {

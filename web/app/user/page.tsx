@@ -36,7 +36,15 @@ export default function UserPage() {
     if (!userProfile?.id.id || !passportFormValues.x || !passportFormValues.github || !currentAccount?.address) {
       return
     }
-    await handleSignAndExecuteTransaction(userProfile?.id.id, passportFormValues.name, passportFormValues.avatar, passportFormValues.introduction, passportFormValues.x, passportFormValues.github)
+    await handleSignAndExecuteTransaction({
+      passport: userProfile?.id.id,
+      name: passportFormValues.name,
+      avatar: passportFormValues.avatar,
+      introduction: passportFormValues.introduction,
+      x: passportFormValues.x,
+      github: passportFormValues.github,
+      email: "",
+    })
   }
 
   useEffect(() => {

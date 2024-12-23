@@ -21,7 +21,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useState } from "react"
-import Image from "next/image"
 import { createStampFormSchema, CreateStampFormValues } from "@/types/form"
 import { ImageUpload } from "@/components/ui/image-upload"
 
@@ -40,16 +39,18 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
       description: "",
       point: "",
       image: "",
+      claimCode: "",
+      startDate: undefined,
+      endDate: undefined
     },
   })
 
   const onSubmit = async (values: CreateStampFormValues) => {
-    console.log(values)
     setIsSubmitting(true);
     // Handle form submission
+    handleCreateStamp(values);
     setIsOpen(false)
     form.reset()
-    handleCreateStamp(values);
   }
 
 
@@ -71,7 +72,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Name*</FormLabel>
                     <FormControl>
                       <Input placeholder="Name" {...field} />
                     </FormControl>
@@ -85,7 +86,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Description*</FormLabel>
                     <FormControl>
                       <Textarea placeholder="Description" {...field} />
                     </FormControl>
@@ -99,19 +100,8 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                 name="image"
                 render={({ field }) => (
                   <FormItem className="flex flex-col items-center justify-center space-y-4">
-                    <FormLabel>Image</FormLabel>
                     <FormControl>
                       <div className="flex flex-col items-center gap-4">
-                        {field.value && (
-                          <div className="relative h-24 w-24 rounded-full overflow-hidden">
-                            <Image
-                              src={field.value}
-                              alt="Avatar"
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
                         <ImageUpload
                           value={field.value}
                           onChange={field.onChange}
@@ -128,9 +118,48 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                 name="point"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Point</FormLabel>
+                    <FormLabel>Point*</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="Number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="claimCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Claim Code (optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Claim Code" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date (optional)</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} value={field.value ? field.value.toString() : ''}/>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date (optional)</FormLabel>
+                    <FormControl>
+                        <Input type="date" {...field} value={field.value ? field.value.toString() : ''}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

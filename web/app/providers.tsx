@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
-import { networkConfig, network } from "../config"
+import { networkConfig, network } from "@/contracts"
 import "@mysten/dapp-kit/dist/index.css";
 import { ThemeProvider } from "next-themes";
 import { UserProfileProvider } from "@/contexts/user-profile-context";
@@ -17,7 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
           <PassportsStampsProvider>
             <UserProfileProvider>
-              <WalletProvider>
+              <WalletProvider autoConnect>
               {children}
             </WalletProvider>
             </UserProfileProvider>

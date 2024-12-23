@@ -3,7 +3,7 @@
 import { StampItem } from "@/types/stamp"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
@@ -11,16 +11,16 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 import { send_stamp } from "@/contracts/stamp"
-import { useNetworkVariables } from "@/config"
 import { useUserProfile } from "@/contexts/user-profile-context"
-import { useSignAndExecuteTransaction } from "@mysten/dapp-kit"
 import { useToast } from "@/hooks/use-toast"
+import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
 
 interface StampDialogProps {
     stamp: StampItem | null
     open: boolean
     admin?: boolean
     onOpenChange: (open: boolean) => void
+    onClaim: (claimCode: string) => void
 }
 
 
@@ -33,31 +33,51 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [recipient, setRecipient] = useState('')
-    const networkVariables = useNetworkVariables()
     const { userProfile } = useUserProfile()
-    const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
+    const [claimCode, setClaimCode] = useState('')
+    const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
+        tx: send_stamp,
+        onSuccess: () => {
+            toast({
+                title: 'Stamp sent successfully',
+                description: 'Stamp sent successfully',
+            })
+            onOpenChange(false)
+        },
+        onSettled: () => {
+            onOpenChange(false)
+        }
+    })
     const { toast } = useToast()
+
+    const disabledClaim = Boolean(
+        !stamp?.hasClaimCode ||
+        (stamp?.claimCodeStartTimestamp && Number(stamp.claimCodeStartTimestamp) > Date.now() / 1000) ||
+        (stamp?.claimCodeEndTimestamp && Number(stamp.claimCodeEndTimestamp) < Date.now() / 1000)
+    )
+
+    const handleClaimStamp = async () => {
+        if (!claimCode || !stamp?.id) return
+        onClaim(claimCode)
+    }
 
     const handleSendStamp = async () => {
         if (!recipient || !isValidSuiAddress(recipient) || !userProfile?.admincap || !stamp?.id) return
-        const tx = await send_stamp(networkVariables, userProfile?.admincap, stamp?.id, stamp?.name, recipient)
-        await signAndExecuteTransaction({ transaction: tx }, {
-            onSuccess: () => {
-                toast({
-                    title: 'Stamp sent successfully',
-                    description: 'Stamp sent successfully',
-                })
-                onOpenChange(false)
-            }
+        handleSignAndExecuteTransaction({
+            adminCap: userProfile?.admincap,
+            online_event: stamp?.id,
+            name: stamp?.name,
+            recipient
         })
     }
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="overflow-y-auto lg:p-6 lg:max-w-screen-md w-11/12"
+                className="overflow-y-auto lg:p-6 lg:max-w-screen-md w-11/12 focus:outline-none"
                 hideCloseButton={true}
                 aria-description="Stamp Dialog"
                 aria-describedby={undefined}
@@ -76,7 +96,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                     {/* Image Container */}
                     <div className="w-full lg:w-1/2 flex flex-col">
                         <div className="w-40 h-40 aspect-square rounded-full bg-gray-100 flex items-center justify-center relative overflow-hidden self-center">
-                            {isImageLoading && (
+                            {!stamp?.imageUrl && isImageLoading && (
                                 <Skeleton className="absolute inset-0" />
                             )}
                             <Image
@@ -86,7 +106,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover transition-opacity duration-300 rounded-full"
                                 style={{ opacity: isImageLoading ? 0 : 1, objectFit: 'contain' }}
-                                onLoad={() => setIsImageLoading(false)}
+                                onLoadingComplete={() => setIsImageLoading(false)}
                             />
 
                         </div>
@@ -105,6 +125,33 @@ export function StampDialog({ stamp, open, admin, onOpenChange }: StampDialogPro
                         />
                     </div>
                 </div>
+                {stamp?.hasClaimCode && (
+                    <div className="flex flex-col gap-4 gap-y-6 pt-6">
+                        <div className="flex items-center gap-2">
+                            <p className="text-sm text-gray-500 flex-shrink-0">
+                                Claim Code
+                            </p>
+                            <Input placeholder="Claim Code" value={claimCode} onChange={(e) => setClaimCode(e.target.value)} />
+                        </div>
+                        {stamp.claimCodeStartTimestamp && (
+                            <p className="text-sm text-gray-500">
+                                Available from: {new Date(Number(stamp.claimCodeStartTimestamp)).toLocaleString()}
+                            </p>
+                        )}
+                        {stamp.claimCodeEndTimestamp && (
+                            <p className="text-sm text-gray-500">
+                                Available until: {new Date(Number(stamp.claimCodeEndTimestamp)).toLocaleString()}
+                            </p>
+                        )}
+                        <Button
+                            className="rounded-full"
+                            disabled={!disabledClaim || claimCode.length === 0}
+                            onClick={handleClaimStamp}
+                        >
+                            Claim Stamp
+                        </Button>
+                    </div>
+                )}
 
                 {admin && (
                     <div className="flex flex-col gap-4 gap-y-6 pt-6">

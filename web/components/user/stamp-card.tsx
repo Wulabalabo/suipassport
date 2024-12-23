@@ -16,10 +16,7 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
 
 
     return (
-        <Card 
-            className="cursor-pointer hover:shadow-md transition-all duration-300 hover:-translate-y-1 rounded lg:rounded-2xl bg-gray-100"
-            onClick={onClick}
-        >
+        <Card className="lg:rounded-2xl bg-gray-100" onClick={onClick}>
             <CardContent className="p-3 lg:p-6">
                 <div className="aspect-square rounded-lg relative overflow-hidden mb-2">
                     {stamp.imageUrl && !imageError ? (
@@ -34,7 +31,6 @@ export function StampCard({ stamp, onClick }: StampCardProps) {
                                 priority
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="rounded-lg object-fill transition-opacity duration-300"
-                                style={{ opacity: isImageLoading ? 0 : 1}}
                                 onLoad={() => setIsImageLoading(false)}
                                 onError={() => setImageError(true)}
                             />

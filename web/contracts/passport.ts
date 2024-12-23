@@ -10,34 +10,32 @@
     ctx: &mut TxContext
 )*/
 
-import { createBetterTxFactory, NetworkVariables } from "@/contracts";
-import { Transaction } from "@mysten/sui/transactions";
+import { createBetterTxFactory } from "@/contracts";
 
-export const mint_passport = createBetterTxFactory((
-    tx: Transaction, 
-    networkVariables: NetworkVariables, 
-    name: string, 
-    avatar: string, 
-    introduction: string, 
-    x: string, 
-    github: string, 
-    email: string = ""
-) => {
+export const mint_passport = createBetterTxFactory<{
+    name: string;
+    avatar: string;
+    introduction: string;
+    x: string;
+    github: string;
+    email: string;
+}>((tx, networkVariables, params) => {
     tx.moveCall({
         package: networkVariables.package,
         module: "sui_passport",
         function: "mint_passport",
         arguments: [
             tx.object(networkVariables.suiPassportRecord),
-            tx.pure.string(name),
-            tx.pure.string(avatar),
-            tx.pure.string(introduction),
-            tx.pure.string(x),
-            tx.pure.string(github),
-            tx.pure.string(email),
+            tx.pure.string(params.name),
+            tx.pure.string(params.avatar),
+            tx.pure.string(params.introduction),
+            tx.pure.string(params.x),
+            tx.pure.string(params.github),
+            tx.pure.string(params.email),
             tx.object("0x6"),
         ],
     });
+    return tx;
 });
 
 /*public fun edit_passport(
@@ -52,30 +50,29 @@ export const mint_passport = createBetterTxFactory((
     ctx: &TxContext
 )*/
 
-export const edit_passport = createBetterTxFactory((
-    tx: Transaction,
-    networkVariables: NetworkVariables,
-    passport: string,
-    name: string,
-    avatar: string,
-    introduction: string,
-    x: string,
-    github: string,
-    email: string = ""
-) => {
+export const edit_passport = createBetterTxFactory<{
+    passport: string;
+    name: string;
+    avatar: string;
+    introduction: string;
+    x: string;
+    github: string;
+    email: string;
+}>((tx, networkVariables, params) => {
     tx.moveCall({
         package: networkVariables.package,
         module: "sui_passport",
         function: "edit_passport",
         arguments: [
-            tx.object(passport),
-            tx.pure.option("string", name),
-            tx.pure.option("string", avatar),
-            tx.pure.option("string", introduction),
-            tx.pure.option("string", x),
-            tx.pure.option("string", github),
-            tx.pure.option("string", email),
+            tx.object(params.passport),
+            tx.pure.option("string", params.name),
+            tx.pure.option("string", params.avatar),
+            tx.pure.option("string", params.introduction),
+            tx.pure.option("string", params.x),
+            tx.pure.option("string", params.github),
+            tx.pure.option("string", params.email),
             tx.object("0x6"),
         ],
     });
+    return tx;
 });

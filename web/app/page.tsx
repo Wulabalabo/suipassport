@@ -27,8 +27,10 @@ export default function Home() {
         description: "You can now view your passport in the profile page",
       })
     },
-    onSettled: () => {      
+    onSettled: async () =>  {      
       if (currentAccount?.address) {
+        // Add a delay to allow time for blockchain data to propagate
+        await new Promise(resolve => setTimeout(resolve, 2000));
         refreshProfile(currentAccount?.address ?? '', networkVariables)
         refreshPassportStamps(networkVariables)
       }
@@ -37,7 +39,14 @@ export default function Home() {
   })
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
-    await handleSignAndExecuteTransaction(values.name, values.avatar, values.introduction, values.x ?? '', values.github ?? '');
+    await handleSignAndExecuteTransaction({
+      name: values.name,
+      avatar: values.avatar,
+      introduction: values.introduction,
+      x: values.x ?? '',
+      github: values.github ?? '',
+      email: ''
+    });
   }
 
   useEffect(() => {

@@ -14,6 +14,8 @@ export default function AdminPage() {
   const { refreshPassportStamps, stamps} = usePassportsStamps()
   const { userProfile } = useUserProfile()
   const router = useRouter()
+
+  
   
   useEffect(() => {
     if (!userProfile?.admincap || !isValidSuiObjectId(userProfile.admincap)) {

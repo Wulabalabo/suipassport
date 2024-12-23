@@ -14,7 +14,7 @@ import { LogOut, User, Wallet } from 'lucide-react'
 import { truncateAddress } from '@/lib/utils'
 import { usePathname, useRouter } from 'next/navigation'
 import { useUserProfile } from '@/contexts/user-profile-context'
-import { useNetworkVariables } from '@/config'
+import { useNetworkVariables } from '@/contracts'
 import { isValidSuiObjectId } from '@mysten/sui/utils'
 
 export function CustomConnectButton() {
@@ -93,7 +93,7 @@ export function CustomConnectButton() {
           <User className="mr-2 h-4 w-4" />
           {pathname === '/user' ? 'Home' : 'Profile'}
         </DropdownMenuItem>
-        {isValidSuiObjectId(userProfile?.admincap ?? '') && (
+        { userProfile?.admincap && isValidSuiObjectId(userProfile?.admincap) && (
           <DropdownMenuItem onClick={handleAdminCap}>
             <User className="mr-2 h-4 w-4" />
             Admin

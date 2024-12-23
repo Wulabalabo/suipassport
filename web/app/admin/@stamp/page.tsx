@@ -8,10 +8,12 @@ import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
 import { create_event_stamp } from "@/contracts/stamp"
-import { useNetworkVariables } from "@/contracts"
 import { useUserProfile } from "@/contexts/user-profile-context"
-import { useSignAndExecuteTransaction } from "@mysten/dapp-kit"
 import { useToast } from "@/hooks/use-toast"
+import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
+import { getEventFromDigest } from "@/contracts/query"
+import { ClaimStamp } from "@/lib/validations/claim-stamp"
+import { getDataFromEffects } from "@/lib/utils"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -21,36 +23,87 @@ interface AdminStampProps {
 export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
+    const [createStampValues, setCreateStampValues] = useState<CreateStampFormValues | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
-    const networkVariables = useNetworkVariables();
     const { userProfile } = useUserProfile();
-    const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
     const { toast } = useToast();
+    const { handleSignAndExecuteTransaction} = useBetterSignAndExecuteTransaction({
+        tx: create_event_stamp,
+        onSuccess: () => {
+            toast({
+                title: "Stamp created successfully",
+                description: "Stamp created successfully",
+            });
+        },
+        onError: (e) => {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: e.message,
+            });
+        },
+        onSettled: async (e) => {
+            if (e?.effects) {
+                onStampCreated(e.effects)
+            }
+        }
+    })
+
+    const handleStampClaim = async (claimCode: string) => {
+        const result = await fetch("/api/claim-stamps/verify", {
+            method: "POST",
+            body: JSON.stringify({
+                stamp_id: selectedStamp?.id,
+                claim_code: claimCode
+            })
+        })
+        const data = await result.json()
+        console.log(data)
+    }
+
+    const onStampCreated = async (effects: string) => {
+        const digest = getDataFromEffects(effects)
+        if (!digest) return
+        const stamp = await getEventFromDigest(digest)
+        const claimStamp: ClaimStamp = {
+            stamp_id: stamp.id,
+            claim_code: createStampValues?.claimCode ?? null,
+            claim_code_start_timestamp: createStampValues?.startDate ? new Date(createStampValues.startDate).getTime().toString() : null,
+            claim_code_end_timestamp: createStampValues?.endDate ? new Date(createStampValues.endDate).getTime().toString() : null
+        }
+        console.log(claimStamp)
+        const response = await fetch("/api/claim-stamps", {
+            method: "POST",
+            body: JSON.stringify(claimStamp)
+        })
+        const data = await response.json()
+        console.log(data)
+    }
+
     const handleCreateStamp = async (values: CreateStampFormValues) => {
         if (!userProfile?.admincap) return;
-        const tx = await create_event_stamp(
-            networkVariables,
-            userProfile.admincap,
-            values.name,
-            values.description,
-            values.image,
-            Number(values.point)
-        );
-        await signAndExecuteTransaction({ transaction: tx }, {
-            onSuccess: () => {
-                toast({
-                    title: "Stamp created successfully",
-                    description: "Stamp created successfully",
-                });
-            }, onError: (e) => {
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: e.message,
-                });
-            }
-        });
+        setCreateStampValues(values)
+        // const claimStamp: ClaimStamp = {
+        //     stamp_id: "0xc1fda8f2362935552eadeb3d038a8fb71feb117f27a7758bfe45aaca6fa24dc4",
+        //     claim_code: values?.claimCode ?? null,
+        //     claim_code_start_timestamp: values?.startDate ? new Date(values.startDate).getTime().toString() : null,
+        //     claim_code_end_timestamp: values?.endDate ? new Date(values.endDate).getTime().toString() : null
+        // }
+        // console.log("claimStamp", claimStamp)
+        // const response = await fetch("/api/claim-stamps/0xc1fda8f2362935552eadeb3d038a8fb71feb117f27a7758bfe45aaca6fa24dc4", {
+        //     method: "PUT",
+        //     body: JSON.stringify(claimStamp)
+        // })
+        // const data = await response.json()
+        // console.log(data)
+        handleSignAndExecuteTransaction({
+            adminCap: userProfile.admincap,
+            event: values.name,
+            description: values.description,
+            image_url: values.image,
+            points: Number(values.point)
+        })
     }
     const handleFilterChange = (value: string) => {
         setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')
@@ -121,9 +174,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                         <div
                             key={stamp.id}
                             onClick={() => setSelectedStamp(stamp)}
-                            className={`block bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer`}
+                            className={`flex justify-between items-center bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer $`}
                         >
                             <div className="font-bold text-lg">{stamp.name}</div>
+                            {stamp.hasClaimCode && <div className="text-blue-400">Claimable</div>}
                         </div>
                     ))}
                 </div>
@@ -133,10 +187,14 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                             <div
                                 key={stamp.id}
                                 onClick={() => setSelectedStamp(stamp)}
-                                className={`block bg-white rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer`}
+                                className={`block bg-white rounded-sm p-5 hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer`}
                             >
                                 <div className="flex flex-col justify-start items-start min-h-[100px] p-4 gap-y-2">
-                                    <div className="font-bold text-lg">{stamp.name}</div>
+                                    <div className="flex justify-between items-center w-full">
+                                        <div className="font-bold text-lg">{stamp.name}</div>
+                                        {stamp.hasClaimCode && <div className="animate-bounce text-blue-400">Claimable</div>}
+                                    </div>
+                                    
                                     <div className="text-blue-400 max-w-48">
                                         <p className="truncate">{stamp.description}</p>
                                     </div>
@@ -164,6 +222,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 open={!!selectedStamp}
                 admin={admin}
                 onOpenChange={(open) => !open && setSelectedStamp(null)}
+                onClaim={handleStampClaim}
             />
         </div>
     )

@@ -36,7 +36,7 @@ export const checkUserState = async (
     address: string,
     networkVariables: NetworkVariables
 ): Promise<UserProfile | null> => {
-    let profile: UserProfile = {
+    const profile: UserProfile = {
         avatar: "",
         collections: {
             fields: {
@@ -50,15 +50,15 @@ export const checkUserState = async (
         exhibit: [],
         github: "",
         current_user: address,
-        admincap: undefined,
         id: {
             id: ""
         },
         introduction: "",
         last_time: 0,
         name: "",
+        admincap: "",
         points: 0,
-        x: ""
+        x: "",
     }
     let hasNextPage = true;
     let nextCursor: string | null = null;
@@ -95,13 +95,25 @@ export const checkUserState = async (
             }
             const contentType = data.content?.type;
             if (contentType === `${networkVariables.package}::sui_passport::SuiPassport`) {
-                profile = data.content.fields as UserProfile;
-                profile.current_user = address;
+                const passport = data.content.fields as unknown as UserProfile;
+                profile.avatar = passport.avatar;
+                profile.collections = passport.collections;
+                profile.email = passport.email;
+                profile.exhibit = passport.exhibit;
+                profile.github = passport.github;
+                profile.id = passport.id;
+                profile.introduction = passport.introduction;
+                profile.last_time = passport.last_time;
+                profile.name = passport.name;
+                profile.points = passport.points;
+                profile.x = passport.x;
             }
             if (contentType === `${networkVariables.package}::stamp::AdminCap`) {
                 const adminCap = data.content.fields as unknown as { id: { id: string } };
-                console.log(adminCap.id.id)
-                profile.admincap = adminCap.id.id;
+                const adminCapId = adminCap?.id?.id;
+                if (adminCapId) {                    
+                    profile.admincap = adminCapId;
+                }
             }
             if (contentType === `${networkVariables.package}::stamp::Stamp`) {
                 const stamp = data.content.fields as unknown as StampItem;
@@ -123,17 +135,17 @@ export const getStampsData = async (networkVariables: NetworkVariables) => {
     while (hasNextPage) {
         const stampsEvent = await suiClient.queryEvents({
             query: {
-                MoveEventType: `${networkVariables.package}::stamp::SetOnlineEventStampEvent`
+                MoveEventType: `${networkVariables.package}::stamp::SetEventStamp`
             },
             cursor: nextCursor,
         });
         nextCursor = stampsEvent.nextCursor ?? null;
         hasNextPage = stampsEvent.hasNextPage;
         stamps = stamps.concat(stampsEvent.data.map((event) => {
-            if (event.type === `${networkVariables.package}::stamp::SetOnlineEventStampEvent`) {
+            if (event.type === `${networkVariables.package}::stamp::SetEventStamp`) {
                 const stamp = event.parsedJson as StampItem;
                 stamp.timestamp = event.timestampMs ? parseInt(event.timestampMs) : undefined;
-                stamp.id = (event.parsedJson as unknown as { online_event: string }).online_event;
+                stamp.id = (event.parsedJson as unknown as { event: string }).event;
                 stamp.imageUrl = (event.parsedJson as unknown as { image_url: string }).image_url;
                 return stamp;
             }
@@ -164,4 +176,18 @@ export const getPassportData = async (networkVariables: NetworkVariables) => {
         }));
     }
     return passport;
+}
+
+export const getEventFromDigest = async (digest: string) => {
+    const tx = await suiClient.getTransactionBlock({
+        digest: digest,
+        options: {
+            showEvents: true
+        }
+    })
+    const stamp = tx.events?.[0]?.parsedJson as StampItem;
+    stamp.timestamp = tx.events?.[0]?.timestampMs ? parseInt(tx.events?.[0]?.timestampMs) : undefined;
+    stamp.id = (tx.events?.[0]?.parsedJson as unknown as { event: string }).event;
+    stamp.imageUrl = (tx.events?.[0]?.parsedJson as unknown as { image_url: string }).image_url;
+    return stamp;
 }
