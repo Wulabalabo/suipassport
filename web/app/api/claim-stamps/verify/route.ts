@@ -1,5 +1,24 @@
 import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/db';
+import { bcs } from '@mysten/sui/bcs';
+import { keccak256 } from 'js-sha3';
+import { fromHex, toHex } from '@mysten/sui/utils';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+
+type Response = {
+    success: boolean;
+    valid: boolean;
+    signature?: Uint8Array;
+}
+
+export const config = {
+    api:{
+        responseLimit: false,
+        bodyParser:{
+            sizeLimit: '10mb'
+        }
+    }
+}
 
 export async function POST(request: Request) {
     try {
@@ -12,43 +31,30 @@ export async function POST(request: Request) {
             );
         }
 
-        const { stamp_id, claim_code } = body;
+        const { stamp_id, passport_id, last_time, claim_code } = body;
         const current_timestamp = Date.now(); // Get current Unix 
         const sql = `
-    SELECT 
-      claim_code,
-      claim_code_start_timestamp,
-      claim_code_end_timestamp,
-      (claim_code = ?) as code_matches,
-      (claim_code_start_timestamp IS NULL AND claim_code_end_timestamp IS NULL) as case1_no_timestamps,
-      (claim_code_start_timestamp IS NOT NULL AND claim_code_end_timestamp IS NULL AND claim_code_start_timestamp <= ?) as case2_only_start,
-      (claim_code_start_timestamp IS NULL AND claim_code_end_timestamp IS NOT NULL AND claim_code_end_timestamp >= ?) as case3_only_end,
-      (claim_code_start_timestamp IS NOT NULL AND claim_code_end_timestamp IS NOT NULL AND claim_code_start_timestamp <= ? AND claim_code_end_timestamp >= ?) as case4_both_timestamps,
-      CASE 
-        WHEN claim_code = ? AND (
-          (claim_code_start_timestamp IS NULL AND claim_code_end_timestamp IS NULL) OR
-          (claim_code_start_timestamp IS NOT NULL AND claim_code_end_timestamp IS NULL AND claim_code_start_timestamp <= ?) OR
-          (claim_code_start_timestamp IS NULL AND claim_code_end_timestamp IS NOT NULL AND claim_code_end_timestamp >= ?) OR
-          (claim_code_start_timestamp IS NOT NULL AND claim_code_end_timestamp IS NOT NULL AND claim_code_start_timestamp <= ? AND claim_code_end_timestamp >= ?)
-        )
-        THEN 1
-        ELSE 0
-      END as valid
-    FROM claim_stamps 
-    WHERE stamp_id = ?`;
+        SELECT 
+          CASE 
+            WHEN claim_code = ? AND (
+              (claim_code_start_timestamp IS NULL AND claim_code_end_timestamp IS NULL) OR
+              (claim_code_start_timestamp IS NOT NULL AND claim_code_end_timestamp IS NULL AND claim_code_start_timestamp <= ?) OR
+              (claim_code_start_timestamp IS NULL AND claim_code_end_timestamp IS NOT NULL AND claim_code_end_timestamp >= ?) OR
+              (claim_code_start_timestamp IS NOT NULL AND claim_code_end_timestamp IS NOT NULL AND claim_code_start_timestamp <= ? AND claim_code_end_timestamp >= ?)
+            )
+            THEN 1
+            ELSE 0
+          END as valid
+        FROM claim_stamps 
+        WHERE stamp_id = ?`;
 
         const result = await queryD1(sql, [
-            claim_code,        // 验证 claim_code 匹配
-            current_timestamp, // case2 的时间戳比较
-            current_timestamp, // case3 的时间戳比较
-            current_timestamp, // case4 的开始时间戳比较
-            current_timestamp, // case4 的结束时间戳比较
-            claim_code,        // CASE WHEN 中的 claim_code 匹配
-            current_timestamp, // CASE WHEN 中 case2 的时间戳比较
-            current_timestamp, // CASE WHEN 中 case3 的时间戳比较
-            current_timestamp, // CASE WHEN 中 case4 的开始时间戳比较
-            current_timestamp, // CASE WHEN 中 case4 的结束时间戳比较
-            stamp_id          // WHERE 条件
+            claim_code,        // 验证码匹配
+            current_timestamp, // 开始时间检查
+            current_timestamp, // 结束时间检查
+            current_timestamp, // 时间范围开始
+            current_timestamp, // 时间范围结束
+            stamp_id          // stamp_id 查询条件
         ]);
 
         if (!result.success) {
@@ -58,11 +64,18 @@ export async function POST(request: Request) {
             );
         }
 
-        return NextResponse.json({
+        const response: Response = {
             success: true,
             // 修改这里：result.data 的结构不同于预期
             valid: Array.isArray(result.data) && result.data[0]?.results?.[0]?.valid === 1
-        });
+        };
+
+        if (response.valid) {
+            // 更新用户信息
+            response.signature = await signMessage(passport_id, last_time);
+        }
+
+        return NextResponse.json(response);
     } catch (error) {
         console.error('Verification error:', error);
         return NextResponse.json(
@@ -72,5 +85,32 @@ export async function POST(request: Request) {
             },
             { status: 500 }
         );
+    }
+}
+
+const signMessage = async (passport_id: string, last_time: number) => {
+    try {
+        const claim_stamp_info = bcs.struct('ClaimStampInfo', {
+            passport: bcs.Address,
+            last_time: bcs.u64()
+        });
+
+        const claim_stamp_info_bytes = claim_stamp_info.serialize({
+            passport: passport_id, 
+            last_time
+        }).toBytes();
+        const hash_data = keccak256(claim_stamp_info_bytes);
+        const hash_bytes = fromHex(hash_data);
+
+        if (!process.env.CLAIM_PRIVATE_KEY) {
+            throw new Error('STAMP_SECRET_KEY is not set');
+        }
+        
+        const keypair = Ed25519Keypair.deriveKeypairFromSeed(process.env.CLAIM_PRIVATE_KEY);
+        const signature = await keypair.sign(hash_bytes);        
+        return signature;
+    } catch (error) {
+        console.error('Signing error:', error);
+        throw error;
     }
 }

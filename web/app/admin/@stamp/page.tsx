@@ -28,7 +28,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
     const { userProfile } = useUserProfile();
     const { toast } = useToast();
-    const { handleSignAndExecuteTransaction} = useBetterSignAndExecuteTransaction({
+    const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
         tx: create_event_stamp,
         onSuccess: () => {
             toast({
@@ -55,7 +55,9 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             method: "POST",
             body: JSON.stringify({
                 stamp_id: selectedStamp?.id,
-                claim_code: claimCode
+                claim_code: claimCode,
+                passport_id: userProfile?.id.id,
+                last_time: userProfile?.last_time
             })
         })
         const data = await result.json()
@@ -84,19 +86,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const handleCreateStamp = async (values: CreateStampFormValues) => {
         if (!userProfile?.admincap) return;
         setCreateStampValues(values)
-        // const claimStamp: ClaimStamp = {
-        //     stamp_id: "0xc1fda8f2362935552eadeb3d038a8fb71feb117f27a7758bfe45aaca6fa24dc4",
-        //     claim_code: values?.claimCode ?? null,
-        //     claim_code_start_timestamp: values?.startDate ? new Date(values.startDate).getTime().toString() : null,
-        //     claim_code_end_timestamp: values?.endDate ? new Date(values.endDate).getTime().toString() : null
-        // }
-        // console.log("claimStamp", claimStamp)
-        // const response = await fetch("/api/claim-stamps/0xc1fda8f2362935552eadeb3d038a8fb71feb117f27a7758bfe45aaca6fa24dc4", {
-        //     method: "PUT",
-        //     body: JSON.stringify(claimStamp)
-        // })
-        // const data = await response.json()
-        // console.log(data)
         handleSignAndExecuteTransaction({
             adminCap: userProfile.admincap,
             event: values.name,

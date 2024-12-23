@@ -16,3 +16,14 @@ CREATE TABLE claim_stamps (
 CREATE INDEX idx_stamp_id ON claim_stamps(stamp_id);
 CREATE INDEX idx_claim_code ON claim_stamps(claim_code);
 CREATE INDEX idx_timestamps ON claim_stamps(claim_code_start_timestamp, claim_code_end_timestamp);
+
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    address TEXT NOT NULL UNIQUE,
+    stamps JSON,  -- Cloudflare D1 supports JSON type for storing arrays
+    points INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_address ON users(address);
