@@ -185,6 +185,7 @@ export const getEventFromDigest = async (digest: string) => {
             showEvents: true
         }
     })
+    console.log("tx.events", tx.events)
     const stamp = tx.events?.[0]?.parsedJson as StampItem;
     stamp.timestamp = tx.events?.[0]?.timestampMs ? parseInt(tx.events?.[0]?.timestampMs) : undefined;
     stamp.id = (tx.events?.[0]?.parsedJson as unknown as { event: string }).event;

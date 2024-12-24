@@ -3,7 +3,8 @@
 import { StampItem } from "@/types/stamp"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useEffect, useState } from "react"
+import { Loader2 } from "lucide-react"
+import { useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
@@ -20,7 +21,7 @@ interface StampDialogProps {
     open: boolean
     admin?: boolean
     onOpenChange: (open: boolean) => void
-    onClaim: (claimCode: string) => void
+    onClaim: (claimCode: string) => Promise<void>
 }
 
 
@@ -38,6 +39,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
     const [recipient, setRecipient] = useState('')
     const { userProfile } = useUserProfile()
     const [claimCode, setClaimCode] = useState('')
+    const [isClaiming, setIsClaiming] = useState(false)
     const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
         tx: send_stamp,
         onSuccess: () => {
@@ -61,7 +63,10 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
-        onClaim(claimCode)
+        setIsClaiming(true)
+        await onClaim(claimCode)
+        setIsClaiming(false)
+        onOpenChange(false)
     }
 
     const handleSendStamp = async () => {
@@ -148,7 +153,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
                             disabled={!disabledClaim || claimCode.length === 0}
                             onClick={handleClaimStamp}
                         >
-                            Claim Stamp
+                            {isClaiming ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Claim Stamp'}
                         </Button>
                     </div>
                 )}

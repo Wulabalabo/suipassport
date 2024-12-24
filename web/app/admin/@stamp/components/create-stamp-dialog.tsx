@@ -30,7 +30,6 @@ interface CreateStampDialogProps {
 
 export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<CreateStampFormValues>({
     resolver: zodResolver(createStampFormSchema),
@@ -46,7 +45,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
   })
 
   const onSubmit = async (values: CreateStampFormValues) => {
-    setIsSubmitting(true);
+    
     // Handle form submission
     handleCreateStamp(values);
     setIsOpen(false)
@@ -105,7 +104,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                         <ImageUpload
                           value={field.value}
                           onChange={field.onChange}
-                          disabled={isSubmitting}
+                          disabled={form.formState.isSubmitting}
                         />
                       </div>
                     </FormControl>

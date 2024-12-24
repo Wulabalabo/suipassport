@@ -4,12 +4,7 @@ import { bcs } from '@mysten/sui/bcs';
 import { keccak256 } from 'js-sha3';
 import { fromHex, toHex } from '@mysten/sui/utils';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-
-type Response = {
-    success: boolean;
-    valid: boolean;
-    signature?: Uint8Array;
-}
+import { ClaimStampResponse } from '@/types';
 
 export const config = {
     api:{
@@ -64,17 +59,18 @@ export async function POST(request: Request) {
             );
         }
 
-        const response: Response = {
+        const response: ClaimStampResponse = {
             success: true,
             // 修改这里：result.data 的结构不同于预期
-            valid: Array.isArray(result.data) && result.data[0]?.results?.[0]?.valid === 1
+            valid: Array.isArray(result.data) && result.data[0]?.results?.[0]?.valid === 1,
+            signature: undefined
         };
 
         if (response.valid) {
             // 更新用户信息
             response.signature = await signMessage(passport_id, last_time);
         }
-
+        console.log(response)
         return NextResponse.json(response);
     } catch (error) {
         console.error('Verification error:', error);
@@ -102,11 +98,10 @@ const signMessage = async (passport_id: string, last_time: number) => {
         const hash_data = keccak256(claim_stamp_info_bytes);
         const hash_bytes = fromHex(hash_data);
 
-        if (!process.env.CLAIM_PRIVATE_KEY) {
+        if (!process.env.ADDRESS_SECRET_KEY) {
             throw new Error('STAMP_SECRET_KEY is not set');
         }
-        
-        const keypair = Ed25519Keypair.deriveKeypairFromSeed(process.env.CLAIM_PRIVATE_KEY);
+        const keypair = Ed25519Keypair.fromSecretKey(process.env.ADDRESS_SECRET_KEY);
         const signature = await keypair.sign(hash_bytes);        
         return signature;
     } catch (error) {

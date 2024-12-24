@@ -17,3 +17,9 @@ export type UserProfile = {
     admincap: string,
     stamps?: StampItem[]
 }
+
+export type ClaimStampResponse = {
+    success: boolean;
+    valid: boolean;
+    signature?: Uint8Array;
+}

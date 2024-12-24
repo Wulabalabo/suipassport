@@ -2,7 +2,7 @@
 
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { CreateStampDialog } from "./components/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
@@ -14,6 +14,10 @@ import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
 import { getEventFromDigest } from "@/contracts/query"
 import { ClaimStamp } from "@/lib/validations/claim-stamp"
 import { getDataFromEffects } from "@/lib/utils"
+import { claim_stamp } from "@/contracts/claim"
+import { ClaimStampResponse } from "@/types"
+import { usePassportsStamps } from "@/contexts/passports-stamps-context"
+import { useNetworkVariables } from "@/contracts"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -23,12 +27,15 @@ interface AdminStampProps {
 export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
-    const [createStampValues, setCreateStampValues] = useState<CreateStampFormValues | null>(null)
+    const createStampValuesRef = useRef<CreateStampFormValues | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
     const { userProfile } = useUserProfile();
+    const { refreshPassportStamps } = usePassportsStamps()
+    const { refreshProfile } = useUserProfile()
     const { toast } = useToast();
-    const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
+    const networkVariables = useNetworkVariables()
+    const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
         tx: create_event_stamp,
         onSuccess: () => {
             toast({
@@ -43,10 +50,33 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 description: e.message,
             });
         },
+        onSettled: (e) => {
+            if (e?.effects) {
+                onStampCreated(e.effects, createStampValuesRef.current || undefined)
+                refreshPassportStamps(networkVariables)
+            }
+        }
+    })
+    const { handleSignAndExecuteTransaction: handleClaimStampTx } = useBetterSignAndExecuteTransaction({
+        tx: claim_stamp,
+        onSuccess: () => {
+            toast({
+                title: "Stamp claimed successfully",
+                description: "Stamp claimed successfully",
+            });
+        },
+        onError: (e) => {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: e.message,
+            });
+        },
         onSettled: async (e) => {
             if (e?.effects) {
-                onStampCreated(e.effects)
+                await onStampClaimed(e.effects)
             }
+            refreshProfile(userProfile?.id.id ?? "", networkVariables)
         }
     })
 
@@ -60,21 +90,39 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 last_time: userProfile?.last_time
             })
         })
-        const data = await result.json()
+        const data = await result.json() as ClaimStampResponse
         console.log(data)
+        if (!data.signature) return
+
+        // Convert signature object to array
+        const signatureArray = Object.values(data.signature)
+
+        handleClaimStampTx({
+            event: selectedStamp?.id ?? "",
+            passport: userProfile?.id.id ?? "",
+            name: selectedStamp?.name ?? "",
+            sig: signatureArray
+        })
     }
 
-    const onStampCreated = async (effects: string) => {
+    const onStampCreated = async (effects: string, values?: CreateStampFormValues) => {
         const digest = getDataFromEffects(effects)
         if (!digest) return
         const stamp = await getEventFromDigest(digest)
+        console.log(stamp)
+        // Check if createStampValues exists before using it
+        if (!values) {
+            console.error('createStampValues is undefined');
+            return;
+        }
+
         const claimStamp: ClaimStamp = {
             stamp_id: stamp.id,
-            claim_code: createStampValues?.claimCode ?? null,
-            claim_code_start_timestamp: createStampValues?.startDate ? new Date(createStampValues.startDate).getTime().toString() : null,
-            claim_code_end_timestamp: createStampValues?.endDate ? new Date(createStampValues.endDate).getTime().toString() : null
+            claim_code: values.claimCode ?? null,
+            claim_code_start_timestamp: values.startDate ? new Date(values.startDate).getTime().toString() : null,
+            claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null
         }
-        console.log(claimStamp)
+        console.log('Creating claim stamp:', claimStamp);
         const response = await fetch("/api/claim-stamps", {
             method: "POST",
             body: JSON.stringify(claimStamp)
@@ -83,10 +131,16 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         console.log(data)
     }
 
+    const onStampClaimed = async (effects: string) => {
+        const digest = getDataFromEffects(effects)
+        if (!digest) return
+        console.log(digest)
+    }
+
     const handleCreateStamp = async (values: CreateStampFormValues) => {
         if (!userProfile?.admincap) return;
-        setCreateStampValues(values)
-        handleSignAndExecuteTransaction({
+        createStampValuesRef.current = values
+        handleCreateStampTx({
             adminCap: userProfile.admincap,
             event: values.name,
             description: values.description,
@@ -183,7 +237,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                                         <div className="font-bold text-lg">{stamp.name}</div>
                                         {stamp.hasClaimCode && <div className="animate-bounce text-blue-400">Claimable</div>}
                                     </div>
-                                    
+
                                     <div className="text-blue-400 max-w-48">
                                         <p className="truncate">{stamp.description}</p>
                                     </div>

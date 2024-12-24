@@ -18,4 +18,4 @@ This is a Next.js Sui dApp project...
 
 ### OnlineEventRecord: `0xfe6c115a0b686b96c651940d6cbb5f9506cfac9fc3f6410eb2b3a2fd2d8f43f6`
 
-### Digest:`137kJibFbsR4P1wL1cJy18L3WDbRUpP9dbXqjoby4awQ`
+### Digest:`4dps9qtWCMsjMfkGeQsmWBy1KUaYe9DhwTEksfFhsP6x`
