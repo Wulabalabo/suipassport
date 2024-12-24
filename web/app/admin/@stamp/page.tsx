@@ -18,6 +18,7 @@ import { claim_stamp } from "@/contracts/claim"
 import { ClaimStampResponse } from "@/types"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { useNetworkVariables } from "@/contracts"
+import { useCurrentAccount } from "@mysten/dapp-kit"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -31,6 +32,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
     const { userProfile } = useUserProfile();
+    const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
     const { toast } = useToast();
@@ -76,7 +78,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             if (e?.effects) {
                 await onStampClaimed(e.effects)
             }
-            refreshProfile(userProfile?.id.id ?? "", networkVariables)
+            refreshProfile(currentAccount?.address ?? '', networkVariables)
         }
     })
 
@@ -91,8 +93,15 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             })
         })
         const data = await result.json() as ClaimStampResponse
-        console.log(data)
-        if (!data.signature) return
+        
+        if (!data.signature || !data.valid) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Invalid claim code",
+            });
+            return
+        }
 
         // Convert signature object to array
         const signatureArray = Object.values(data.signature)
