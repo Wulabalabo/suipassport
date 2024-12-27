@@ -2,6 +2,7 @@
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { createNetworkConfig } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
+import { SuiGraphQLClient } from "@mysten/sui/graphql";
 
 type NetworkVariables = ReturnType<typeof useNetworkVariables>;
 
@@ -57,6 +58,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } = createNetwork
 
 // 创建全局 SuiClient 实例
 const suiClient = new SuiClient({ url: networkConfig[network].url });
+const graphqlClient = new SuiGraphQLClient({ url: `https://sui-${network}.mystenlabs.com/graphql` });
 
-export { useNetworkVariable, useNetworkVariables, networkConfig, network, suiClient, createBetterTxFactory };
+export { useNetworkVariable, useNetworkVariables, networkConfig, network, suiClient, createBetterTxFactory, graphqlClient };
 export type { NetworkVariables };

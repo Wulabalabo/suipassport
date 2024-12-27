@@ -18,6 +18,7 @@ export type UserProfile = {
     admincap: string,
     stamps?: StampItem[],
     db_profile?:DbUser
+    collection_detail?: any[]
 }
 
 export type ClaimStampResponse = {

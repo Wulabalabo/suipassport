@@ -46,13 +46,18 @@ export default function RankingPage() {
     const fetchData = async () => {
       const users = await fetchUsers()
       if (users) {
-        setRankings(users.map((user, index) => {
+        const sortedUsers = users.sort((a, b) => b.points - a.points)
+        setRankings(sortedUsers.map((user, index) => {
           const stamps = JSON.parse(user.stamps as unknown as string) as stamp[]
+          let stampsCount = 0
+          stamps.forEach((stamp) => {
+            stampsCount += stamp.claim_count
+          })
           return {
             rank: index + 1,
             user: user.address,
             points: user.points,
-            stampsCount: stamps.length
+            stampsCount: stampsCount
           }
         }))
       }

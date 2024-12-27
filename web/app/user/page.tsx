@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import { PassportFormValues } from '@/components/passport/passport-form'
 import { edit_passport } from '@/contracts/passport'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
-
+import { useToast } from '@/hooks/use-toast'
 
 export default function UserPage() {
   const router = useRouter();
@@ -21,9 +21,10 @@ export default function UserPage() {
   const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
     tx: edit_passport
   })
+  const { toast } = useToast()
 
   const handleEdit = async (passportFormValues: PassportFormValues) => {
-    if (!userProfile?.id.id || !passportFormValues.x || !passportFormValues.github || !currentAccount?.address) {
+    if (!userProfile?.id.id || !currentAccount?.address) {
       return
     }
     await handleSignAndExecuteTransaction({
@@ -31,12 +32,17 @@ export default function UserPage() {
       name: passportFormValues.name,
       avatar: passportFormValues.avatar,
       introduction: passportFormValues.introduction,
-      x: passportFormValues.x,
-      github: passportFormValues.github,
+      x: passportFormValues.x ?? "",
+      github: passportFormValues.github ?? "",
       email: "",
     }).onSuccess(async () => {
       await refreshProfile(currentAccount?.address ?? '', networkVariables)
-    }).execute()
+      toast({
+        title: "Edit Success",
+        description: "Your passport has been updated",
+        variant: "default"
+      })
+    }).execute()  
   }
 
   useEffect(() => {

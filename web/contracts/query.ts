@@ -4,7 +4,8 @@ import { categorizeSuiObjects, CategorizedObjects } from "@/utils/assetsHelpers"
 import { UserProfile } from "@/types";
 import { StampItem } from "@/types/stamp";
 import { PassportItem } from "@/types/passport";
-import { NetworkVariables, suiClient } from "@/contracts";
+import { graphqlClient, NetworkVariables, suiClient } from "@/contracts";
+import { getCollectionDetail } from "./graphql";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
     if (!isValidSuiAddress(address)) {
@@ -124,7 +125,15 @@ export const checkUserState = async (
         });
     }
     profile.stamps = stamps;
-
+    //TODO: HasNextPage
+    const collectionDetail = await graphqlClient.query({
+        query: getCollectionDetail,
+        variables: {
+            address: profile.collections.fields.id.id,
+        }
+    })
+    const collection = collectionDetail.data?.owner?.dynamicFields?.nodes?.map((node) => node.name?.json) ?? []
+    profile.collection_detail = collection
     return profile;
 };
 
