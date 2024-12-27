@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation'
 import { PassportFormValues } from '@/components/passport/passport-form'
 import { edit_passport } from '@/contracts/passport'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
-import { toast } from '@/hooks/use-toast'
 
 
 export default function UserPage() {

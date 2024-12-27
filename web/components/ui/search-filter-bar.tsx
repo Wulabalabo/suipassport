@@ -11,6 +11,7 @@ interface SearchFilterBarProps {
   onSearchChange?: (value: string) => void
   onFilterChange?: (value: string) => void
   className?: string
+  filterDisabled?: boolean
 }
 
 export function SearchFilterBar({
@@ -20,6 +21,7 @@ export function SearchFilterBar({
   onSearchChange,
   onFilterChange,
   className = "",
+  filterDisabled = false
 }: SearchFilterBarProps) {
   return (
     <div className={`flex items-center justify-between gap-x-4 flex-shrink-0 ${className}`}>
@@ -31,8 +33,8 @@ export function SearchFilterBar({
         />
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       </div>
-      <div className="w-1/2">
-        <Select onValueChange={onFilterChange}>
+      {!filterDisabled && <div className="w-1/2">
+        <Select onValueChange={onFilterChange} disabled={filterDisabled}>
           <SelectTrigger>
             <SelectValue placeholder={filterPlaceholder} />
           </SelectTrigger>
@@ -43,8 +45,9 @@ export function SearchFilterBar({
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
-      </div>
+          </Select>
+        </div>
+      }
     </div>
   )
 } 

@@ -61,24 +61,24 @@ export const create_event_stamp = createBetterTxFactory<{
 
 /*public fun send_stamp(
     _admin: &AdminCap, 
-    online_event: &mut OnlineEvent,
+    event: &mut Event,
     name: String,
     recipient: address,
     ctx: &mut TxContext
 )*/
 export const send_stamp = createBetterTxFactory<{
     adminCap: string;
-    online_event: string;
+    event: string;
     name: string;
     recipient: string;
 }>((tx, networkVariables, params) => {
     tx.moveCall({
         package: `${networkVariables.package}`,
-        module: `stamp`,
+        module: `send`,
         function: `send_stamp`,
         arguments: [
             tx.object(params.adminCap),
-            tx.object(params.online_event),
+            tx.object(params.event),
             tx.pure.string(params.name),
             tx.pure.address(params.recipient)
         ]

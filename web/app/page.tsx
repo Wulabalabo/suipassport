@@ -8,12 +8,12 @@ import { mint_passport } from '@/contracts/passport'
 import { useCurrentAccount } from '@mysten/dapp-kit'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
-import AdminDashboard from './admin/@dashboard/page'
 import { useEffect } from 'react'
 import { passportFormSchema } from '@/components/passport/passport-form'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
 import { toast } from '@/hooks/use-toast'
 import { useUserCrud } from '@/hooks/use-user-crud'
+import RankingPage from './@ranking/page'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
@@ -24,7 +24,7 @@ export default function Home() {
     tx: mint_passport,
     delay: 2000
   })
-  const { createNewUser} = useUserCrud()
+  const { createNewUser,fetchUserByAddress} = useUserCrud()
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
     await handleSignAndExecuteTransaction({
@@ -35,20 +35,32 @@ export default function Home() {
       github: values.github ?? '',
       email: ''
     }).onSuccess(async () => {
+      await onStampCreated()
       toast({
         title: "Passport minted successfully",
         description: "You can now view your passport in the profile page",
       })
-      if (currentAccount?.address) {
-        await createNewUser({
-          address: currentAccount?.address,
-          stamps: [],
-          points: 0
-        })        
-        await refreshProfile(currentAccount?.address ?? '', networkVariables)
-        await refreshPassportStamps(networkVariables)
-      }
     }).execute()
+  }
+
+  const onStampCreated = async () => {
+    if(!currentAccount?.address){
+      toast({
+        title: "Error",
+        description: "You need to connect your wallet to create a passport",
+      })
+      return
+    }
+    const dbUser = await fetchUserByAddress(currentAccount?.address)
+    if(!dbUser?.data?.results[0]?.address){
+      await createNewUser({
+        address: currentAccount?.address,
+        stamps: [],
+        points: 0
+      })        
+    }
+    await refreshProfile(currentAccount?.address ?? '', networkVariables)
+    await refreshPassportStamps(networkVariables)
   }
 
   useEffect(() => {
@@ -75,7 +87,7 @@ export default function Home() {
             <p className="text-base lg:text-lg">The Sui community flourishes because of passionate members like you. Through content, conferences, events, and hackathons, your contributions help elevate our Sui Community. Now it&apos;s time to showcase your impact, gain recognition, and unlock rewards for your active participation. Connect your wallet today and claim your first stamp!</p>
           </div>
           <AdminStamp stamps={stamps} admin={false} />
-          <AdminDashboard/>
+          <RankingPage />
         </>
       </div>
     </div>

@@ -24,19 +24,19 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { fetchUserByAddress } = useUserCrud();
+  const { fetchUserByAddress, syncUserPoints } = useUserCrud();
 
   const refreshProfile = useCallback(async (address: string, networkVariables: NetworkVariables) => {
     try {
       setIsLoading(true);
       setError(null);
       const profile = await checkUserState(address, networkVariables);
+      await syncUserPoints(address, profile?.points ?? 0)
       const dbProfile = await fetchUserByAddress(address);
-      console.log(dbProfile)
       if(dbProfile?.success && profile){
         profile.db_profile = dbProfile.data?.results[0];
       }
-      console.log(profile);
+      console.log(profile)
       setUserProfile(profile);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));

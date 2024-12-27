@@ -7,7 +7,7 @@ import { CreateStampDialog } from "./components/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
-import { create_event_stamp } from "@/contracts/stamp"
+import { create_event_stamp, send_stamp } from "@/contracts/stamp"
 import { useUserProfile } from "@/contexts/user-profile-context"
 import { useToast } from "@/hooks/use-toast"
 import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
@@ -22,6 +22,7 @@ import { useCurrentAccount } from "@mysten/dapp-kit"
 import { useClaimStamps } from "@/hooks/use-stamp-crud"
 import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
+import { increaseClaimStampCount } from "@/lib/services/claim-stamps"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -39,7 +40,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const { refreshProfile } = useUserProfile()
     const { createClaimStamp } = useClaimStamps()
     const { toast } = useToast();
-    const { updateUserData } = useUserCrud()
+    const { updateUserData,fetchUserByAddress,createNewUser } = useUserCrud()
     const networkVariables = useNetworkVariables()
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
         tx: create_event_stamp
@@ -47,6 +48,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const { handleSignAndExecuteTransaction: handleClaimStampTx } = useBetterSignAndExecuteTransaction({
         tx: claim_stamp
     })
+    const { handleSignAndExecuteTransaction: handleSendStampTx } = useBetterSignAndExecuteTransaction({
+        tx: send_stamp
+    })
+
 
     const handleStampClaim = async (claimCode: string) => {
         if (!selectedStamp?.id || !userProfile?.db_profile) {
@@ -58,10 +63,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             return;
         }
         const stamps = userProfile?.db_profile?.stamps as stamp[]
-        const parsedStamps:stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
+        const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
         if (selectedStamp.userCountLimit && parsedStamps.some(stamp => stamp.claim_count >= selectedStamp.userCountLimit!)) {
             toast({
-                variant: "destructive", 
+                variant: "destructive",
                 title: "Error",
                 description: `You have already claimed this stamp ${selectedStamp.userCountLimit} times`,
             });
@@ -107,40 +112,8 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).execute()
     }
 
-    const onStampCreated = async (effects: string, values?: CreateStampFormValues) => {
-        const digest = getDataFromEffects(effects)
-        if (!digest) return
-        const stamp = await getEventFromDigest(digest)
-        console.log(stamp)
-        // Check if createStampValues exists before using it
-        if (!values) {
-            console.error('createStampValues is undefined');
-            return;
-        }
-
-        const claimStamp: ClaimStamp = {
-            stamp_id: stamp.id,
-            claim_code: values.claimCode && values.claimCode.length > 0 ? values.claimCode : null,
-            claim_code_start_timestamp: values.startDate ? new Date(values.startDate).getTime().toString() : null,
-            claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null,
-            total_count_limit: values.totalCountLimit ?? null,
-            user_count_limit: values.userCountLimit ?? null
-        }
-        console.log('Creating claim stamp:', claimStamp);
-        const data = await createClaimStamp(claimStamp)
-        console.log(data)
-    }
-
-    const onStampClaimed = async () => {
-        if (!userProfile?.current_user || !selectedStamp?.id) return
-        await updateUserData(userProfile?.current_user, selectedStamp?.id, {
-            stamp: { id: selectedStamp?.id, claim_count: 1 },
-            points: selectedStamp?.points
-        })
-    }
-
     const handleCreateStamp = async (values: CreateStampFormValues) => {
-        if(!userProfile?.db_profile){
+        if (!userProfile?.db_profile) {
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -173,10 +146,76 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             });
         }).execute()
     }
+    const handleSendStamp = async (recipient: string) => {
+        if (!userProfile?.admincap || !selectedStamp?.id) return
+        const dbUser = await fetchUserByAddress(recipient)
+        if(!dbUser?.data?.results[0]?.address){
+            await createNewUser({
+                address: recipient,
+                stamps: [],
+                points: 0
+            })
+        }
+        console.log(dbUser)
+
+        handleSendStampTx({
+            adminCap: userProfile?.admincap,
+            event: selectedStamp?.id,
+            name: selectedStamp?.name,
+            recipient: recipient
+        }).onSuccess(async () => {
+            toast({
+                title: 'Stamp sent successfully',
+                description: 'Stamp sent successfully',
+            })
+            await onStampSent()
+        }).execute()
+    }
+
+    const onStampCreated = async (effects: string, values?: CreateStampFormValues) => {
+        const digest = getDataFromEffects(effects)
+        if (!digest) return
+        const stamp = await getEventFromDigest(digest)
+        console.log(stamp)
+        // Check if createStampValues exists before using it
+        if (!values) {
+            console.error('createStampValues is undefined');
+            return;
+        }
+
+        const claimStamp: ClaimStamp = {
+            stamp_id: stamp.id,
+            claim_code: values.claimCode && values.claimCode.length > 0 ? values.claimCode : null,
+            claim_code_start_timestamp: values.startDate ? new Date(values.startDate).getTime().toString() : null,
+            claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null,
+            total_count_limit: values.totalCountLimit ?? null,
+            user_count_limit: values.userCountLimit ?? null
+        }
+        console.log('Creating claim stamp:', claimStamp);
+        const data = await createClaimStamp(claimStamp)
+        console.log(data)
+    }
+    const onStampClaimed = async () => {
+        if (!userProfile?.current_user || !selectedStamp?.id) return
+        await updateUserData(userProfile?.current_user, {
+            stamp: { id: selectedStamp?.id, claim_count: 1 },
+            points: selectedStamp?.points
+        })
+        await increaseClaimStampCount(selectedStamp?.id)
+    }
+    const onStampSent = async () => {
+        if (!selectedStamp?.id || !userProfile?.current_user) return
+        await increaseClaimStampCount(selectedStamp?.id)
+        await updateUserData(userProfile?.current_user, {
+            stamp: { id: selectedStamp?.id, claim_count: 1 },
+            points: selectedStamp?.points
+        })
+    }
+
+
     const handleFilterChange = (value: string) => {
         setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')
     }
-
     // Filter and sort stamps
     const filteredStamps = stamps
         ?.filter(stamp =>
@@ -275,7 +314,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                     </div>
                 </div>
             </div>
-
             <div className="py-4 lg:hidden">
                 {shouldShowPagination && (
                     <PaginationControls
@@ -291,6 +329,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 admin={admin}
                 onOpenChange={(open) => !open && setSelectedStamp(null)}
                 onClaim={handleStampClaim}
+                onSend={handleSendStamp}
             />
         </div>
     )

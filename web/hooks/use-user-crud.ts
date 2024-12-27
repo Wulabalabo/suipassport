@@ -1,4 +1,3 @@
-import { increaseClaimStampCount } from '@/lib/services/claim-stamps';
 import { stamp } from '@/types/db';
 import { useState } from 'react';
 
@@ -36,11 +35,12 @@ interface UseUserCrudReturn {
     isLoading: boolean;
     error: string | null;
     users: DbUser[];
-    fetchUsers: () => Promise<void>;
+    fetchUsers: () => Promise<DbUser[] | undefined>;
     fetchUserByAddress: (address: string) => Promise<DbResponse | null>;
     createNewUser: (user: CreateUser) => Promise<DbResponse | null>;
-    updateUserData: (address: string, eventId: string, updates: SafeUpdateUser) => Promise<DbResponse | null>;
+    updateUserData: (address: string, updates: SafeUpdateUser) => Promise<DbResponse | null>;
     removeUser: (address: string) => Promise<DbResponse | null>;
+    syncUserPoints: (address: string, points: number) => Promise<DbResponse | null>;
 }
 
 export function useUserCrud(): UseUserCrudReturn {
@@ -61,6 +61,7 @@ export function useUserCrud(): UseUserCrudReturn {
                 throw new Error(data.error);
             }
             setUsers(data.data?.results || []);
+            return data.data?.results || [];
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch users');
         } finally {
@@ -114,7 +115,6 @@ export function useUserCrud(): UseUserCrudReturn {
 
     const updateUserData = async (
         address: string,
-        eventId: string,
         updates: SafeUpdateUser
     ): Promise<DbResponse | null> => {
         try {
@@ -129,11 +129,6 @@ export function useUserCrud(): UseUserCrudReturn {
                 setError(data.error);
                 return data;
             }
-            const updateStamp = await increaseClaimStampCount(eventId);
-            if(!updateStamp.success){
-                setError(updateStamp.error || 'Failed to update stamp');
-                return null;
-            }
             return data;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update user');
@@ -142,6 +137,28 @@ export function useUserCrud(): UseUserCrudReturn {
             setIsLoading(false);
         }
     };
+
+    const syncUserPoints = async (address: string, points: number) => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await fetch('/api/user/points', {
+                method: 'PATCH',
+                body: JSON.stringify({ address, points })
+            })
+            const data = await response.json() as DbResponse;
+            if (!data.success) {
+                setError(data.error);
+                return data;
+            }
+            return data;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to sync user points');
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
     const removeUser = async (address: string): Promise<DbResponse | null> => {
         try {
@@ -174,5 +191,6 @@ export function useUserCrud(): UseUserCrudReturn {
         createNewUser,
         updateUserData,
         removeUser,
+        syncUserPoints
     };
 }

@@ -10,11 +10,6 @@ import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
-import { isValidSuiAddress } from "@mysten/sui/utils"
-import { send_stamp } from "@/contracts/stamp"
-import { useUserProfile } from "@/contexts/user-profile-context"
-import { useToast } from "@/hooks/use-toast"
-import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
 
 interface StampDialogProps {
     stamp: StampItem | null
@@ -22,6 +17,7 @@ interface StampDialogProps {
     admin?: boolean
     onOpenChange: (open: boolean) => void
     onClaim: (claimCode: string) => Promise<void>
+    onSend: (recipient: string) => Promise<void>
 }
 
 
@@ -34,17 +30,12 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, onOpenChange, onClaim,onSend }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [recipient, setRecipient] = useState('')
-    const { userProfile } = useUserProfile()
     const [claimCode, setClaimCode] = useState('')
     const [isClaiming, setIsClaiming] = useState(false)
     const [disabledClaim, setDisabledClaim] = useState(false)
-    const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
-        tx: send_stamp
-    })
-    const { toast } = useToast()
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
@@ -64,21 +55,6 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
         ))
     }, [stamp])
 
-    const handleSendStamp = async () => {
-        if (!recipient || !isValidSuiAddress(recipient) || !userProfile?.admincap || !stamp?.id) return
-        handleSignAndExecuteTransaction({
-            adminCap: userProfile?.admincap,
-            online_event: stamp?.id,
-            name: stamp?.name,
-            recipient
-        }).onSuccess(() => {
-            toast({
-                title: 'Stamp sent successfully',
-                description: 'Stamp sent successfully',
-            })
-            onOpenChange(false)
-        }).execute()
-    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,7 +144,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
                             <Input placeholder="Address" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
                             <Button className="rounded-full" variant="outline">Upload</Button>
                         </div>
-                        <Button className="rounded-full text-xl font-bold" onClick={handleSendStamp}>Send</Button>
+                        <Button className="rounded-full text-xl font-bold" onClick={() => onSend(recipient)}>Send</Button>
                     </div>
                 )}
             </DialogContent>

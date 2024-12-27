@@ -57,13 +57,6 @@ export const updateUser = async (address: string, update: SafeUpdateUser) => {
 
         setStatements.push('stamps = ?');
         params.push(JSON.stringify(currentStamps));
-
-        // Only add points if a valid stamp is added
-        if (update.points !== undefined) {
-            const newPoints = Number(currentUser.points) + Number(update.points);
-            setStatements.push('points = ?');
-            params.push(newPoints);
-        }
     }
 
     if (setStatements.length === 0) return null;
@@ -79,6 +72,16 @@ export const updateUser = async (address: string, update: SafeUpdateUser) => {
 
     const result = await queryD1<SafeUser[]>(query, params);
     return result;
+}
+
+export const syncUserPoints = async (address: string, points: number) => {
+    const query = `UPDATE users 
+        SET points = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE address = ?
+        RETURNING *`;
+    const result = await queryD1<SafeUser[]>(query, [points, address]);
+    return result
 }
 
 export const deleteUser = async (address: string) => {

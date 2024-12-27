@@ -75,6 +75,23 @@ export function useClaimStamps() {
     }
   }
 
+  const increaseClaimStampCount = async (stamp_id: string) => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/claim-stamps/add`, {
+        method: 'PATCH',
+        body: JSON.stringify({ stamp_id })
+      })
+      const result = await response.json()
+      return result.data
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to increase claim stamp count'))
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const deleteClaimStamp = async (id: string) => {
     try {
       setIsLoading(true)
@@ -98,6 +115,7 @@ export function useClaimStamps() {
     getClaimStamp,
     updateClaimStamp,
     deleteClaimStamp,
-    createClaimStamp
+    createClaimStamp,
+    increaseClaimStampCount
   }
 }
