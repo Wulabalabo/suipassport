@@ -43,9 +43,8 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
       const fetchedStamps = await getStampsData(networkVariables);
       const fetchedPassport = await getPassportData(networkVariables);
       const claimStamps = await listClaimStamps(networkVariables);
-
       const updatedStamps = fetchedStamps?.map(stamp => {
-        const claimStamp = claimStamps?.[0]?.results?.find(
+        const claimStamp = claimStamps?.results?.find(
           (cs: QueryClaimStamp) => cs?.stamp_id === stamp?.id
         );
         

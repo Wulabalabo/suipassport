@@ -10,13 +10,20 @@ export async function queryD1<T>(
     query: string,
     params?: SQLParams
 ): Promise<D1Response<T>> {
+    const isLocal = process.env.NODE_ENV === 'development';
+    const baseUrl = isLocal 
+        ? 'http://127.0.0.1:8787'
+        : `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/d1/database/${process.env.DATABASE_ID}`;
+
     try {
         const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/d1/database/${process.env.DATABASE_ID}/query`,
+            `${baseUrl}/query`,
             {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+                    ...(isLocal ? {} : {
+                        'Authorization': `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+                    }),
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({

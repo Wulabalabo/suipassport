@@ -20,16 +20,7 @@ export default function UserPage() {
   const { userProfile, refreshProfile } = useUserProfile();
   const networkVariables = useNetworkVariables();
   const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
-    tx: edit_passport,
-    onSuccess: () => {
-      toast({
-        title: "Edit passport success",
-        description: "Your passport has been updated",
-      })     
-    },
-    onSettled: () => {
-      refreshProfile(currentAccount?.address ?? '', networkVariables)
-    }
+    tx: edit_passport
   })
 
   const handleEdit = async (passportFormValues: PassportFormValues) => {
@@ -44,7 +35,9 @@ export default function UserPage() {
       x: passportFormValues.x,
       github: passportFormValues.github,
       email: "",
-    })
+    }).onSuccess(async () => {
+      await refreshProfile(currentAccount?.address ?? '', networkVariables)
+    }).execute()
   }
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { DbUser } from "@/hooks/use-user-crud"
 import { StampItem } from "@/types/stamp"
 
 
@@ -15,7 +16,8 @@ export type UserProfile = {
     x: string,
     current_user: string,
     admincap: string,
-    stamps?: StampItem[]
+    stamps?: StampItem[],
+    db_profile?:DbUser
 }
 
 export type ClaimStampResponse = {

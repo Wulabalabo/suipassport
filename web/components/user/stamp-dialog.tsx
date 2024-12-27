@@ -4,7 +4,7 @@ import { StampItem } from "@/types/stamp"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
@@ -40,26 +40,11 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
     const { userProfile } = useUserProfile()
     const [claimCode, setClaimCode] = useState('')
     const [isClaiming, setIsClaiming] = useState(false)
+    const [disabledClaim, setDisabledClaim] = useState(false)
     const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
-        tx: send_stamp,
-        onSuccess: () => {
-            toast({
-                title: 'Stamp sent successfully',
-                description: 'Stamp sent successfully',
-            })
-            onOpenChange(false)
-        },
-        onSettled: () => {
-            onOpenChange(false)
-        }
+        tx: send_stamp
     })
     const { toast } = useToast()
-
-    const disabledClaim = Boolean(
-        !stamp?.hasClaimCode ||
-        (stamp?.claimCodeStartTimestamp && Number(stamp.claimCodeStartTimestamp) > Date.now() / 1000) ||
-        (stamp?.claimCodeEndTimestamp && Number(stamp.claimCodeEndTimestamp) < Date.now() / 1000)
-    )
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
@@ -69,6 +54,16 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
         onOpenChange(false)
     }
 
+    useEffect(() => {
+        setDisabledClaim(Boolean(
+            !stamp?.hasClaimCode || 
+            (stamp?.claimCodeStartTimestamp && stamp?.claimCodeEndTimestamp && (
+                Number(stamp.claimCodeStartTimestamp) > Date.now() / 1000 ||
+                Number(stamp.claimCodeEndTimestamp) < Date.now() / 1000
+            ))
+        ))
+    }, [stamp])
+
     const handleSendStamp = async () => {
         if (!recipient || !isValidSuiAddress(recipient) || !userProfile?.admincap || !stamp?.id) return
         handleSignAndExecuteTransaction({
@@ -76,7 +71,13 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
             online_event: stamp?.id,
             name: stamp?.name,
             recipient
-        })
+        }).onSuccess(() => {
+            toast({
+                title: 'Stamp sent successfully',
+                description: 'Stamp sent successfully',
+            })
+            onOpenChange(false)
+        }).execute()
     }
 
     return (
@@ -150,7 +151,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
                         )}
                         <Button
                             className="rounded-full"
-                            disabled={!disabledClaim || claimCode.length === 0}
+                            disabled={disabledClaim || claimCode.length === 0}
                             onClick={handleClaimStamp}
                         >
                             {isClaiming ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Claim Stamp'}

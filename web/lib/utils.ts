@@ -15,3 +15,8 @@ export function getDataFromEffects(effects: string){
   const data = bcs.TransactionEffects.fromBase64(effects)
   return data.V2?.transactionDigest
 }
+
+export function getChangedObjectsFromDigest(digest: string){
+  const data = bcs.TransactionEffects.fromBase64(digest)
+  return data.V2?.changedObjects
+}

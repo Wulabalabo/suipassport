@@ -4,6 +4,7 @@ import { createContext, useContext, useCallback, useMemo, useState } from 'react
 import { UserProfile } from '@/types';
 import { checkUserState } from '@/contracts/query';
 import { NetworkVariables } from '@/contracts';
+import { useUserCrud } from '@/hooks/use-user-crud';
 
 interface UserProfileContextType {
   userProfile: UserProfile | null;
@@ -23,12 +24,18 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const { fetchUserByAddress } = useUserCrud();
 
   const refreshProfile = useCallback(async (address: string, networkVariables: NetworkVariables) => {
     try {
       setIsLoading(true);
       setError(null);
       const profile = await checkUserState(address, networkVariables);
+      const dbProfile = await fetchUserByAddress(address);
+      console.log(dbProfile)
+      if(dbProfile?.success && profile){
+        profile.db_profile = dbProfile.data?.results[0];
+      }
       console.log(profile);
       setUserProfile(profile);
     } catch (err) {

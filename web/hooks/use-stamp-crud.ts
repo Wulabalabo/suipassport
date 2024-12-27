@@ -23,6 +23,24 @@ export function useClaimStamps() {
     }
   }
 
+  const createClaimStamp = async (data: ClaimStamp) => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/claim-stamps`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      const result = await response.json()
+      return result.data
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to create claim stamp'))
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const getClaimStamp = async (id: string) => {
     try {
       setIsLoading(true)
@@ -77,6 +95,7 @@ export function useClaimStamps() {
     listClaimStamps,
     getClaimStamp,
     updateClaimStamp,
-    deleteClaimStamp
+    deleteClaimStamp,
+    createClaimStamp
   }
 }

@@ -2,7 +2,7 @@
 
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { CreateStampDialog } from "./components/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
@@ -13,12 +13,14 @@ import { useToast } from "@/hooks/use-toast"
 import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
 import { getEventFromDigest } from "@/contracts/query"
 import { ClaimStamp } from "@/lib/validations/claim-stamp"
-import { getDataFromEffects } from "@/lib/utils"
+import { getChangedObjectsFromDigest, getDataFromEffects } from "@/lib/utils"
 import { claim_stamp } from "@/contracts/claim"
 import { ClaimStampResponse } from "@/types"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { useNetworkVariables } from "@/contracts"
 import { useCurrentAccount } from "@mysten/dapp-kit"
+import { useClaimStamps } from "@/hooks/use-stamp-crud"
+import { useUserCrud } from "@/hooks/use-user-crud"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -28,69 +30,42 @@ interface AdminStampProps {
 export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
-    const createStampValuesRef = useRef<CreateStampFormValues | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
     const { userProfile } = useUserProfile();
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
+    const { createClaimStamp } = useClaimStamps()
     const { toast } = useToast();
+    const { updateUserData } = useUserCrud()
     const networkVariables = useNetworkVariables()
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
-        tx: create_event_stamp,
-        onSuccess: () => {
-            toast({
-                title: "Stamp created successfully",
-                description: "Stamp created successfully",
-            });
-        },
-        onError: (e) => {
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: e.message,
-            });
-        },
-        onSettled: (e) => {
-            if (e?.effects) {
-                onStampCreated(e.effects, createStampValuesRef.current || undefined)
-                refreshPassportStamps(networkVariables)
-            }
-        }
+        tx: create_event_stamp
     })
     const { handleSignAndExecuteTransaction: handleClaimStampTx } = useBetterSignAndExecuteTransaction({
-        tx: claim_stamp,
-        onSuccess: () => {
-            toast({
-                title: "Stamp claimed successfully",
-                description: "Stamp claimed successfully",
-            });
-        },
-        onError: (e) => {
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: e.message,
-            });
-        },
-        onSettled: async (e) => {
-            if (e?.effects) {
-                await onStampClaimed(e.effects)
-            }
-            refreshProfile(currentAccount?.address ?? '', networkVariables)
-        }
+        tx: claim_stamp
     })
 
     const handleStampClaim = async (claimCode: string) => {
+        if(selectedStamp?.id && userProfile?.db_profile?.stamps.includes(selectedStamp?.id)){
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "You have already claimed this stamp",
+            });
+            return
+        }
+        const requestBody = {
+            stamp_id: selectedStamp?.id,
+            claim_code: claimCode,
+            passport_id: userProfile?.id.id,
+            last_time: userProfile?.last_time
+        }
+        console.log(requestBody)
         const result = await fetch("/api/claim-stamps/verify", {
             method: "POST",
-            body: JSON.stringify({
-                stamp_id: selectedStamp?.id,
-                claim_code: claimCode,
-                passport_id: userProfile?.id.id,
-                last_time: userProfile?.last_time
-            })
+            body: JSON.stringify(requestBody)
         })
         const data = await result.json() as ClaimStampResponse
         
@@ -106,12 +81,21 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         // Convert signature object to array
         const signatureArray = Object.values(data.signature)
 
-        handleClaimStampTx({
+        await handleClaimStampTx({
             event: selectedStamp?.id ?? "",
             passport: userProfile?.id.id ?? "",
             name: selectedStamp?.name ?? "",
             sig: signatureArray
-        })
+        }).onSuccess(async (result) => {
+            if (result?.effects) {
+                await onStampClaimed(result.effects)
+            }
+           await refreshProfile(currentAccount?.address ?? '', networkVariables)
+           toast({
+            title: "Stamp claimed successfully",
+            description: "Stamp claimed successfully",
+           })
+        }).execute()
     }
 
     const onStampCreated = async (effects: string, values?: CreateStampFormValues) => {
@@ -132,30 +116,50 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null
         }
         console.log('Creating claim stamp:', claimStamp);
-        const response = await fetch("/api/claim-stamps", {
-            method: "POST",
-            body: JSON.stringify(claimStamp)
-        })
-        const data = await response.json()
+        const data = await createClaimStamp(claimStamp)
         console.log(data)
     }
 
     const onStampClaimed = async (effects: string) => {
-        const digest = getDataFromEffects(effects)
-        if (!digest) return
-        console.log(digest)
+        if(!userProfile?.current_user) return
+        const changedObjects = getChangedObjectsFromDigest(effects)
+        const stampid = changedObjects?.find(obj => {
+            if(obj[1].outputState.ObjectWrite?.[1].AddressOwner === userProfile?.current_user){
+                return obj[0]
+            }
+        })?.[0]
+        if (!stampid) return
+        await updateUserData(userProfile?.current_user, {
+            stamp: stampid,
+            points: selectedStamp?.points
+        })
     }
 
     const handleCreateStamp = async (values: CreateStampFormValues) => {
         if (!userProfile?.admincap) return;
-        createStampValuesRef.current = values
         handleCreateStampTx({
             adminCap: userProfile.admincap,
             event: values.name,
             description: values.description,
             image_url: values.image,
             points: Number(values.point)
-        })
+        }).onSuccess(async (result) => {
+            if (result?.effects) {
+                await onStampCreated(result.effects, values)
+                refreshPassportStamps(networkVariables)
+            }
+            
+            toast({
+                title: "Stamp created successfully",
+                description: "Stamp created successfully",
+            });
+        }).onError((e) => {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: e.message,
+            });
+        }).execute()
     }
     const handleFilterChange = (value: string) => {
         setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')

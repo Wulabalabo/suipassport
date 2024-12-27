@@ -13,6 +13,7 @@ import { useEffect } from 'react'
 import { passportFormSchema } from '@/components/passport/passport-form'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
 import { toast } from '@/hooks/use-toast'
+import { useUserCrud } from '@/hooks/use-user-crud'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
@@ -21,22 +22,9 @@ export default function Home() {
   const currentAccount = useCurrentAccount()
   const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
     tx: mint_passport,
-    onSuccess: () => {
-      toast({
-        title: "Passport minted successfully",
-        description: "You can now view your passport in the profile page",
-      })
-    },
-    onSettled: async () =>  {      
-      if (currentAccount?.address) {
-        // Add a delay to allow time for blockchain data to propagate
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        refreshProfile(currentAccount?.address ?? '', networkVariables)
-        refreshPassportStamps(networkVariables)
-      }
-    }
-    
+    delay: 2000
   })
+  const { createNewUser} = useUserCrud()
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
     await handleSignAndExecuteTransaction({
@@ -46,7 +34,21 @@ export default function Home() {
       x: values.x ?? '',
       github: values.github ?? '',
       email: ''
-    });
+    }).onSuccess(async () => {
+      toast({
+        title: "Passport minted successfully",
+        description: "You can now view your passport in the profile page",
+      })
+      if (currentAccount?.address) {
+        await refreshProfile(currentAccount?.address ?? '', networkVariables)
+        await refreshPassportStamps(networkVariables)
+        await createNewUser({
+          address: currentAccount?.address,
+          stamps: [],
+          points: 0
+        })
+      }
+    }).execute()
   }
 
   useEffect(() => {

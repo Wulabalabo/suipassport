@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/db';
 import { bcs } from '@mysten/sui/bcs';
 import { keccak256 } from 'js-sha3';
-import { fromHex, toHex } from '@mysten/sui/utils';
+import { fromHex } from '@mysten/sui/utils';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { ClaimStampResponse } from '@/types';
 
@@ -58,11 +58,10 @@ export async function POST(request: Request) {
                 { status: 500 }
             );
         }
-
+        const validData = result.data as unknown as {results:[{valid:number}]}
         const response: ClaimStampResponse = {
             success: true,
-            // 修改这里：result.data 的结构不同于预期
-            valid: Array.isArray(result.data) && result.data[0]?.results?.[0]?.valid === 1,
+            valid: validData.results[0]?.valid === 1,
             signature: undefined
         };
 
