@@ -7,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
+import Link from "next/link"
 
 interface RankItem {
   rank: number
@@ -23,6 +24,12 @@ const columns: ColumnDef<RankItem>[] = [
   {
     accessorKey: "user",
     header: "User",
+    cell: ({ row }) => {
+      const user = row.original.user
+      return <div className="max-w-28 truncate lg:max-w-64">
+        {user}
+      </div>
+    }
   },
   {
     accessorKey: "points",
