@@ -6,13 +6,7 @@ import { getPassportData, getStampsData } from '@/contracts/query';
 import { StampItem } from '@/types/stamp';
 import { PassportItem } from '@/types/passport';
 import { useClaimStamps } from '@/hooks/use-stamp-crud';
-
-type QueryClaimStamp = {
-  stamp_id: string;
-  claim_code_start_timestamp: number;
-  claim_code_end_timestamp: number;
-  has_claim_code: boolean;
-}
+import { SafeClaimStamp } from '@/types/db';
 
 interface PassportsStampsContextType {
   stamps: StampItem[] | null;
@@ -42,18 +36,19 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
       setError(null);
       const fetchedStamps = await getStampsData(networkVariables);
       const fetchedPassport = await getPassportData(networkVariables);
-      const claimStamps = await listClaimStamps(networkVariables);
+      const claimStamps = await listClaimStamps();
       const updatedStamps = fetchedStamps?.map(stamp => {
-        const claimStamp = claimStamps?.results?.find(
-          (cs: QueryClaimStamp) => cs?.stamp_id === stamp?.id
-        );
+        const claimStamp = claimStamps?.find((cs: SafeClaimStamp) => cs.stamp_id === stamp.id)
         
         if (claimStamp) {
           return {
             ...stamp,
-            hasClaimCode: claimStamp.has_claim_code === 0 ? false : true,
-            claimCodeStartTimestamp: claimStamp.claim_code_start_timestamp?.toString() ?? '',
-            claimCodeEndTimestamp: claimStamp.claim_code_end_timestamp?.toString() ?? '',
+            hasClaimCode: claimStamp?.has_claim_code,
+            claimCodeStartTimestamp: claimStamp?.claim_code_start_timestamp?.toString() ?? '',
+            claimCodeEndTimestamp: claimStamp?.claim_code_end_timestamp?.toString() ?? '',
+            totalCountLimit: claimStamp?.total_count_limit ?? null,
+            userCountLimit: claimStamp?.user_count_limit ?? null,
+            claimCount: claimStamp.claim_count ?? null
           };
         }
         return stamp;

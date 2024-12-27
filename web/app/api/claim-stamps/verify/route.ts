@@ -69,7 +69,6 @@ export async function POST(request: Request) {
             // 更新用户信息
             response.signature = await signMessage(passport_id, last_time);
         }
-        console.log(response)
         return NextResponse.json(response);
     } catch (error) {
         console.error('Verification error:', error);

@@ -79,6 +79,9 @@ export function StampGrid({ items }: StampGridProps) {
             <StampDialog
                 stamp={selectedStamp}
                 open={!!selectedStamp}
+                onClaim={async (claimCode) => {
+                    console.log(claimCode)
+                }}
                 onOpenChange={(open) => !open && setSelectedStamp(null)}
             />
         </div>

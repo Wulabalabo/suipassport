@@ -33,12 +33,12 @@ const mainnetVariables = {
 }
 
 const testnetVariables = {
-    package: "0xa39cb2a24888869d71f7374f15b82f3e0a86edb749fa8215b014f473a1e6f397",
-    suiPassportRecord: "0xc54a50c6706b20c6699c26ccd5a7b9773ff390907abec980a863b2927d665542",
-    stampDisplay: "0xddcfcd439320340ad3ec8962634a569e19f036f9804468c5be05d660f12cc12b",
-    passportDisplay: "0x44d24f3bf4cccfb07e8bc14e4fde3d99c1411ac921589c0b2e3886da061ba50d",
-    stampEventRecord: "0x684c3753a85496a0c0a2ed7a580bdb69396d410087df0e6ccfb4707ffe6cdebc",
-    stampAdminCap: "0xd6216df66ae25b70e4250343bb94e93295e2b1b53ac910cd80b06a5ff17b9eff",
+    package: "0xa28b5aba8965da59da3b0882aa725945731150828573d4114d12a3580aa46214",
+    suiPassportRecord: "0x3acb5685b4bb8f94602c178842bdad7f46bf46bad07ce91dd4e361000506fa8e",
+    stampDisplay: "0xee0025288085cecc660809c1b82749e615e40242f6754f6d8ef59e193697f496",
+    passportDisplay: "0x5e5b9641fe885203acf7f67a7a4009e4ada1ea067550d40afe1a6ae2f8472314",
+    stampEventRecord: "0x00cc37fda12bedc8574960bda14c2abc1d4cc903d7b5eb0f37d87cb39d47a915",
+    stampAdminCap: "0x08e2dacc64ff829606ed3b8228597a6f05acf0891f05ac6bc9305b5b8a9c3400",
 }
 
 const network = (process.env.NEXT_PUBLIC_NETWORK as Network) || "testnet";

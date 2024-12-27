@@ -1,10 +1,12 @@
+import { increaseClaimStampCount } from '@/lib/services/claim-stamps';
+import { stamp } from '@/types/db';
 import { useState } from 'react';
 
 export interface DbResponse {
     success: boolean;
     data?: {
         success: boolean;
-        meta:any;
+        meta:unknown;
         results: DbUser[];
     };
     error: string;
@@ -13,7 +15,7 @@ export interface DbResponse {
 export interface DbUser{
     id: string;
     address: string;
-    stamps: string[];
+    stamps: stamp[];
     points: number;
     created_at: string;
     updated_at: string;
@@ -21,12 +23,12 @@ export interface DbUser{
 
 interface CreateUser {
     address: string;
-    stamps: string[];
+    stamps: stamp[];
     points: number;
 }
 
 interface SafeUpdateUser {
-    stamp?: string;
+    stamp?: stamp;
     points?: number;
 }
 
@@ -37,7 +39,7 @@ interface UseUserCrudReturn {
     fetchUsers: () => Promise<void>;
     fetchUserByAddress: (address: string) => Promise<DbResponse | null>;
     createNewUser: (user: CreateUser) => Promise<DbResponse | null>;
-    updateUserData: (address: string, updates: SafeUpdateUser) => Promise<DbResponse | null>;
+    updateUserData: (address: string, eventId: string, updates: SafeUpdateUser) => Promise<DbResponse | null>;
     removeUser: (address: string) => Promise<DbResponse | null>;
 }
 
@@ -112,6 +114,7 @@ export function useUserCrud(): UseUserCrudReturn {
 
     const updateUserData = async (
         address: string,
+        eventId: string,
         updates: SafeUpdateUser
     ): Promise<DbResponse | null> => {
         try {
@@ -125,6 +128,11 @@ export function useUserCrud(): UseUserCrudReturn {
             if (!data.success) {
                 setError(data.error);
                 return data;
+            }
+            const updateStamp = await increaseClaimStampCount(eventId);
+            if(!updateStamp.success){
+                setError(updateStamp.error || 'Failed to update stamp');
+                return null;
             }
             return data;
         } catch (err) {

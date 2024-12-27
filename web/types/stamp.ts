@@ -8,6 +8,9 @@ export type StampItem = {
     hasClaimCode?: boolean
     claimCodeStartTimestamp?: string
     claimCodeEndTimestamp?: string
+    totalCountLimit?: number
+    userCountLimit?: number
+    claimCount?: number
 }
 
 export interface StampGridProps {

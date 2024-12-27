@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
 import { getEventFromDigest } from "@/contracts/query"
 import { ClaimStamp } from "@/lib/validations/claim-stamp"
-import { getChangedObjectsFromDigest, getDataFromEffects } from "@/lib/utils"
+import { getDataFromEffects } from "@/lib/utils"
 import { claim_stamp } from "@/contracts/claim"
 import { ClaimStampResponse } from "@/types"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
@@ -21,6 +21,7 @@ import { useNetworkVariables } from "@/contracts"
 import { useCurrentAccount } from "@mysten/dapp-kit"
 import { useClaimStamps } from "@/hooks/use-stamp-crud"
 import { useUserCrud } from "@/hooks/use-user-crud"
+import { stamp } from "@/types/db"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -48,11 +49,21 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     })
 
     const handleStampClaim = async (claimCode: string) => {
-        if(selectedStamp?.id && userProfile?.db_profile?.stamps.includes(selectedStamp?.id)){
+        if (!selectedStamp?.id || !userProfile?.db_profile) {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "You have already claimed this stamp",
+                description: "Database connection error or stamp not selected",
+            });
+            return;
+        }
+        const stamps = userProfile?.db_profile?.stamps as stamp[]
+        const parsedStamps:stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
+        if (selectedStamp.userCountLimit && parsedStamps.some(stamp => stamp.claim_count >= selectedStamp.userCountLimit!)) {
+            toast({
+                variant: "destructive", 
+                title: "Error",
+                description: `You have already claimed this stamp ${selectedStamp.userCountLimit} times`,
             });
             return
         }
@@ -68,7 +79,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             body: JSON.stringify(requestBody)
         })
         const data = await result.json() as ClaimStampResponse
-        
+
         if (!data.signature || !data.valid) {
             toast({
                 variant: "destructive",
@@ -86,15 +97,13 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             passport: userProfile?.id.id ?? "",
             name: selectedStamp?.name ?? "",
             sig: signatureArray
-        }).onSuccess(async (result) => {
-            if (result?.effects) {
-                await onStampClaimed(result.effects)
-            }
-           await refreshProfile(currentAccount?.address ?? '', networkVariables)
-           toast({
-            title: "Stamp claimed successfully",
-            description: "Stamp claimed successfully",
-           })
+        }).onSuccess(async () => {
+            await onStampClaimed()
+            await refreshProfile(currentAccount?.address ?? '', networkVariables)
+            toast({
+                title: "Stamp claimed successfully",
+                description: "Stamp claimed successfully",
+            })
         }).execute()
     }
 
@@ -111,31 +120,34 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
 
         const claimStamp: ClaimStamp = {
             stamp_id: stamp.id,
-            claim_code: values.claimCode ?? null,
+            claim_code: values.claimCode && values.claimCode.length > 0 ? values.claimCode : null,
             claim_code_start_timestamp: values.startDate ? new Date(values.startDate).getTime().toString() : null,
-            claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null
+            claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null,
+            total_count_limit: values.totalCountLimit ?? null,
+            user_count_limit: values.userCountLimit ?? null
         }
         console.log('Creating claim stamp:', claimStamp);
         const data = await createClaimStamp(claimStamp)
         console.log(data)
     }
 
-    const onStampClaimed = async (effects: string) => {
-        if(!userProfile?.current_user) return
-        const changedObjects = getChangedObjectsFromDigest(effects)
-        const stampid = changedObjects?.find(obj => {
-            if(obj[1].outputState.ObjectWrite?.[1].AddressOwner === userProfile?.current_user){
-                return obj[0]
-            }
-        })?.[0]
-        if (!stampid) return
-        await updateUserData(userProfile?.current_user, {
-            stamp: stampid,
+    const onStampClaimed = async () => {
+        if (!userProfile?.current_user || !selectedStamp?.id) return
+        await updateUserData(userProfile?.current_user, selectedStamp?.id, {
+            stamp: { id: selectedStamp?.id, claim_count: 1 },
             points: selectedStamp?.points
         })
     }
 
     const handleCreateStamp = async (values: CreateStampFormValues) => {
+        if(!userProfile?.db_profile){
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Database connection error",
+            });
+            return
+        }
         if (!userProfile?.admincap) return;
         handleCreateStampTx({
             adminCap: userProfile.admincap,
@@ -148,7 +160,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 await onStampCreated(result.effects, values)
                 refreshPassportStamps(networkVariables)
             }
-            
+
             toast({
                 title: "Stamp created successfully",
                 description: "Stamp created successfully",

@@ -40,7 +40,9 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
       image: "",
       claimCode: "",
       startDate: undefined,
-      endDate: undefined
+      endDate: undefined,
+      totalCountLimit: 0,
+      userCountLimit: 1
     },
   })
 
@@ -59,7 +61,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
       <DialogTrigger asChild>
         <Button className="rounded-full text-sm px-4 py-2 lg:text-base">Create new Stamp</Button>
       </DialogTrigger>
-      <DialogContent hideCloseButton className="sm:max-w-[425px] flex flex-col p-0">
+      <DialogContent hideCloseButton className="sm:max-w-[425px] flex flex-col p-0 max-h-svh">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-4xl font-bold text-left">Create Stamp</DialogTitle>
         </DialogHeader>
@@ -164,6 +166,40 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                   </FormItem>
                 )}
               />
+              <div className="flex gap-2">
+                <FormField
+                  control={form.control}
+                  name="totalCountLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Total Count Limit</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} placeholder="default is infinite" 
+                        onChange={e => field.onChange(Number(e.target.value))}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />  
+                <FormField
+                  control={form.control}
+                  name="userCountLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>User Count Limit</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          onChange={e => field.onChange(Number(e.target.value))}
+                          placeholder="default is 1" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </form>
           </Form>
         </div>

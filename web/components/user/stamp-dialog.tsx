@@ -55,7 +55,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
     }
 
     useEffect(() => {
-        setDisabledClaim(Boolean(
+        setDisabledClaim(!Boolean(
             !stamp?.hasClaimCode || 
             (stamp?.claimCodeStartTimestamp && stamp?.claimCodeEndTimestamp && (
                 Number(stamp.claimCodeStartTimestamp) > Date.now() / 1000 ||
@@ -106,7 +106,7 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim }: Stamp
                                 <Skeleton className="absolute inset-0" />
                             )}
                             <Image
-                                src={stamp?.imageUrl ?? '/mockStamp.png'}
+                                src={stamp?.imageUrl?.startsWith('http') ? stamp?.imageUrl : '/mockStamp.png'}
                                 alt={stamp?.name ?? ''}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

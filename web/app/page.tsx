@@ -40,13 +40,13 @@ export default function Home() {
         description: "You can now view your passport in the profile page",
       })
       if (currentAccount?.address) {
-        await refreshProfile(currentAccount?.address ?? '', networkVariables)
-        await refreshPassportStamps(networkVariables)
         await createNewUser({
           address: currentAccount?.address,
           stamps: [],
           points: 0
-        })
+        })        
+        await refreshProfile(currentAccount?.address ?? '', networkVariables)
+        await refreshPassportStamps(networkVariables)
       }
     }).execute()
   }

@@ -1,15 +1,5 @@
 import { queryD1 } from "../db";
-
-interface SafeUser {
-    address: string;
-    stamps: string[];  // JSON array stored as string
-    points: number;
-}
-
-interface SafeUpdateUser {
-    stamp?: string;
-    points?: number;
-}
+import { SafeUser, SafeUpdateUser, stamp } from "@/types/db";
 
 export const getUsers = async () => {
     const query = `SELECT * FROM users ORDER BY created_at DESC`;
@@ -43,35 +33,34 @@ export const updateUser = async (address: string, update: SafeUpdateUser) => {
     const setStatements = [];
     const params = [];
     if (update.stamp !== undefined) {
-        // Validate stamp format
-        if (typeof update.stamp !== 'string') {
-            return {
-                success: false,
-                error: "Invalid stamp format - must be a string"
-            };
-        }
-
         // Parse existing stamps if they're a string
-        const currentStamps = Array.isArray(currentUser.stamps) 
+        const currentStamps:stamp[] = Array.isArray(currentUser.stamps) 
             ? currentUser.stamps 
             : JSON.parse(currentUser.stamps as string);
-
+        
         // Check if stamp already exists
-        if (currentStamps.includes(update.stamp)) {
-            return {
-                success: false,
-                error: "Stamp already exists for this user"
-            };
+        const existingStampIndex = currentStamps.findIndex(
+            (s) => s.id === update.stamp?.id
+        );
+
+        if (existingStampIndex >= 0) {
+            // If stamp exists, increment its count
+            currentStamps[existingStampIndex].claim_count = 
+                (currentStamps[existingStampIndex].claim_count || 1) + 1;
+        } else {
+            // If stamp doesn't exist, add it with count 1
+            currentStamps.push({
+                id: update.stamp?.id,
+                claim_count: 1
+            });
         }
 
-        // Add the new stamp to existing stamps array
-        currentStamps.push(update.stamp);
         setStatements.push('stamps = ?');
         params.push(JSON.stringify(currentStamps));
 
         // Only add points if a valid stamp is added
         if (update.points !== undefined) {
-            const newPoints = currentUser.points + update.points;
+            const newPoints = Number(currentUser.points) + Number(update.points);
             setStatements.push('points = ?');
             params.push(newPoints);
         }

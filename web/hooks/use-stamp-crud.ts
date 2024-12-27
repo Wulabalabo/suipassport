@@ -2,19 +2,21 @@
 
 import { useState } from 'react'
 import type { ClaimStamp } from '@/lib/validations/claim-stamp'
+import { SafeClaimStamp } from '@/types/db'
 
 export function useClaimStamps() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const listClaimStamps = async (params?: Record<string, string | number>) => {
+  const listClaimStamps = async () => {
     try {
       setIsLoading(true)
-      const stampId = params?.stampId
-      const queryParams = stampId ? `?stampId=${stampId}` : ''
-      const response = await fetch(`/api/claim-stamps${queryParams}`)
+      const response = await fetch(`/api/claim-stamps`,{
+        method: 'GET'
+      })
       const result = await response.json()
-      return result.data
+
+      return result.results as SafeClaimStamp[]
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch claim stamps'))
       throw err

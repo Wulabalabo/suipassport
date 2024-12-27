@@ -5,9 +5,9 @@ DROP TABLE IF EXISTS users;
 -- 创建 claim_stamps 表
 CREATE TABLE claim_stamps (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    stamp_id TEXT,
+    stamp_id TEXT NOT NULL,
     claim_code TEXT,
-    total_count_limit INTEGER,
+    total_count_limit INTEGER DEFAULT 0,
     user_count_limit INTEGER DEFAULT 1,
     claim_count INTEGER DEFAULT 0,
     claim_code_start_timestamp INTEGER,

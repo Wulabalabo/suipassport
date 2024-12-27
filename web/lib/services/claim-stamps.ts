@@ -1,29 +1,26 @@
 import { queryD1 } from '@/lib/db';
 import type { ClaimStamp } from '@/lib/validations/claim-stamp';
+import type { SafeClaimStamp } from '@/types/db';
 
-interface SafeClaimStamp {
-  stamp_id: string;
-  claim_code_start_timestamp: string | null;
-  claim_code_end_timestamp: string | null;
-  has_claim_code: boolean;
-}
-
-export async function getClaimStamps(stampId?: string | null) {
-  let query = `
-  SELECT 
-    stamp_id, 
-    claim_code_start_timestamp, 
-    claim_code_end_timestamp,
-    CASE WHEN claim_code IS NULL THEN 0 ELSE 1 END as has_claim_code
-  FROM claim_stamps`;
-  const params: (string | number | null)[] = [];
-  
-  if (stampId) {
-    query += ' WHERE stamp_id = ?';
-    params.push(stampId);
+export async function getClaimStamps() {
+  try {
+    const query = `
+    SELECT 
+      stamp_id, 
+      claim_code_start_timestamp, 
+      claim_code_end_timestamp,
+      total_count_limit,
+      user_count_limit,
+      claim_count,
+      CASE WHEN claim_code IS NULL THEN 0 ELSE 1 END as has_claim_code
+    FROM claim_stamps`;
+    
+    const response = await queryD1<SafeClaimStamp[]>(query);    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching claim stamps:', error);
+    throw error;
   }
-  
-  return queryD1<SafeClaimStamp[]>(query, params);
 }
 
 export async function createClaimStamp(data: ClaimStamp) {
@@ -32,14 +29,18 @@ export async function createClaimStamp(data: ClaimStamp) {
       stamp_id, 
       claim_code, 
       claim_code_start_timestamp, 
-      claim_code_end_timestamp
-    ) VALUES (?, ?, ?, ?)
+      claim_code_end_timestamp,
+      total_count_limit,
+      user_count_limit
+    ) VALUES (?, ?, ?, ?, ?, ?)
     RETURNING *`,
     [
       data.stamp_id,
       data.claim_code,
       data.claim_code_start_timestamp,
-      data.claim_code_end_timestamp
+      data.claim_code_end_timestamp,
+      data.total_count_limit,
+      data.user_count_limit
     ]
   );
 }
@@ -51,27 +52,37 @@ export async function getClaimStampById(id: string) {
     [id]
   );
 }
-  
-  export async function updateClaimStamp(id: string, data: ClaimStamp) {
-    return queryD1<ClaimStamp>(
-      `UPDATE claim_stamps 
+
+export async function updateClaimStamp(id: string, data: ClaimStamp) {
+  return queryD1<ClaimStamp>(
+    `UPDATE claim_stamps 
        SET claim_code = ?,
            claim_code_start_timestamp = ?,
            claim_code_end_timestamp = ?
        WHERE stamp_id = ?
        RETURNING *`,
-      [
-        data.claim_code,
-        data.claim_code_start_timestamp,
-        data.claim_code_end_timestamp,
-        id
-      ]
-    );
-  }
-  
-  export async function deleteClaimStamp(id: string) {
-    return queryD1<ClaimStamp>(
-      'DELETE FROM claim_stamps WHERE id = ? RETURNING *',
-      [id]
-    );
-  }
+    [
+      data.claim_code,
+      data.claim_code_start_timestamp,
+      data.claim_code_end_timestamp,
+      id
+    ]
+  );
+}
+
+export async function increaseClaimStampCount(id: string) {
+  const query = `
+    UPDATE claim_stamps 
+    SET claim_count = COALESCE(claim_count, 0) + 1 
+    WHERE stamp_id = ? 
+    RETURNING *
+  `;
+  return queryD1<ClaimStamp>(query, [id]);
+}
+
+export async function deleteClaimStamp(id: string) {
+  return queryD1<ClaimStamp>(
+    'DELETE FROM claim_stamps WHERE id = ? RETURNING *',
+    [id]
+  );
+}

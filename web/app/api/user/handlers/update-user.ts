@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateUser as updateUserService } from "@/lib/services/user";
+import { stamp } from "@/types/db";
 
 export async function updateUser(request: NextRequest) {
     try {
-        const { address, stamp, points } = await request.json();
+        const { address, stamp, points } = await request.json() as { address: string, stamp: stamp, points: number };
         console.log(address, stamp, points)
         const user = await updateUserService(address, { stamp, points });
 

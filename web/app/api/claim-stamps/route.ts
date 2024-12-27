@@ -2,12 +2,9 @@ import { NextResponse } from 'next/server';
 import { getClaimStamps, createClaimStamp } from '@/lib/services/claim-stamps';
 import { claimStampSchema } from '@/lib/validations/claim-stamp';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const stampId = searchParams.get('stampId');
-    
-    const result = await getClaimStamps(stampId);
+    const result = await getClaimStamps();
     return NextResponse.json(result);
   } catch (error ) {
     return NextResponse.json(
@@ -23,7 +20,7 @@ export async function POST(request: Request) {
     
     // 验证输入数据
     const validatedData = claimStampSchema.parse(data);
-    
+    console.log( "validatedData", validatedData)
     const result = await createClaimStamp(validatedData);
     return NextResponse.json(result);
   } catch (error) {
