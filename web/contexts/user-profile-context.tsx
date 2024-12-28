@@ -31,15 +31,16 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
       setIsLoading(true);
       setError(null);
       const profile = await checkUserState(address, networkVariables);
-      await syncUserPoints(address, profile?.points ?? 0)
+      await syncUserPoints(address, profile?.points ?? 0);
       const dbProfile = await fetchUserByAddress(address);
-      if(dbProfile?.success && profile){
+      if (dbProfile?.success && profile) {
         profile.db_profile = dbProfile.data?.results[0];
       }
-      console.log(profile)
+      console.log('Profile fetched:', profile);
       setUserProfile(profile);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
+      console.error('Error fetching profile:', err);
     } finally {
       setIsLoading(false);
     }
