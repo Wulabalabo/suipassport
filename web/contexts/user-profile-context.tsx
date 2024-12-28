@@ -51,7 +51,7 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchUserByAddress, syncUserPoints]);
+  }, []);
 
   const clearProfile = useCallback(() => {
     setUserProfile(null);
