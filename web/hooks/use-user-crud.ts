@@ -56,7 +56,7 @@ export function useUserCrud(): UseUserCrudReturn {
                 method: 'GET'
             })
             const data = await response.json() as DbResponse;
-            console.log(data)
+            console.log("fetchUsers data", data)
             if (!data.success) {
                 throw new Error(data.error);
             }
