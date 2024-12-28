@@ -9,7 +9,7 @@ export const getUsers = async () => {
 
 export const getUserByAddress = async (address: string) => {
     const query = `SELECT * FROM users WHERE address = ?`;
-    const users = await queryD1<SafeUser[]>(query, [address]);
+    const users = await queryD1<SafeUser>(query, [address]);
     return users;
 }
 
