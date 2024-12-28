@@ -52,6 +52,7 @@ export default function Home() {
       return
     }
     const dbUser = await fetchUserByAddress(currentAccount?.address)
+    console.log("dbUser", dbUser)
     if(!dbUser?.data?.results[0]?.address){
       await createNewUser({
         address: currentAccount?.address,
