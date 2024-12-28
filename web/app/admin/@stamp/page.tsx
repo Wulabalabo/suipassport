@@ -23,6 +23,7 @@ import { useClaimStamps } from "@/hooks/use-stamp-crud"
 import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
 import { increaseClaimStampCount } from "@/lib/services/claim-stamps"
+import { isValidSuiAddress } from "@mysten/sui/utils"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -155,6 +156,14 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).execute()
     }
     const handleSendStamp = async (recipient: string) => {
+        if(!isValidSuiAddress(recipient)){
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Invalid address",
+            });
+            return
+        }
         if (!userProfile?.admincap || !selectedStamp?.id) return
         let dbUser = await fetchUserByAddress(recipient)
         if(!dbUser?.data?.results[0]?.address){
