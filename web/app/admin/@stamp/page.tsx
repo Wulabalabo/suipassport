@@ -38,9 +38,9 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
-    const { createClaimStamp } = useClaimStamps()
+    const { createClaimStamp,isLoading:isCreatingClaimStamp } = useClaimStamps()
     const { toast } = useToast();
-    const { updateUserData,fetchUserByAddress,createNewUser } = useUserCrud()
+    const { updateUserData,fetchUserByAddress,createNewUser,isLoading:isUserLoading } = useUserCrud()
     const networkVariables = useNetworkVariables()
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
         tx: create_event_stamp
@@ -48,7 +48,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const { handleSignAndExecuteTransaction: handleClaimStampTx } = useBetterSignAndExecuteTransaction({
         tx: claim_stamp
     })
-    const { handleSignAndExecuteTransaction: handleSendStampTx } = useBetterSignAndExecuteTransaction({
+    const { handleSignAndExecuteTransaction: handleSendStampTx,isLoading:isSending } = useBetterSignAndExecuteTransaction({
         tx: send_stamp
     })
 
@@ -64,11 +64,19 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }
         const stamps = userProfile?.db_profile?.stamps as stamp[]
         const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
-        if (selectedStamp.userCountLimit && parsedStamps.some(stamp => stamp.claim_count >= selectedStamp.userCountLimit!)) {
+        if (parsedStamps.some(stamp => stamp.id===selectedStamp?.id)) {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: `You have already claimed this stamp ${selectedStamp.userCountLimit} times`,
+                description: `You have already have this stamp`,
+            });
+            return
+        }
+        if( selectedStamp.claimCount && selectedStamp.totalCountLimit!==0 && selectedStamp?.claimCount>=selectedStamp.totalCountLimit!){
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Stamp is claimed out",
             });
             return
         }
@@ -148,15 +156,25 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     }
     const handleSendStamp = async (recipient: string) => {
         if (!userProfile?.admincap || !selectedStamp?.id) return
-        const dbUser = await fetchUserByAddress(recipient)
+        let dbUser = await fetchUserByAddress(recipient)
         if(!dbUser?.data?.results[0]?.address){
-            await createNewUser({
+            dbUser = await createNewUser({
                 address: recipient,
                 stamps: [],
                 points: 0
             })
         }
-        console.log(dbUser)
+        console.log("dbUser", dbUser)
+        const stamps = dbUser?.data?.results[0]?.stamps as stamp[]  
+        const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
+        if(parsedStamps.some(stamp=>stamp.id===selectedStamp?.id)){
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "User already has this stamp",
+            });
+            return
+        }
 
         handleSendStampTx({
             adminCap: userProfile?.admincap,
@@ -168,7 +186,8 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 title: 'Stamp sent successfully',
                 description: 'Stamp sent successfully',
             })
-            await onStampSent()
+            await onStampSent(recipient)
+            await refreshPassportStamps(networkVariables)
         }).execute()
     }
 
@@ -203,10 +222,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         })
         await increaseClaimStampCount(selectedStamp?.id)
     }
-    const onStampSent = async () => {
+    const onStampSent = async (address: string) => {
         if (!selectedStamp?.id || !userProfile?.current_user) return
         await increaseClaimStampCount(selectedStamp?.id)
-        await updateUserData(userProfile?.current_user, {
+        await updateUserData(address, {
             stamp: { id: selectedStamp?.id, claim_count: 1 },
             points: selectedStamp?.points
         })
@@ -330,6 +349,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 onOpenChange={(open) => !open && setSelectedStamp(null)}
                 onClaim={handleStampClaim}
                 onSend={handleSendStamp}
+                isLoading={isSending || isCreatingClaimStamp || isUserLoading}
             />
         </div>
     )

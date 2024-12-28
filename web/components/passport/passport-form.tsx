@@ -111,7 +111,7 @@ export function PassportForm({
               name="x"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>X (Twitter)</FormLabel>
+                  <FormLabel>Twitter (optional)</FormLabel>
                   <FormControl>
                     <Input placeholder="@username" {...field} />
                   </FormControl>
@@ -125,7 +125,7 @@ export function PassportForm({
               name="github"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>GitHub</FormLabel>
+                  <FormLabel>GitHub (optional)</FormLabel>
                   <FormControl>
                     <Input placeholder="GitHub username" {...field} />
                   </FormControl>

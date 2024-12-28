@@ -15,6 +15,7 @@ interface StampDialogProps {
     stamp: StampItem | null
     open: boolean
     admin?: boolean
+    isLoading?: boolean
     onOpenChange: (open: boolean) => void
     onClaim: (claimCode: string) => Promise<void>
     onSend: (recipient: string) => Promise<void>
@@ -30,7 +31,7 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, admin, onOpenChange, onClaim,onSend }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [recipient, setRecipient] = useState('')
     const [claimCode, setClaimCode] = useState('')
@@ -46,14 +47,12 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim,onSend }
     }
 
     useEffect(() => {
-        setDisabledClaim(!Boolean(
-            !stamp?.hasClaimCode || 
-            (stamp?.claimCodeStartTimestamp && stamp?.claimCodeEndTimestamp && (
-                Number(stamp.claimCodeStartTimestamp) > Date.now() / 1000 ||
-                Number(stamp.claimCodeEndTimestamp) < Date.now() / 1000
-            ))
+        setDisabledClaim(Boolean(
+            !stamp?.hasClaimCode ||
+            (stamp?.claimCodeStartTimestamp ? Number(stamp.claimCodeStartTimestamp) > Date.now() / 1000 : false) ||
+            (stamp?.claimCodeEndTimestamp ? Number(stamp.claimCodeEndTimestamp) < Date.now() / 1000 : false)
         ))
-    }, [stamp])
+    }, [stamp, claimCode])
 
 
     return (
@@ -107,13 +106,18 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim,onSend }
                         />
                     </div>
                 </div>
-                {stamp?.hasClaimCode && (
+                {stamp?.hasClaimCode && !admin && (
                     <div className="flex flex-col gap-4 gap-y-6 pt-6">
-                        <div className="flex items-center gap-2">
-                            <p className="text-sm text-gray-500 flex-shrink-0">
-                                Claim Code
-                            </p>
-                            <Input placeholder="Claim Code" value={claimCode} onChange={(e) => setClaimCode(e.target.value)} />
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 w-2/3">
+                                <p className="text-sm text-gray-500 flex-shrink-0">
+                                    Claim Code
+                                </p>
+                                <Input placeholder="Claim Code" value={claimCode} onChange={(e) => setClaimCode(e.target.value)} />
+                            </div>
+                            <div>
+                               {stamp.totalCountLimit!==0? <p>{stamp.claimCount}/{stamp.totalCountLimit}</p>:<p className="text-sm text-primary flex-shrink-0 uppercase">unlimited</p>}
+                            </div>
                         </div>
                         {stamp.claimCodeStartTimestamp && (
                             <p className="text-sm text-gray-500">
@@ -144,7 +148,9 @@ export function StampDialog({ stamp, open, admin, onOpenChange, onClaim,onSend }
                             <Input placeholder="Address" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
                             <Button className="rounded-full" variant="outline">Upload</Button>
                         </div>
-                        <Button className="rounded-full text-xl font-bold" onClick={() => onSend(recipient)}>Send</Button>
+                        <Button className="rounded-full text-xl font-bold" onClick={() => onSend(recipient)} disabled={isLoading}>
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send'}
+                        </Button>
                     </div>
                 )}
             </DialogContent>

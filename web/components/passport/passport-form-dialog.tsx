@@ -27,7 +27,7 @@ export function PassportFormDialog({ onSubmit }: { onSubmit: (values: PassportFo
   const networkVariables = useNetworkVariables();
   const router = useRouter();
   const { toast } = useToast();
-  const { userProfile } = useUserProfile();
+  const { userProfile,isLoading } = useUserProfile();
 
   useEffect(() => {
     async function checkProfile() {
@@ -79,7 +79,7 @@ export function PassportFormDialog({ onSubmit }: { onSubmit: (values: PassportFo
       {!hasPassport ? (
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
-            <RainbowButton>Get Your Passport</RainbowButton>
+            <RainbowButton className={`${isLoading ? 'opacity-50' : ''}`} disabled={isLoading}>Get Your Passport</RainbowButton>
           </DialogTrigger>
           <DialogContent hideCloseButton className="sm:max-w-[500px] overflow-y-auto">
             <DialogHeader>

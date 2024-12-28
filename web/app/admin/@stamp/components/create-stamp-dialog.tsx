@@ -166,13 +166,12 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                   </FormItem>
                 )}
               />
-              <div className="flex gap-2">
                 <FormField
                   control={form.control}
                   name="totalCountLimit"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Total Count Limit</FormLabel>
+                      <FormLabel>Total Count Limit (optional, 0 is unlimited)</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} placeholder="default is infinite" 
                         onChange={e => field.onChange(Number(e.target.value))}/>
@@ -181,7 +180,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                     </FormItem>
                   )}
                 />  
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="userCountLimit"
                   render={({ field }) => (
@@ -198,8 +197,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                       <FormMessage />
                     </FormItem>
                   )}
-                />
-              </div>
+                /> */}
             </form>
           </Form>
         </div>
