@@ -8,7 +8,7 @@ export interface DbResponse {
         meta:unknown;
         results: DbUser[];
     };
-    error: string;
+    error?: string;
 }
 
 export interface DbUser{
@@ -77,8 +77,9 @@ export function useUserCrud(): UseUserCrudReturn {
                 method: 'GET',
             })
             const data = await response.json() as DbResponse;
+            console.log("fetchUserByAddress data", data)
             if (!data.success) {
-                setError(data.error);
+                setError(data.error ?? 'Failed to fetch user');
                 return data;
             }
             return data;
@@ -100,7 +101,7 @@ export function useUserCrud(): UseUserCrudReturn {
             })
             const data = await response.json() as DbResponse;
             if (!data.success) {
-                setError(data.error);
+                setError(data.error ?? 'Failed to create user');
                 return data;
             }
             await fetchUsers(); // 刷新用户列表
@@ -126,7 +127,7 @@ export function useUserCrud(): UseUserCrudReturn {
             })
             const data = await response.json() as DbResponse;
             if (!data.success) {
-                setError(data.error);
+                setError(data.error ?? 'Failed to update user');
                 return data;
             }
             return data;
@@ -148,7 +149,7 @@ export function useUserCrud(): UseUserCrudReturn {
             })
             const data = await response.json() as DbResponse;
             if (!data.success) {
-                setError(data.error);
+                setError(data.error ?? 'Failed to sync user points');
                 return data;
             }
             return data;
@@ -170,7 +171,7 @@ export function useUserCrud(): UseUserCrudReturn {
             })
             const data = await response.json() as DbResponse;
             if (!data.success) {
-                setError(data.error);
+                setError(data.error ?? 'Failed to delete user');
                 return data;
             }
             return data;

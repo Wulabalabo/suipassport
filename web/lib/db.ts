@@ -34,14 +34,18 @@ export async function queryD1<T>(
         );
 
         const result = await response.json();
-
         if (!response.ok) {
             throw new Error(result.errors?.[0]?.message || 'Database query failed');
         }
 
+        // 统一处理 result.result 格式
+        const normalizedResult = Array.isArray(result.result) 
+            ? result.result[0]
+            : result.result;
+
         return {
             success: true,
-            data: result.result as T
+            data: normalizedResult as T
         };
     } catch (error) {
         return {
