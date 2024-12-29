@@ -65,7 +65,7 @@ export default function UserPage() {
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamp
         </p>
-        <StampGrid items={userProfile?.stamps || []} />
+        <StampGrid stamps={userProfile?.stamps || []} collection_detail={userProfile?.collection_detail || []}/>
       </div>
     </div>
   )

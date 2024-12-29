@@ -133,7 +133,7 @@ export const checkUserState = async (
         }
     })
     const collection = collectionDetail.data?.owner?.dynamicFields?.nodes?.map((node) => node.name?.json) ?? []
-    profile.collection_detail = collection
+    profile.collection_detail = collection as string[]
     return profile;
 };
 

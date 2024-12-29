@@ -17,8 +17,8 @@ interface StampDialogProps {
     admin?: boolean
     isLoading?: boolean
     onOpenChange: (open: boolean) => void
-    onClaim: (claimCode: string) => Promise<void>
-    onSend: (recipient: string) => Promise<void>
+    onClaim?: (claimCode: string) => Promise<void>
+    onSend?: (recipient: string) => Promise<void>
 }
 
 
@@ -41,7 +41,9 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
         setIsClaiming(true)
-        await onClaim(claimCode)
+        if(onClaim){
+            await onClaim(claimCode)
+        }
         setIsClaiming(false)
         onOpenChange(false)
     }
@@ -148,7 +150,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                             <Input placeholder="Address" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
                             <Button className="rounded-full" variant="outline">Upload</Button>
                         </div>
-                        <Button className="rounded-full text-xl font-bold" onClick={() => onSend(recipient)} disabled={isLoading}>
+                        <Button className="rounded-full text-xl font-bold" onClick={() => onSend && onSend(recipient)} disabled={isLoading}>
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send'}
                         </Button>
                     </div>

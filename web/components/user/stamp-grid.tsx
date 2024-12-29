@@ -1,54 +1,53 @@
 'use client'
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { StampDialog } from "./stamp-dialog"
 import { StampCard } from "./stamp-card"
 import { StampItem } from "@/types/stamp"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 
-interface StampGridProps {
-    items: StampItem[]
+type displayStamp = StampItem & {
+    isActive: boolean
 }
 
-export function StampGrid({ items }: StampGridProps) {
+interface StampGridProps {
+    stamps: StampItem[]
+    collection_detail: string[]
+}
+
+export function StampGrid({ stamps,collection_detail }: StampGridProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
+    const [items, setItems] = useState<displayStamp[]>([])
 
     // 使用媒体查询来确定是否为桌面版
     const isDesktop = useMediaQuery("(min-width: 1024px)")
     const itemsPerPage = isDesktop ? 5 : 4
 
+    useEffect(()=>{
+        if(stamps){
+            const activeStamps = stamps.map(stamp=>({
+                ...stamp,
+                isActive: collection_detail?.includes(stamp.id) ?? false
+            }))
+            console.log(activeStamps)
+            setItems(activeStamps)
+        }
+    },[stamps,collection_detail])
+    
     // 计算分页数据
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage
         const endIndex = startIndex + itemsPerPage
-        return items.slice(startIndex, endIndex)
+        return items?.slice(startIndex, endIndex)
     }, [items, currentPage, itemsPerPage])
 
-    const totalPages = Math.ceil(items.length / itemsPerPage)
+    const totalPages = Math.ceil(items!.length / itemsPerPage)
 
     return (
         <div className="space-y-6 px-6 py-4">
             <div className="flex flex-col lg:flex-row gap-3">
-                {/* <Tabs
-                    value="all"
-                    onValueChange={(value) => console.log('Tab:', value)}
-                    className="flex-shrink-0"
-                >
-                    <TabsList>
-                        <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="private">Private Stamps</TabsTrigger>
-                        <TabsTrigger value="best">Best Stamps</TabsTrigger>
-                    </TabsList>
-                </Tabs> */}
-                {/* <SearchFilterBar
-                    searchPlaceholder="Name / ID"
-                    filterPlaceholder="Event Type"
-                    filterOptions={filterOptions}
-                    onSearchChange={(value) => console.log('Search:', value)}
-                    onFilterChange={(value) => console.log('Filter:', value)}
-                /> */}
                 <PaginationControls
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -64,6 +63,7 @@ export function StampGrid({ items }: StampGridProps) {
                         key={item.id}
                         stamp={item}
                         onClick={() => setSelectedStamp(item)}
+                        isActive={item.isActive}
                     />
                 ))}
             </div>
@@ -79,9 +79,6 @@ export function StampGrid({ items }: StampGridProps) {
             <StampDialog
                 stamp={selectedStamp}
                 open={!!selectedStamp}
-                onClaim={async (claimCode) => {
-                    console.log(claimCode)
-                }}
                 onOpenChange={(open) => !open && setSelectedStamp(null)}
             />
         </div>
