@@ -51,8 +51,8 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     useEffect(() => {
         setDisabledClaim(Boolean(
             !stamp?.hasClaimCode ||
-            (stamp?.claimCodeStartTimestamp ? Number(stamp.claimCodeStartTimestamp) > Date.now() / 1000 : false) ||
-            (stamp?.claimCodeEndTimestamp ? Number(stamp.claimCodeEndTimestamp) < Date.now() / 1000 : false)
+            (stamp?.claimCodeStartTimestamp && Number(stamp.claimCodeStartTimestamp) <= Date.now() / 1000) ||
+            (stamp?.claimCodeEndTimestamp && Number(stamp.claimCodeEndTimestamp) >= Date.now() / 1000)
         ))
     }, [stamp, claimCode])
 

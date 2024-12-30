@@ -22,7 +22,6 @@ import { useCurrentAccount } from "@mysten/dapp-kit"
 import { useClaimStamps } from "@/hooks/use-stamp-crud"
 import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
-import { increaseClaimStampCount } from "@/lib/services/claim-stamps"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 
 interface AdminStampProps {
@@ -114,6 +113,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).onSuccess(async () => {
             await onStampClaimed()
             await refreshProfile(currentAccount?.address ?? '', networkVariables)
+            await refreshPassportStamps(networkVariables)
             toast({
                 title: "Stamp claimed successfully",
                 description: "Stamp claimed successfully",
@@ -229,11 +229,21 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             stamp: { id: selectedStamp?.id, claim_count: 1 },
             points: selectedStamp?.points
         })
-        await increaseClaimStampCount(selectedStamp?.id)
+        await fetch(`/api/claim-stamps/add`, {
+            method: "PATCH",
+            body: JSON.stringify({
+                stamp_id: selectedStamp?.id
+            })
+        })
     }
     const onStampSent = async (address: string) => {
         if (!selectedStamp?.id || !userProfile?.current_user) return
-        await increaseClaimStampCount(selectedStamp?.id)
+        await fetch(`/api/claim-stamps/add`, {
+            method: "PATCH",
+            body: JSON.stringify({
+                stamp_id: selectedStamp?.id
+            })
+        })
         await updateUserData(address, {
             stamp: { id: selectedStamp?.id, claim_count: 1 },
             points: selectedStamp?.points
