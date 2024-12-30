@@ -39,6 +39,14 @@ const columns: ColumnDef<RankItem>[] = [
     accessorKey: "stampsCount",
     header: "Stamps",
   },
+  {
+    accessorKey: "view",
+    header: "View",
+    cell: ({ row }) => {
+      const user = row.original.user
+      return <Link href={`/user/${user}`} target="_blank" className="text-blue-500 hover:underline">View</Link>
+    }
+  },
 ]
 
 export default function RankingPage() {
