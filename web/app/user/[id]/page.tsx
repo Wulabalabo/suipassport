@@ -23,7 +23,8 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const { userProfile, refreshProfile } = useUserProfile();
   const networkVariables = useNetworkVariables();
-  
+  const [isVisitor, setIsVisitor] = useState(false)
+
   useEffect(() => {
     if(!isValidSuiAddress(userId)){
       router.replace('/')
@@ -31,8 +32,10 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
     }
     if (currentAccount?.address === userId) {
       router.replace('/user')
+      setIsVisitor(false)
       return
     }
+    setIsVisitor(true)
     setIsLoading(false)
     if(!userProfile){
       refreshProfile(userId, networkVariables)
@@ -46,7 +49,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamp
         </p>
-        <StampGrid items={userProfile?.stamps || []} />
+        <StampGrid stamps={userProfile?.stamps || []} collection_detail={userProfile?.collection_detail || []} isVisitor={isVisitor}/>
       </div>
     </div> : null
   )

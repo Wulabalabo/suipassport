@@ -8,15 +8,17 @@ import { StampItem } from "@/types/stamp"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 
 type displayStamp = StampItem & {
-    isActive: boolean
+    isActive?: boolean
 }
 
 interface StampGridProps {
     stamps: StampItem[]
     collection_detail: string[]
+    isVisitor?: boolean
+    onCollect?: (stamp: StampItem) => void
 }
 
-export function StampGrid({ stamps,collection_detail }: StampGridProps) {
+export function StampGrid({ stamps,collection_detail,isVisitor,onCollect }: StampGridProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
     const [items, setItems] = useState<displayStamp[]>([])
@@ -26,15 +28,23 @@ export function StampGrid({ stamps,collection_detail }: StampGridProps) {
     const itemsPerPage = isDesktop ? 5 : 4
 
     useEffect(()=>{
-        if(stamps){
+        if(isVisitor){
+            const visitorStamps = stamps.some(stamp=>collection_detail.includes(stamp.id)) ? stamps : []
+            const activeStamps = visitorStamps.map(stamp=>({
+                ...stamp,
+                isActive: collection_detail?.includes(stamp.id)
+            }))
+            setItems(activeStamps)
+            return
+        }
+        if(stamps && !isVisitor){
             const activeStamps = stamps.map(stamp=>({
                 ...stamp,
-                isActive: collection_detail?.includes(stamp.id) ?? false
+                isActive: collection_detail?.includes(stamp.id)
             }))
-            console.log(activeStamps)
             setItems(activeStamps)
         }
-    },[stamps,collection_detail])
+    },[stamps,collection_detail,isVisitor])
     
     // 计算分页数据
     const paginatedData = useMemo(() => {
@@ -44,6 +54,14 @@ export function StampGrid({ stamps,collection_detail }: StampGridProps) {
     }, [items, currentPage, itemsPerPage])
 
     const totalPages = Math.ceil(items!.length / itemsPerPage)
+
+    const handleClick = (isActive: boolean,stamp: StampItem) => {
+        if(isActive){
+            setSelectedStamp(stamp)
+        }else{
+            onCollect?.(stamp)
+        }
+    }
 
     return (
         <div className="space-y-6 px-6 py-4">
@@ -62,8 +80,8 @@ export function StampGrid({ stamps,collection_detail }: StampGridProps) {
                     <StampCard
                         key={item.id}
                         stamp={item}
-                        onClick={() => setSelectedStamp(item)}
-                        isActive={item.isActive}
+                        onClick={handleClick}
+                        isActive={item.isActive ?? false}
                     />
                 ))}
             </div>

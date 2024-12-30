@@ -9,17 +9,21 @@ import { isValidSuiAddress } from '@mysten/sui/utils'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PassportFormValues } from '@/components/passport/passport-form'
-import { edit_passport } from '@/contracts/passport'
+import { edit_passport, show_stamp } from '@/contracts/passport'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
 import { useToast } from '@/hooks/use-toast'
+import { StampItem } from '@/types/stamp'
 
 export default function UserPage() {
   const router = useRouter();
   const currentAccount = useCurrentAccount()
   const { userProfile, refreshProfile } = useUserProfile();
   const networkVariables = useNetworkVariables();
-  const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
+  const { handleSignAndExecuteTransaction: handleEditStamp } = useBetterSignAndExecuteTransaction({
     tx: edit_passport
+  })
+  const { handleSignAndExecuteTransaction: handleShowStamp } = useBetterSignAndExecuteTransaction({
+    tx: show_stamp
   })
   const { toast } = useToast()
 
@@ -27,7 +31,7 @@ export default function UserPage() {
     if (!userProfile?.id.id || !currentAccount?.address) {
       return
     }
-    await handleSignAndExecuteTransaction({
+    await handleEditStamp({
       passport: userProfile?.id.id,
       name: passportFormValues.name,
       avatar: passportFormValues.avatar,
@@ -43,6 +47,23 @@ export default function UserPage() {
         variant: "default"
       })
     }).execute()  
+  }
+
+  const handleCollect = async (stamp: StampItem) => {
+    if (!userProfile?.id.id || !currentAccount?.address) {
+      return
+    }
+    await handleShowStamp({
+      passport: userProfile?.id.id,
+      stamp: stamp.id,
+    }).onSuccess(async () => {
+      await refreshProfile(currentAccount?.address ?? '', networkVariables)
+      toast({
+        title: "Collect Success",
+        description: "You have collected this stamp",
+        variant: "default"
+      })
+    }).execute()
   }
 
   useEffect(() => {
@@ -65,7 +86,7 @@ export default function UserPage() {
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamp
         </p>
-        <StampGrid stamps={userProfile?.stamps || []} collection_detail={userProfile?.collection_detail || []}/>
+        <StampGrid stamps={userProfile?.stamps || []} collection_detail={userProfile?.collection_detail || []} onCollect={handleCollect}/>
       </div>
     </div>
   )

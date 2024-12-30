@@ -76,3 +76,27 @@ export const edit_passport = createBetterTxFactory<{
     });
     return tx;
 });
+
+/*public fun show_stamp(
+    passport: &mut SuiPassport, 
+    stamp: &Stamp, 
+    clock: &Clock
+)*/
+
+export const show_stamp = createBetterTxFactory<{
+    passport: string;
+    stamp: string;
+}>((tx, networkVariables, params) => {
+    tx.moveCall({
+        package: networkVariables.package,
+        module: "sui_passport",
+        function: "show_stamp",
+        arguments: [
+            tx.object(params.passport),
+            tx.object(params.stamp),
+            tx.object("0x6"),
+        ],
+    });
+    return tx;
+});
+

@@ -4,11 +4,10 @@ import { StampItem } from "@/types/stamp"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import { useState } from "react"
-import { toast } from "@/hooks/use-toast"
 
 interface StampCardProps {
     stamp: StampItem
-    onClick: () => void
+    onClick: (isActive: boolean,stamp: StampItem) => void
     isActive: boolean
 }
 
@@ -16,15 +15,8 @@ export function StampCard({ stamp, onClick, isActive }: StampCardProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [imageError, setImageError] = useState(false)
 
-    const handleClick = () => {
-        if(isActive){
-            onClick()
-        }else{
-            toast({
-                title: "Please collect this stamp first",
-                variant: "destructive",
-            })
-        }
+    const handleClick = () => {        
+        onClick(isActive,stamp)
     }
 
     return (
