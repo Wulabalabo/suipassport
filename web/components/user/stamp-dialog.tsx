@@ -10,12 +10,14 @@ import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
+import { isClaimable } from "@/utils"
 
 interface StampDialogProps {
     stamp: StampItem | null
     open: boolean
     admin?: boolean
     isLoading?: boolean
+    isClaimable?: boolean
     onOpenChange: (open: boolean) => void
     onClaim?: (claimCode: string) => Promise<void>
     onSend?: (recipient: string) => Promise<void>
@@ -36,7 +38,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     const [recipient, setRecipient] = useState('')
     const [claimCode, setClaimCode] = useState('')
     const [isClaiming, setIsClaiming] = useState(false)
-    const [disabledClaim, setDisabledClaim] = useState(false)
+    const [canClaim, setCanClaim] = useState(false)
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
@@ -49,11 +51,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     }
 
     useEffect(() => {
-        setDisabledClaim(Boolean(
-            !stamp?.hasClaimCode ||
-            (stamp?.claimCodeStartTimestamp && Number(stamp.claimCodeStartTimestamp) <= Date.now() / 1000) ||
-            (stamp?.claimCodeEndTimestamp && Number(stamp.claimCodeEndTimestamp) >= Date.now() / 1000)
-        ))
+        if(stamp) setCanClaim(isClaimable(stamp))
     }, [stamp, claimCode])
 
 
@@ -133,7 +131,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                         )}
                         <Button
                             className="rounded-full"
-                            disabled={disabledClaim || claimCode.length === 0}
+                            disabled={!canClaim || claimCode.length === 0}
                             onClick={handleClaimStamp}
                         >
                             {isClaiming ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Claim Stamp'}

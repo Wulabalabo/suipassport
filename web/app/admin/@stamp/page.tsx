@@ -2,7 +2,7 @@
 
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CreateStampDialog } from "./components/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
@@ -23,15 +23,21 @@ import { useClaimStamps } from "@/hooks/use-stamp-crud"
 import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
 import { isValidSuiAddress } from "@mysten/sui/utils"
+import { isClaimable } from "@/utils"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
     admin: boolean
 }
 
+type DisplayStamp = StampItem & {
+    isClaimable: boolean
+}
+
 export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [currentPage, setCurrentPage] = useState(1)
-    const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
+    const [selectedStamp, setSelectedStamp] = useState<DisplayStamp | null>(null)
+    const [displayStamps, setDisplayStamps] = useState<DisplayStamp[]>([])
     const [searchQuery, setSearchQuery] = useState('')
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
     const { userProfile } = useUserProfile();
@@ -250,12 +256,18 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         })
     }
 
+    useEffect(()=>{
+        if(stamps){
+            const stampsWithClaimable = stamps.map(stamp=>({...stamp,isClaimable:isClaimable(stamp)}))
+            setDisplayStamps(stampsWithClaimable)
+        }
+    },[stamps])
 
     const handleFilterChange = (value: string) => {
         setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')
     }
     // Filter and sort stamps
-    const filteredStamps = stamps
+    const filteredStamps = displayStamps
         ?.filter(stamp =>
             stamp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             stamp.id.includes(searchQuery)
@@ -337,7 +349,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                                 <div className="flex flex-col justify-start items-start min-h-[100px] p-4 gap-y-2">
                                     <div className="flex justify-between items-center w-full">
                                         <div className="font-bold text-lg">{stamp.name}</div>
-                                        {stamp.hasClaimCode && <div className="animate-bounce text-blue-400">Claimable</div>}
+                                        {stamp.isClaimable && <div className="animate-bounce text-blue-400">Claimable</div>}
                                     </div>
 
                                     <div className="text-blue-400 max-w-48">
