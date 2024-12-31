@@ -7,7 +7,7 @@ import { CreateStampDialog } from "./components/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
-import { create_event_stamp, send_stamp } from "@/contracts/stamp"
+import { batch_send_stamp, create_event_stamp, send_stamp } from "@/contracts/stamp"
 import { useUserProfile } from "@/contexts/user-profile-context"
 import { useToast } from "@/hooks/use-toast"
 import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
@@ -41,6 +41,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [displayStamps, setDisplayStamps] = useState<DisplayStamp[]>([])
     const [searchQuery, setSearchQuery] = useState('')
     const [sortDirection, setSortDirection] = useState<'all' | 'claimable'>('all')
+    const [displayDialog, setDisplayDialog] = useState(false)
     const { userProfile } = useUserProfile();
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
@@ -57,6 +58,9 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     })
     const { handleSignAndExecuteTransaction: handleSendStampTx,isLoading:isSending } = useBetterSignAndExecuteTransaction({
         tx: send_stamp
+    })
+    const { handleSignAndExecuteTransaction: handleBatchSendStampTx,isLoading:isBatchSending } = useBetterSignAndExecuteTransaction({
+        tx: batch_send_stamp
     })
 
 
@@ -207,6 +211,22 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             await refreshPassportStamps(networkVariables)
         }).execute()
     }
+    const handleMultipleSendStamp = async (addresses: string[]) => {
+        if(!userProfile?.admincap || !selectedStamp?.id) return
+        handleBatchSendStampTx({
+            adminCap: userProfile?.admincap,
+            event: selectedStamp?.id,
+            name: selectedStamp?.name,
+            recipients: addresses
+        }).onSuccess(async () => {
+            toast({
+                title: 'Stamps sent successfully',
+                description: 'Stamps sent successfully',
+            })
+            await refreshPassportStamps(networkVariables)
+            setDisplayDialog(false)
+        }).execute()
+    }
 
     const onStampCreated = async (effects: string, values?: CreateStampFormValues) => {
         const digest = getDataFromEffects(effects)
@@ -321,7 +341,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                     {currentStamps?.map((stamp) => (
                         <div
                             key={stamp.id}
-                            onClick={() => setSelectedStamp(stamp)}
+                            onClick={() => {
+                                setSelectedStamp(stamp)
+                                setDisplayDialog(true)
+                            }}
                             className={`flex justify-between items-center bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer $`}
                         >
                             <div className="font-bold text-lg">{stamp.name}</div>
@@ -332,7 +355,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 <div className="lg:block hidden pt-6">
                     <div className="grid grid-cols-3 gap-6">
                         {currentStamps?.map((stamp) => (
-                            <StampCard key={stamp.id} stamp={stamp} setSelectedStamp={setSelectedStamp} />
+                            <StampCard key={stamp.id} stamp={stamp} setSelectedStamp={()=>{
+                                setSelectedStamp(stamp)
+                                setDisplayDialog(true)
+                            }} />
                         ))}
                     </div>
                 </div>
@@ -348,12 +374,17 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             </div>
             <StampDialog
                 stamp={selectedStamp}
-                open={!!selectedStamp}
+                open={displayDialog}
                 admin={admin}
                 onOpenChange={(open) => !open && setSelectedStamp(null)}
                 onClaim={handleStampClaim}
                 onSend={handleSendStamp}
-                isLoading={isSending || isCreatingClaimStamp || isUserLoading}
+                onMultipleSend={handleMultipleSendStamp}
+                isLoading={isSending || isCreatingClaimStamp || isUserLoading || isBatchSending}
+                onCloseClick={()=>{
+                    setDisplayDialog(false)
+                    setSelectedStamp(null)
+                }}
             />
         </div>
     )

@@ -86,6 +86,33 @@ export const send_stamp = createBetterTxFactory<{
     return tx;
 });
 
+/*public fun batch_send_stamp(
+    _admin: &AdminCap, 
+    event: &mut Event,
+    name: String,
+    mut recipients: vector<address>,
+    ctx: &mut TxContext
+) */
+export const batch_send_stamp = createBetterTxFactory<{
+    adminCap: string;
+    event: string;
+    name: string;
+    recipients: string[];
+}>((tx, networkVariables, params) => {
+    tx.moveCall({
+        package: `${networkVariables.package}`,
+        module: `send`,
+        function: `batch_send_stamp`,
+        arguments: [
+            tx.object(params.adminCap), 
+            tx.object(params.event), 
+            tx.pure.string(params.name), 
+            tx.pure.vector('address', params.recipients)
+        ]
+    });
+    return tx;
+});
+
 /*public fun set_admin(_admin: &AdminCap, recipient: address, ctx: &mut TxContext) */
 export const set_admin = createBetterTxFactory<{
     adminCap: string;

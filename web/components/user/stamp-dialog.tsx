@@ -10,7 +10,7 @@ import { X } from "lucide-react"
 import styles from "./stamp-dialog.module.css"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
-import { isClaimable } from "@/utils"
+import { isClaimable, parseExcel } from "@/utils"
 
 interface StampDialogProps {
     stamp: StampItem | null
@@ -21,6 +21,8 @@ interface StampDialogProps {
     onOpenChange: (open: boolean) => void
     onClaim?: (claimCode: string) => Promise<void>
     onSend?: (recipient: string) => Promise<void>
+    onMultipleSend?: (addresses: string[]) => Promise<void>
+    onCloseClick?: () => void
 }
 
 
@@ -33,12 +35,13 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend, onMultipleSend, onCloseClick }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [recipient, setRecipient] = useState('')
     const [claimCode, setClaimCode] = useState('')
     const [isClaiming, setIsClaiming] = useState(false)
     const [canClaim, setCanClaim] = useState(false)
+    const [addresses, setAddresses] = useState<string[]>([])
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
@@ -47,7 +50,30 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
             await onClaim(claimCode)
         }
         setIsClaiming(false)
+        resetAndClose()
+    }
+
+    const resetAndClose = () => {
+        setAddresses([])
+        setRecipient('')
+        setClaimCode('')
+        setIsClaiming(false)
         onOpenChange(false)
+        onCloseClick?.()
+    }
+
+    const handleUpload = () => {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = '.xlsx,.xls'
+        input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0]
+            if (file) {
+                const addresses = await parseExcel(file)
+                setAddresses(addresses)
+            }
+        }
+        input.click()
     }
 
     useEffect(() => {
@@ -56,7 +82,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
 
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={resetAndClose}>
             <DialogContent
                 className="overflow-y-auto lg:p-6 lg:max-w-screen-md w-11/12 focus:outline-none"
                 hideCloseButton={true}
@@ -69,7 +95,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                     </DialogTitle>
                     <X
                         className="w-6 h-6 cursor-pointer hover:opacity-70"
-                        onClick={() => onOpenChange(false)}
+                        onClick={resetAndClose}
                     />
                 </DialogHeader>
 
@@ -87,7 +113,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover transition-opacity duration-300 rounded-full"
                                 style={{ opacity: isImageLoading ? 0 : 1, objectFit: 'contain' }}
-                                onLoadingComplete={() => setIsImageLoading(false)}
+                                onLoad={() => setIsImageLoading(false)}
                             />
 
                         </div>
@@ -146,11 +172,24 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                                 Send To
                             </p>
                             <Input placeholder="Address" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
-                            <Button className="rounded-full" variant="outline">Upload</Button>
+                            <Button className="rounded-full" variant="outline" onClick={handleUpload}>Upload</Button>
                         </div>
-                        <Button className="rounded-full text-xl font-bold" onClick={() => onSend && onSend(recipient)} disabled={isLoading}>
+                        {addresses.length > 0 && (
+                            <div className="max-h-[200px] overflow-y-auto border rounded-lg p-4 space-y-2">
+                                {addresses.map((address, index) => (
+                                    <div key={index} className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-700">{address}</span>
+                                        <span className="text-gray-400">#{index + 1}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {addresses.length === 0 && <Button className="rounded-full text-xl font-bold" onClick={() => onSend && onSend(recipient)} disabled={isLoading}>
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send'}
-                        </Button>
+                        </Button>}
+                        {addresses.length > 0 && <Button className="rounded-full text-xl font-bold" onClick={() => onMultipleSend && onMultipleSend(addresses)} disabled={isLoading}>
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Multiple'}
+                        </Button>}
                     </div>
                 )}
             </DialogContent>

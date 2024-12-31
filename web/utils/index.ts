@@ -1,4 +1,6 @@
 import { StampItem } from "@/types/stamp"
+import { isValidSuiAddress } from "@mysten/sui/utils"
+import { read, utils } from "xlsx"
 
 export const isClaimable = (stamp: StampItem) => {
     // If no claim code exists, return false
@@ -31,4 +33,30 @@ export const isClaimable = (stamp: StampItem) => {
     }
 
     return false
+}
+
+export const parseExcel = (file: File): Promise<string[]> => {
+    return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = async (e) => {
+            const buffer = e.target?.result as ArrayBuffer
+            const data = new Uint8Array(buffer)
+            const workbook = read(data, { type: 'array' })
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+            const rows = utils.sheet_to_json(firstSheet)
+            const addresses = new Set<string>()
+            
+            rows.forEach((row: unknown) => {
+                if (typeof row === 'object' && row !== null) {
+                    const address = Object.values(row)[0]
+                    if (typeof address === 'string' && isValidSuiAddress(address)) {
+                        addresses.add(address)
+                    }
+                }
+            })
+            
+            resolve(Array.from(addresses))
+        }
+        reader.readAsArrayBuffer(file)
+    })
 }
