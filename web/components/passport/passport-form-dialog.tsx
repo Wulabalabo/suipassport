@@ -19,7 +19,7 @@ import { useUserProfile } from "@/contexts/user-profile-context";
 import { X } from "lucide-react";
 import { PassportForm, PassportFormValues } from "./passport-form";
 
-export function PassportFormDialog({ onSubmit }: { onSubmit: (values: PassportFormValues) => Promise<void> }) {
+export function PassportFormDialog({ onSubmit, isLoading }: { onSubmit: (values: PassportFormValues) => Promise<void>, isLoading: boolean }) {
   const currentAccount = useCurrentAccount();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,7 +27,7 @@ export function PassportFormDialog({ onSubmit }: { onSubmit: (values: PassportFo
   const networkVariables = useNetworkVariables();
   const router = useRouter();
   const { toast } = useToast();
-  const { userProfile,isLoading } = useUserProfile();
+  const { userProfile } = useUserProfile();
 
   useEffect(() => {
     async function checkProfile() {

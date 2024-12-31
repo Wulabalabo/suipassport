@@ -24,13 +24,14 @@ import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 import { isClaimable } from "@/utils"
+import StampCard from "./components/stamp-card"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
     admin: boolean
 }
 
-type DisplayStamp = StampItem & {
+export type DisplayStamp = StampItem & {
     isClaimable: boolean
 }
 
@@ -39,7 +40,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [selectedStamp, setSelectedStamp] = useState<DisplayStamp | null>(null)
     const [displayStamps, setDisplayStamps] = useState<DisplayStamp[]>([])
     const [searchQuery, setSearchQuery] = useState('')
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+    const [sortDirection, setSortDirection] = useState<'all' | 'claimable'>('all')
     const { userProfile } = useUserProfile();
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
@@ -64,7 +65,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Database connection error or stamp not selected",
+                description: "You should have a passport to claim a stamp",
             });
             return;
         }
@@ -264,21 +265,22 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     },[stamps])
 
     const handleFilterChange = (value: string) => {
-        setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')
+        setSortDirection(value === 'All' ? 'all' : 'claimable')
     }
     // Filter and sort stamps
     const filteredStamps = displayStamps
         ?.filter(stamp =>
-            stamp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            stamp.id.includes(searchQuery)
+            (stamp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            stamp.id.includes(searchQuery)) &&
+            (sortDirection === 'all' || (sortDirection === 'claimable' && stamp.isClaimable))
         )
         .sort((a, b) => {
             const dateA = new Date(a.timestamp ?? 0).getTime()
             const dateB = new Date(b.timestamp ?? 0).getTime()
-            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA
+            return dateB - dateA
         })
 
-    const ITEMS_PER_PAGE = 6
+    const ITEMS_PER_PAGE = 3
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
     const currentStamps = filteredStamps?.slice(startIndex, endIndex)
@@ -302,16 +304,16 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             <div className="py-6 lg:w-full lg:py-0">
                 <div className="lg:flex justify-between ">
                     <SearchFilterBar
-                        searchPlaceholder="Search by name or ID"
+                        searchPlaceholder="Search by name"
                         onSearchChange={setSearchQuery}
                         filterOptions={[
                             {
-                                value: "createdAt↑",
-                                label: "Created At ↑"
+                                value: "All",
+                                label: "All"
                             },
                             {
-                                value: "createdAt↓",
-                                label: "Created At ↓"
+                                value: "Claimable",
+                                label: "Claimable"
                             }
                         ]}
                         onFilterChange={handleFilterChange}
@@ -334,32 +336,14 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                             className={`flex justify-between items-center bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer $`}
                         >
                             <div className="font-bold text-lg">{stamp.name}</div>
-                            {stamp.hasClaimCode && <div className="text-blue-400">Claimable</div>}
+                            {stamp.isClaimable && <div className="text-blue-400">Claimable</div>}
                         </div>
                     ))}
                 </div>
                 <div className="lg:block hidden pt-6">
                     <div className="grid grid-cols-3 gap-6">
                         {currentStamps?.map((stamp) => (
-                            <div
-                                key={stamp.id}
-                                onClick={() => setSelectedStamp(stamp)}
-                                className={`block bg-white rounded-sm p-5 hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer`}
-                            >
-                                <div className="flex flex-col justify-start items-start min-h-[100px] p-4 gap-y-2">
-                                    <div className="flex justify-between items-center w-full">
-                                        <div className="font-bold text-lg">{stamp.name}</div>
-                                        {stamp.isClaimable && <div className="animate-bounce text-blue-400">Claimable</div>}
-                                    </div>
-
-                                    <div className="text-blue-400 max-w-48">
-                                        <p className="truncate">{stamp.description}</p>
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                        Created at: {stamp.timestamp ? new Date(stamp.timestamp).toLocaleDateString() : "N/A"}
-                                    </div>
-                                </div>
-                            </div>
+                            <StampCard key={stamp.id} stamp={stamp} setSelectedStamp={setSelectedStamp} />
                         ))}
                     </div>
                 </div>

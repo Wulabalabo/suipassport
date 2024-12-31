@@ -201,3 +201,14 @@ export const getEventFromDigest = async (digest: string) => {
     stamp.imageUrl = (tx.events?.[0]?.parsedJson as unknown as { image_url: string }).image_url;
     return stamp;
 }
+
+export const getSuiNSName = async (address: string) => {
+    const name = await suiClient.resolveNameServiceNames({
+        format: "dot",
+        address: address
+    })
+    if(name.data.length > 0) {
+        return name.data[0]
+    }
+    return address
+}

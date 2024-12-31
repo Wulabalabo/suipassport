@@ -8,6 +8,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
 import Link from "next/link"
+import { getSuiNSName } from "@/contracts/query"
 
 interface RankItem {
   rank: number
@@ -62,19 +63,21 @@ export default function RankingPage() {
       const users = await fetchUsers()
       if (users) {
         const sortedUsers = users.sort((a, b) => b.points - a.points)
-        setRankings(sortedUsers.map((user, index) => {
+        const rankings = await Promise.all(sortedUsers.map(async (user, index) => {
           const stamps = JSON.parse(user.stamps as unknown as string) as stamp[]
           let stampsCount = 0
           stamps.forEach((stamp) => {
             stampsCount += stamp.claim_count
           })
+          const name = await getSuiNSName(user.address)
           return {
             rank: index + 1,
-            user: user.address,
+            user: name,
             points: user.points,
             stampsCount: stampsCount
           }
         }))
+        setRankings(rankings)
       }
     }
     fetchData()

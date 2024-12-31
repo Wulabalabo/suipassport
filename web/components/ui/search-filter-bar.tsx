@@ -25,7 +25,7 @@ export function SearchFilterBar({
 }: SearchFilterBarProps) {
   return (
     <div className={`flex items-center justify-between gap-x-4 flex-shrink-0 ${className}`}>
-      <div className="relative flex-1 w-1/2">
+      <div className="relative flex-1 w-1/2 min-w-[200px]">
         <Input
           placeholder={searchPlaceholder}
           className="pr-10"

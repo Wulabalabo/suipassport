@@ -85,3 +85,18 @@ export const send_stamp = createBetterTxFactory<{
     });
     return tx;
 });
+
+/*public fun set_admin(_admin: &AdminCap, recipient: address, ctx: &mut TxContext) */
+export const set_admin = createBetterTxFactory<{
+    adminCap: string;
+    recipient: string;
+}>((tx, networkVariables, params) => {
+    tx.moveCall({
+        package: `${networkVariables.package}`,
+        module: `stamp`,
+        function: `set_admin`,
+        arguments: [tx.object(params.adminCap), tx.pure.address(params.recipient)]
+    });
+    return tx;
+});
+

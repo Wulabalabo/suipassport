@@ -17,14 +17,14 @@ import RankingPage from './@ranking/page'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
-  const { stamps,refreshPassportStamps } = usePassportsStamps()
-  const { refreshProfile } = useUserProfile()
+  const { stamps,refreshPassportStamps,isLoading:isPassportStampsLoading } = usePassportsStamps()
+  const { refreshProfile,isLoading:isUserLoading } = useUserProfile()
   const currentAccount = useCurrentAccount()
-  const { handleSignAndExecuteTransaction } = useBetterSignAndExecuteTransaction({
+  const { handleSignAndExecuteTransaction,isLoading:isMintingPassport } = useBetterSignAndExecuteTransaction({
     tx: mint_passport,
     delay: 2000
   })
-  const { createNewUser,fetchUserByAddress} = useUserCrud()
+  const { createNewUser,fetchUserByAddress,isLoading:isUserCrudLoading} = useUserCrud()
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
     await handleSignAndExecuteTransaction({
@@ -35,7 +35,7 @@ export default function Home() {
       github: values.github ?? '',
       email: ''
     }).onSuccess(async () => {
-      await onStampCreated()
+      await onPassportCreated()
       toast({
         title: "Passport minted successfully",
         description: "You can now view your passport in the profile page",
@@ -43,7 +43,7 @@ export default function Home() {
     }).execute()
   }
 
-  const onStampCreated = async () => {
+  const onPassportCreated = async () => {
     if(!currentAccount?.address){
       toast({
         title: "Error",
@@ -82,7 +82,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="lg:ml-auto text-center">
-                <PassportFormDialog onSubmit={handleSubmit} />
+                <PassportFormDialog onSubmit={handleSubmit} isLoading={isUserLoading || isUserCrudLoading || isPassportStampsLoading || isMintingPassport} />
               </div>
             </div>
             <p className="text-base lg:text-lg">The Sui community flourishes because of passionate members like you. Through content, conferences, events, and hackathons, your contributions help elevate our Sui Community. Now it&apos;s time to showcase your impact, gain recognition, and unlock rewards for your active participation. Connect your wallet today and claim your first stamp!</p>
