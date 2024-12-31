@@ -4,21 +4,21 @@ import { useState, useMemo, useEffect } from "react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { StampDialog } from "./stamp-dialog"
 import { StampCard } from "./stamp-card"
-import { StampItem } from "@/types/stamp"
+import { displayStamp, StampItem } from "@/types/stamp"
 import { PaginationControls } from "@/components/ui/pagination-controls"
+import { UserProfile } from "@/types"
 
-type displayStamp = StampItem & {
-    isActive?: boolean
-}
+
 
 interface StampGridProps {
-    stamps: StampItem[]
+    userProfile: UserProfile
+    allstamps: StampItem[]
     collection_detail: string[]
     isVisitor?: boolean
-    onCollect?: (stamp: StampItem) => void
+    onCollect?: (stamp: displayStamp) => void
 }
 
-export function StampGrid({ stamps,collection_detail,isVisitor,onCollect }: StampGridProps) {
+export function StampGrid({ userProfile, allstamps, collection_detail, isVisitor, onCollect }: StampGridProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
     const [items, setItems] = useState<displayStamp[]>([])
@@ -29,7 +29,7 @@ export function StampGrid({ stamps,collection_detail,isVisitor,onCollect }: Stam
 
     useEffect(()=>{
         if(isVisitor){
-            const visitorStamps = stamps.some(stamp=>collection_detail.includes(stamp.id)) ? stamps : []
+            const visitorStamps = userProfile?.stamps?.filter(stamp=>collection_detail.includes(stamp.id)) || []
             const activeStamps = visitorStamps.map(stamp=>({
                 ...stamp,
                 isActive: collection_detail?.includes(stamp.id)
@@ -37,14 +37,26 @@ export function StampGrid({ stamps,collection_detail,isVisitor,onCollect }: Stam
             setItems(activeStamps)
             return
         }
-        if(stamps && !isVisitor){
-            const activeStamps = stamps.map(stamp=>({
+        if(userProfile?.stamps && !isVisitor){
+            const activeStamps = userProfile?.stamps.map(stamp=>({
                 ...stamp,
-                isActive: collection_detail?.includes(stamp.id)
+                isActive: collection_detail?.includes(stamp.id),
+                eventId: allstamps.find(s=>s.name === stamp.event)?.id,
             }))
-            setItems(activeStamps)
+            console.log(activeStamps)
+            const displayStamps = activeStamps.map(stamp => {
+                const sameEventStamps = activeStamps.filter(s => s.eventId === stamp.eventId);
+                const hasActiveStampInEvent = sameEventStamps.some(s => s.isActive);
+                return {
+                    ...stamp,
+                    isCollectable: !hasActiveStampInEvent
+                };
+            });
+            
+            setItems(displayStamps)
         }
-    },[stamps,collection_detail,isVisitor])
+        
+    },[userProfile?.stamps,collection_detail,isVisitor,allstamps,userProfile?.db_profile])
     
     // 计算分页数据
     const paginatedData = useMemo(() => {
@@ -55,9 +67,9 @@ export function StampGrid({ stamps,collection_detail,isVisitor,onCollect }: Stam
 
     const totalPages = Math.ceil(items!.length / itemsPerPage)
 
-    const handleClick = (isActive: boolean,stamp: StampItem) => {
+    const handleClick = (isActive: boolean,stamp: displayStamp) => {
         if(isActive){
-            setSelectedStamp(stamp)
+            setSelectedStamp({...stamp})
         }else{
             onCollect?.(stamp)
         }

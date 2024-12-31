@@ -11,6 +11,7 @@ export type StampItem = {
     totalCountLimit?: number
     userCountLimit?: number
     claimCount?: number
+    event?: string
 }
 
 export interface StampGridProps {
@@ -25,6 +26,12 @@ export interface ClaimStampProps {
     claimCode: string
     claimCodeStartTimestamp: number
     claimCodeEndTimestamp: number
+}
+
+export type displayStamp = StampItem & {
+    isActive?: boolean
+    eventId?: string
+    isCollectable?: boolean
 }
 
 

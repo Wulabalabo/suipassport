@@ -172,6 +172,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             return
         }
         if (!userProfile?.admincap || !selectedStamp?.id) return
+        {/* check if user has this stamp */}
         let dbUser = await fetchUserByAddress(recipient)
         if(!dbUser?.data?.results[0]?.address){
             dbUser = await createNewUser({
@@ -192,6 +193,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             return
         }
 
+
         handleSendStampTx({
             adminCap: userProfile?.admincap,
             event: selectedStamp?.id,
@@ -202,7 +204,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 title: 'Stamp sent successfully',
                 description: 'Stamp sent successfully',
             })
-            await onStampSent(recipient)
             await refreshPassportStamps(networkVariables)
         }).execute()
     }
@@ -243,19 +244,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             })
         })
     }
-    const onStampSent = async (address: string) => {
-        if (!selectedStamp?.id || !userProfile?.current_user) return
-        await fetch(`/api/claim-stamps/add`, {
-            method: "PATCH",
-            body: JSON.stringify({
-                stamp_id: selectedStamp?.id
-            })
-        })
-        await updateUserData(address, {
-            stamp: { id: selectedStamp?.id, claim_count: 1 },
-            points: selectedStamp?.points
-        })
-    }
+
 
     useEffect(()=>{
         if(stamps){

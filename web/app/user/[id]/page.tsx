@@ -48,8 +48,8 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
         <ProfileCard userProfile={userProfile} />
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           Stamps
-        </p>
-        <StampGrid stamps={userProfile?.stamps || []} collection_detail={userProfile?.collection_detail || []} isVisitor={isVisitor}/>
+        </p>  
+        <StampGrid userProfile={userProfile!} allstamps={[]} collection_detail={userProfile?.collection_detail || []} isVisitor={isVisitor}/>
       </div>
     </div> : null
   )
