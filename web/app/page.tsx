@@ -29,8 +29,8 @@ export default function Home() {
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
     await handleSignAndExecuteTransaction({
       name: values.name,
-      avatar: values.avatar,
-      introduction: values.introduction,
+      avatar: values.avatar ?? '',
+      introduction: values.introduction ?? '',
       x: values.x ?? '',
       github: values.github ?? '',
       email: ''

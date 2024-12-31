@@ -18,8 +18,8 @@ import { ImageUpload } from "@/components/ui/image-upload";
 
 export const passportFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  avatar: z.string().min(1, "Please upload an avatar"),
-  introduction: z.string().min(10, "Introduction must be at least 10 characters"),
+  avatar: z.string().min(1, "Please upload an avatar").optional(),
+  introduction: z.string().min(10, "Introduction must be at least 10 characters").optional(),
   x: z.string().optional(),
   github: z.string().optional(),
 });
@@ -61,7 +61,7 @@ export function PassportForm({
               <FormControl>
                 <div className="flex flex-col items-center gap-4">
                   <ImageUpload
-                    value={field.value}
+                    value={field.value ?? ''}
                     onChange={field.onChange}
                     disabled={isSubmitting}
                   />

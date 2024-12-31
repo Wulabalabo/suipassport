@@ -52,10 +52,10 @@ export default function UserPage() {
     await handleEditStamp({
       passport: userProfile?.id.id,
       name: passportFormValues.name,
-      avatar: passportFormValues.avatar,
-      introduction: passportFormValues.introduction,
-      x: passportFormValues.x ?? "",
-      github: passportFormValues.github ?? "",
+      avatar: passportFormValues.avatar ?? '',
+      introduction: passportFormValues.introduction ?? '',
+      x: passportFormValues.x ?? '',
+      github: passportFormValues.github ?? '',
       email: "",
     }).onSuccess(async () => {
       await refreshProfile(currentAccount?.address ?? '', networkVariables)
