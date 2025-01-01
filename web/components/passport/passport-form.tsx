@@ -18,10 +18,10 @@ import { ImageUpload } from "@/components/ui/image-upload";
 
 export const passportFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  avatar: z.string().min(1, "Please upload an avatar").optional(),
-  introduction: z.string().min(10, "Introduction must be at least 10 characters").optional(),
-  x: z.string().optional(),
-  github: z.string().optional(),
+  avatar: z.string().optional().or(z.literal('')),
+  introduction: z.string().optional(),
+  x: z.string().optional().or(z.literal('')),
+  github: z.string().optional().or(z.literal('')),
 });
 
 export type PassportFormValues = z.infer<typeof passportFormSchema>;

@@ -47,7 +47,6 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
   })
 
   const onSubmit = async (values: CreateStampFormValues) => {
-    
     // Handle form submission
     handleCreateStamp(values);
     setIsOpen(false)
@@ -173,8 +172,13 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
                     <FormItem>
                       <FormLabel>Total Count Limit (optional, 0 is unlimited)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} placeholder="default is infinite" 
-                        onChange={e => field.onChange(Number(e.target.value))}/>
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(Number(e.target.value))}
+                          placeholder="unlimited"
+                          value={field.value === 0 ? '' : field.value}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
