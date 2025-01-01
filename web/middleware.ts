@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   
   // 开发环境下允许没有 origin 的请求通过
-  if (process.env.NODE_ENV === 'development' && !origin) {
+  if (!origin) {
     return NextResponse.next()
   }
 
@@ -24,8 +24,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 生产环境严格检查 origin
-  if (origin !== allowedOrigin) {
+  // 生产环境检查 origin
+  if (!origin.startsWith(allowedOrigin)) {
     return NextResponse.json(
       { error: 'Unauthorized access' },
       { 
