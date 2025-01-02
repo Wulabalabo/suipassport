@@ -18,12 +18,14 @@ export interface DbUser{
     points: number;
     created_at: string;
     updated_at: string;
+    name: string;
 }
 
 interface CreateUser {
     address: string;
     stamps: stamp[];
     points: number;
+    name: string;
 }
 
 interface SafeUpdateUser {

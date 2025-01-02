@@ -80,7 +80,7 @@ export function PassportForm({
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Your name" {...field} />
+                  <Input disabled={!!defaultValues?.name} placeholder="Your name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

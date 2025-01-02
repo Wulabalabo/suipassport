@@ -178,25 +178,18 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         if (!userProfile?.admincap || !selectedStamp?.id) return
         {/* check if user has this stamp */}
         let dbUser = await fetchUserByAddress(recipient)
-        if(!dbUser?.data?.results[0]?.address){
-            dbUser = await createNewUser({
-                address: recipient,
-                stamps: [],
-                points: 0
-            })
+        if(dbUser?.data?.results[0]?.address && isValidSuiAddress(dbUser?.data?.results[0]?.address)){
+            const stamps = dbUser?.data?.results[0]?.stamps as stamp[]  
+            const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
+            if(parsedStamps.some(stamp=>stamp.id===selectedStamp?.id)){
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "User already has this stamp",
+                });
+                return
+            }
         }
-        console.log("dbUser", dbUser)
-        const stamps = dbUser?.data?.results[0]?.stamps as stamp[]  
-        const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
-        if(parsedStamps.some(stamp=>stamp.id===selectedStamp?.id)){
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "User already has this stamp",
-            });
-            return
-        }
-
 
         handleSendStampTx({
             adminCap: userProfile?.admincap,

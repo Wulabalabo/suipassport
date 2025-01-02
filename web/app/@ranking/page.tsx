@@ -13,6 +13,7 @@ import { getSuiNSName } from "@/contracts/query"
 interface RankItem {
   rank: number
   user: string
+  address: string
   points: number
   stampsCount: number
 }
@@ -25,10 +26,14 @@ const columns: ColumnDef<RankItem>[] = [
   {
     accessorKey: "user",
     header: "User",
+  },
+  {
+    accessorKey: "address",
+    header: "Address",
     cell: ({ row }) => {
-      const user = row.original.user
+      const address = row.original.address
       return <div className="max-w-28 truncate lg:max-w-64">
-        {user}
+        {address}
       </div>
     }
   },
@@ -44,8 +49,8 @@ const columns: ColumnDef<RankItem>[] = [
     accessorKey: "view",
     header: "View",
     cell: ({ row }) => {
-      const user = row.original.user
-      return <Link href={`/user/${user}`} target="_blank" className="text-blue-500 hover:underline">View</Link>
+      const address = row.original.address
+      return <Link href={`/user/${address}`} target="_blank" className="text-blue-500 hover:underline">View</Link>
     }
   },
 ]
@@ -69,10 +74,10 @@ export default function RankingPage() {
           stamps.forEach((stamp) => {
             stampsCount += stamp.claim_count
           })
-          const name = await getSuiNSName(user.address)
           return {
             rank: index + 1,
-            user: name,
+            user: user.name ?? '',
+            address: user.address,
             points: user.points,
             stampsCount: stampsCount
           }

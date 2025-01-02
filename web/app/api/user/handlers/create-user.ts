@@ -4,11 +4,12 @@ import { stamp } from "@/types/db";
 
 export async function createUser(request: NextRequest) {
     try {
-        const { address, stamps, points } = await request.json() as { address: string, stamps: stamp[], points: number };
+        const { address, stamps, points, name } = await request.json() as { address: string, stamps: stamp[], points: number, name: string };   
         const user = await createUserService({
             address,
             stamps,
-            points
+            points,
+            name
         });
 
         return NextResponse.json(user, { status: 201 });

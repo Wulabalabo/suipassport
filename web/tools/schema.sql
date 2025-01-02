@@ -24,6 +24,7 @@ CREATE INDEX idx_timestamps ON claim_stamps(claim_code_start_timestamp, claim_co
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     address TEXT NOT NULL UNIQUE,
+    name TEXT,
     stamps JSON,  -- Cloudflare D1 supports JSON type for storing arrays
     points INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

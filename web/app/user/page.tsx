@@ -110,7 +110,7 @@ export default function UserPage() {
       <div className="bg-white rounded-t-2xl lg:pb-6 lg:rounded-b-2xl">
         <ProfileCard userProfile={userProfile} onEdit={handleEdit} />
         <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
-          My Stamp
+          My Stamps
         </p>
         <StampGrid userProfile={userProfile!} allstamps={stamps || []} collection_detail={userProfile?.collection_detail || []} onCollect={handleCollect} />
       </div>

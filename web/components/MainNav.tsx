@@ -4,12 +4,14 @@
 // import { Moon, Sun } from "lucide-react"
 // import { useTheme } from "next-themes"
 import { CustomConnectButton } from './custom-connect-button'
+import { useRouter } from 'next/navigation'
 
 export function MainNav() {
+  const router = useRouter()
   return (
     <header className="sticky top-0 z-50 w-full bg-background dark:bg-black">
       <div className="lg:h-28 lg:px-24 w-full h-[68px] px-6 border-border flex items-center justify-between border-b">
-        <div className="text-center">
+        <div className="text-center cursor-pointer" onClick={() => router.push('/')}>
           <span className="text-primary text-lg font-medium leading-loose tracking-tight lg:font-bold lg:text-4xl">Sui </span>
           <span className="text-lg font-medium leading-loose tracking-tight lg:font-bold lg:text-4xl">Passport</span>
         </div>

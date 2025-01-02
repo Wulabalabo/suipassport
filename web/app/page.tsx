@@ -35,7 +35,7 @@ export default function Home() {
       github: values.github ?? '',
       email: ''
     }).onSuccess(async () => {
-      await onPassportCreated()
+      await onPassportCreated(values.name)
       toast({
         title: "Passport minted successfully",
         description: "You can now view your passport in the profile page",
@@ -43,7 +43,7 @@ export default function Home() {
     }).execute()
   }
 
-  const onPassportCreated = async () => {
+  const onPassportCreated = async (name: string) => {
     if(!currentAccount?.address){
       toast({
         title: "Error",
@@ -57,7 +57,8 @@ export default function Home() {
       await createNewUser({
         address: currentAccount?.address,
         stamps: [],
-        points: 0
+        points: 0,
+        name: name
       })        
     }
     await refreshProfile(currentAccount?.address ?? '', networkVariables)

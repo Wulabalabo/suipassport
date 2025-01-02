@@ -2,6 +2,7 @@ export interface SafeUser {
     address: string;
     stamps: stamp[];  // JSON array stored as string
     points: number;
+    name?: string;
 }
 
 export interface stamp {
@@ -12,6 +13,7 @@ export interface stamp {
 export interface SafeUpdateUser {
     stamp?: stamp;
     points?: number;
+    name?: string;
 }
 
 export interface SafeClaimStamp {

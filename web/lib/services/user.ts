@@ -15,13 +15,13 @@ export const getUserByAddress = async (address: string) => {
 
 export const createUser = async (user: SafeUser) => {
     const query = `
-        INSERT INTO users (address, stamps, points) 
-        VALUES (?, ?, ?)
+        INSERT INTO users (address, stamps, points, name) 
+        VALUES (?, ?, ?, ?)
         RETURNING *
     `;
-    const params = [user.address, JSON.stringify(user.stamps), user.points];
+    const params = [user.address, JSON.stringify(user.stamps), user.points ?? 0, user.name ?? null];
     const result = await queryD1<SafeUser[]>(query, params);
-    return result
+    return result;
 }
 
 export const updateUser = async (address: string, update: SafeUpdateUser) => {
