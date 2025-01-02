@@ -205,7 +205,7 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
             </form>
           </Form>
         </div>
-        <div className="bottom-0 border-t bg-white px-6 py-4 mt-auto">
+        <div className="bottom-0 border-t bg-card border border-border px-6 py-4 mt-auto">
           <div className="flex justify-end gap-4">
             <Button
               type="button"

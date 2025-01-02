@@ -21,8 +21,7 @@ export default function Home() {
   const { refreshProfile,isLoading:isUserLoading } = useUserProfile()
   const currentAccount = useCurrentAccount()
   const { handleSignAndExecuteTransaction,isLoading:isMintingPassport } = useBetterSignAndExecuteTransaction({
-    tx: mint_passport,
-    delay: 2000
+    tx: mint_passport
   })
   const { createNewUser,fetchUserByAddress,isLoading:isUserCrudLoading} = useUserCrud()
 
@@ -71,7 +70,7 @@ export default function Home() {
 
   return (
     <div className="">
-      <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 lg:space-y-24">
+      <div className="w-full lg:p-24 lg:pb-48 bg-background lg:space-y-24">
         <>
           <div className="flex flex-col gap-4 px-4 lg:px-8">
             <div className="flex flex-col lg:flex-row lg:gap-x-3 gap-y-4">

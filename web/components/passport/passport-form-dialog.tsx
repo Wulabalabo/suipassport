@@ -79,7 +79,7 @@ export function PassportFormDialog({ onSubmit, isLoading }: { onSubmit: (values:
       {!hasPassport ? (
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
-            <RainbowButton className={`${isLoading ? 'opacity-50' : ''}`} disabled={isLoading}>Get Your Passport</RainbowButton>
+            <RainbowButton disabled={isLoading}>Get Your Passport</RainbowButton>
           </DialogTrigger>
           <DialogContent hideCloseButton className="sm:max-w-[500px] overflow-y-auto">
             <DialogHeader>

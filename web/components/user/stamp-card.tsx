@@ -20,7 +20,7 @@ export function StampCard({ stamp, onClick, isActive }: StampCardProps) {
     }
 
     return (
-        <Card className={`lg:rounded-2xl bg-gray-100 hover:translate-y-[-5px] cursor-pointer transition-all duration-300`} onClick={handleClick}>
+        <Card className={`lg:rounded-2xl bg-card border border-border shadow-md shadow-border hover:translate-y-[-5px] cursor-pointer transition-all duration-300`} onClick={handleClick}>
             <CardContent className="p-3 lg:p-6">
                 <div className="aspect-square rounded-lg relative overflow-hidden mb-2">
                     {stamp.imageUrl && !imageError ? (

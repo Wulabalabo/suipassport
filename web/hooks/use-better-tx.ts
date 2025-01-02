@@ -4,10 +4,11 @@ import { Transaction } from '@mysten/sui/transactions'
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
 import { SuiSignAndExecuteTransactionOutput } from '@mysten/wallet-standard'
 import { useState } from 'react'
+import { suiClient } from '@/contracts'
 
 export type BetterSignAndExecuteTransactionProps<TArgs extends unknown[] = unknown[]> = {
     tx: (...args: TArgs) => Transaction
-    delay?: number
+    waitForTx?: boolean
 }
 
 interface TransactionChain {
@@ -44,7 +45,9 @@ export function useBetterSignAndExecuteTransaction<TArgs extends unknown[] = unk
                 setIsLoading(true)
                 await signAndExecuteTransaction({ transaction: tx }, {
                     onSuccess: async (result) => {
-                        await new Promise(resolve => setTimeout(resolve, props.delay ?? 1000))
+                        if (props.waitForTx) {
+                            await suiClient.waitForTransaction({ digest: result.digest })
+                        }
                         await successCallback?.(result)
                     },
                     onError: (error) => {

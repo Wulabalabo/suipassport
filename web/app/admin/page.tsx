@@ -63,11 +63,11 @@ export default function AdminPage() {
   }, [networkVariables, refreshPassportStamps, userProfile, router])
 
   return (
-    <div className="w-full lg:p-24 lg:pb-48 bg-gray-100 space-y-24">
+    <div className="w-full lg:p-24 lg:pb-48 bg-background space-y-24">
       {(
         <>
-          <div className="absolute top-32 right-24">
-            <div className="flex w-72 gap-4 bg-white p-4 rounded-lg shadow-lg">
+          <div className="lg:absolute top-32 right-24 p-4">
+            <div className="flex w-72 gap-4 bg-card border border-border shadow-md shadow-border p-4 rounded-lg">
               <Input placeholder="Recipient" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
               <Button onClick={handleSetAdmin}>Set Admin</Button>
             </div>

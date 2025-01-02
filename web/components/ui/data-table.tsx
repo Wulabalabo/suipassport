@@ -37,7 +37,7 @@ export function DataTable<TData extends Record<string, any>>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow 
               key={headerGroup.id}
-              className="bg-gray-100 hover:bg-gray-100"
+              className="bg-muted hover:bg-muted"
             >
               {headerGroup.headers.map((header) => (
                 <TableHead 
@@ -61,7 +61,7 @@ export function DataTable<TData extends Record<string, any>>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="border-b hover:bg-gray-50"
+                className="border-b hover:bg-muted"
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell 

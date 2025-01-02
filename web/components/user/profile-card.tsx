@@ -58,22 +58,22 @@ export function ProfileCard({
                     <UserAvatar avatarUrl={userProfile.avatar} className="absolute -top-5 left-11" />
                 </div>
                 {/* Mobile View */}
-                <div className="mt-6 bg-blue-200 max-h-48 rounded-2xl lg:hidden">
+                <div className="mt-6 bg-muted border border-border shadow-md shadow-border max-h-48 rounded-2xl lg:hidden">
                     <div className="pl-6 pr-4 py-4">
                         {isEditing ? (
                             <div className="flex justify-end">
-                                <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={handleEditClick}><EditIcon className="w-4 h-4 text-gray-400" /> Edit</Button>
+                                <Button variant="outline" className="rounded-full bg-card border border-border shadow-md shadow-border text-lg font-me" onClick={handleEditClick}><EditIcon className="w-4 h-4 text-muted-foreground" /> Edit</Button>
                             </div>
                         ) : <div className="flex justify-end min-h-9"></div>}
                         {/* Avatar */}
                         <div className="flex flex-col justify-between gap-y-2 mt-6">
                             <h2 className="text-2xl font-medium">{userProfile.name}</h2>
-                            <p className="text-blue-900 text-sm font-normal tracking-tight leading-tight overflow-hidden">{userProfile.introduction}</p>
+                            <p className="text-muted-foreground text-sm font-normal tracking-tight leading-tight overflow-hidden">{userProfile.introduction}</p>
                         </div>
                     </div>
                 </div>
                 {/* Desktop View */}
-                <div className="hidden lg:block bg-blue-200 rounded-t-2xl px-12 py-6">
+                <div className="hidden lg:block bg-primary-foreground rounded-t-2xl px-12 py-6">
                     <div className="flex justify-start items-center gap-x-20">
                         <UserAvatar avatarUrl={userProfile.avatar} size={160} />
                         <div className="flex flex-col justify-between gap-y-2 max-w-sm">

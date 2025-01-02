@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
-import styles from "./stamp-dialog.module.css"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { isClaimable, parseExcel } from "@/utils"
@@ -28,9 +27,9 @@ interface StampDialogProps {
 
 function DetailItem({ label, value }: { label: string; value?: string | number }) {
     return (
-        <div className="gap-y-2">
-            <h4 className={styles.label}>{label}</h4>
-            <p className={styles.description}>{value || 'Not available'}</p>
+        <div className="gap-y-4 flex flex-col">
+            <h4 className="text-sm text-muted-foreground">{label}</h4>
+            <p className="text">{value || 'Not available'}</p>
         </div>
     )
 }
@@ -90,8 +89,9 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                 aria-describedby={undefined}
             >
                 <DialogHeader className="flex flex-row justify-between">
-                    <DialogTitle className="flex justify-between items-center text-3xl font-bold">
-                        {stamp?.name}
+                    <DialogTitle className="flex justify-between gap-x-4 items-center text-3xl font-bold">
+                        <p className="text-primary">{stamp?.name.split('#')[0]}</p>
+                        <p className="text-primary">{stamp?.name.split('#')[1] ?  '#' + stamp?.name.split('#')[1] : ''}</p>
                     </DialogTitle>
                     <X
                         className="w-6 h-6 cursor-pointer hover:opacity-70"
@@ -102,7 +102,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                 <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:gap-x-12 lg:py-9">
                     {/* Image Container */}
                     <div className="w-full lg:w-1/2 flex flex-col">
-                        <div className="w-40 h-40 aspect-square rounded-full bg-gray-100 flex items-center justify-center relative overflow-hidden self-center">
+                        <div className="w-40 h-40 aspect-square rounded-full bg-card border border-border shadow-md shadow-border flex items-center justify-center relative overflow-hidden self-center">
                             {!stamp?.imageUrl && isImageLoading && (
                                 <Skeleton className="absolute inset-0" />
                             )}

@@ -8,7 +8,6 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
 import Link from "next/link"
-import { getSuiNSName } from "@/contracts/query"
 
 interface RankItem {
   rank: number
@@ -102,7 +101,7 @@ export default function RankingPage() {
 
 
   return (
-    <div className="p-6 space-y-6 lg:bg-white lg:rounded-3xl lg:p-12">
+    <div className="p-6 space-y-6 lg:rounded-3xl bg-card shadow-lg shadow-border border border-border lg:p-12">
       <div className="lg:flex lg:justify-between lg:items-center space-y-6 lg:space-y-0 pb-6">
         <h1 className="text-4xl font-bold">Top Contributors</h1>
       </div>

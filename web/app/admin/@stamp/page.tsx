@@ -48,7 +48,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const { refreshProfile } = useUserProfile()
     const { createClaimStamp,isLoading:isCreatingClaimStamp } = useClaimStamps()
     const { toast } = useToast();
-    const { updateUserData,fetchUserByAddress,createNewUser,isLoading:isUserLoading } = useUserCrud()
+    const { updateUserData,fetchUserByAddress,isLoading:isUserLoading } = useUserCrud()
     const networkVariables = useNetworkVariables()
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
         tx: create_event_stamp
@@ -177,7 +177,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }
         if (!userProfile?.admincap || !selectedStamp?.id) return
         {/* check if user has this stamp */}
-        let dbUser = await fetchUserByAddress(recipient)
+        const dbUser = await fetchUserByAddress(recipient)
         if(dbUser?.data?.results[0]?.address && isValidSuiAddress(dbUser?.data?.results[0]?.address)){
             const stamps = dbUser?.data?.results[0]?.stamps as stamp[]  
             const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
@@ -338,7 +338,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                                 setSelectedStamp(stamp)
                                 setDisplayDialog(true)
                             }}
-                            className={`flex justify-between items-center bg-gray-200 rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer $`}
+                            className={`flex justify-between items-center bg-card border border-border shadow shadow-border rounded-sm p-5 hover:bg-gray-300 transition-colors cursor-pointer $`}
                         >
                             <div className="font-bold text-lg">{stamp.name}</div>
                             {stamp.isClaimable && <div className="text-blue-400">Claimable</div>}

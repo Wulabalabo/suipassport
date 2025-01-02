@@ -106,10 +106,10 @@ export default function UserPage() {
   }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router, stamps])
 
   return (
-    <div className="lg:p-24 bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white rounded-t-2xl lg:pb-6 lg:rounded-b-2xl">
+    <div className="lg:p-24 bg-background">
+      <div className="bg-card lg:shadow-lg lg:shadow-border lg:border border-border rounded-t-2xl lg:pb-6 lg:rounded-b-2xl">
         <ProfileCard userProfile={userProfile} onEdit={handleEdit} />
-        <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
+        <p className="pt-6 lg:pt-12 px-6 text-muted-foreground text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamps
         </p>
         <StampGrid userProfile={userProfile!} allstamps={stamps || []} collection_detail={userProfile?.collection_detail || []} onCollect={handleCollect} />

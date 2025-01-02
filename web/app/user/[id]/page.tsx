@@ -43,10 +43,10 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   }, [currentAccount?.address, userId, networkVariables, router, refreshProfile, userProfile])
   
   return (
-    !isLoading ? <div className="lg:p-24 bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white rounded-t-2xl lg:pb-6 lg:rounded-b-2xl">
+    !isLoading ? <div className="lg:p-24 bg-background">
+      <div className="bg-card border border-border shadow-md shadow-border rounded-t-2xl lg:pb-6 lg:rounded-b-2xl">
         <ProfileCard userProfile={userProfile} />
-        <p className="pt-6 lg:pt-12 px-6 text-gray-500 text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
+        <p className="pt-6 lg:pt-12 px-6 text-muted-foreground text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           Stamps
         </p>  
         <StampGrid userProfile={userProfile!} allstamps={[]} collection_detail={userProfile?.collection_detail || []} isVisitor={isVisitor}/>

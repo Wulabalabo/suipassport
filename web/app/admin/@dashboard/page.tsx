@@ -61,7 +61,7 @@ const passportColumns: ColumnDef<PassportItem>[] = [
     cell: ({ row }) => {
       return (
         <div 
-          className="max-w-xs cursor-pointer underline text-blue-600" 
+          className="max-w-xs cursor-pointer underline text-blue-600 truncate" 
           onClick={() => window.open(`/user/${row.original.sender}`, '_blank')}
         >
           {row.original.sender}
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 lg:bg-white lg:rounded-3xl lg:p-12">
+    <div className="p-6 space-y-6 bg-card border border-border shadow-md shadow-border lg:rounded-3xl lg:p-12">
       <div className="lg:flex lg:justify-between lg:items-center space-y-6 lg:space-y-0 pb-6">
         <h1 className="text-4xl font-bold">Dashboard</h1>
 
