@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/apiClient';
 import { stamp } from '@/types/db';
 import { useState } from 'react';
 
@@ -54,10 +55,10 @@ export function useUserCrud(): UseUserCrudReturn {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch('/api/user', {
+            const response = await apiFetch<DbResponse>('/api/user', {
                 method: 'GET'
             })
-            const data = await response.json() as DbResponse;
+            const data = await response;
             console.log("fetchUsers data", data)
             if (!data.success) {
                 throw new Error(data.error);
@@ -75,10 +76,10 @@ export function useUserCrud(): UseUserCrudReturn {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch(`/api/user/id?address=${address}`, {
+            const response = await apiFetch<DbResponse>(`/api/user/id?address=${address}`, {
                 method: 'GET',
             })
-            const data = await response.json() as DbResponse;
+            const data = await response
             console.log("fetchUserByAddress data", data)
             if (!data.success) {
                 setError(data.error ?? 'Failed to fetch user');
@@ -97,11 +98,11 @@ export function useUserCrud(): UseUserCrudReturn {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch('/api/user', {
+            const response = await apiFetch<DbResponse>('/api/user', {
                 method: 'POST',
                 body: JSON.stringify(user)
             })
-            const data = await response.json() as DbResponse;
+            const data = await response
             if (!data.success) {
                 setError(data.error ?? 'Failed to create user');
                 return data;
@@ -123,11 +124,11 @@ export function useUserCrud(): UseUserCrudReturn {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch('/api/user', {
+            const response = await apiFetch<DbResponse>('/api/user', {
                 method: 'PATCH',
                 body: JSON.stringify({ address, ...updates })
             })
-            const data = await response.json() as DbResponse;
+            const data = await response
             if (!data.success) {
                 setError(data.error ?? 'Failed to update user');
                 return data;
@@ -145,11 +146,11 @@ export function useUserCrud(): UseUserCrudReturn {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch('/api/user/points', {
+            const response = await apiFetch<DbResponse>('/api/user/points', {
                 method: 'PATCH',
                 body: JSON.stringify({ address, points })
             })
-            const data = await response.json() as DbResponse;
+            const data = await response
             if (!data.success) {
                 setError(data.error ?? 'Failed to sync user points');
                 return data;
@@ -167,11 +168,11 @@ export function useUserCrud(): UseUserCrudReturn {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch('/api/user', {
+            const response = await apiFetch<DbResponse>('/api/user', {
                 method: 'DELETE',
                 body: JSON.stringify({ address })
             })
-            const data = await response.json() as DbResponse;
+            const data = await response
             if (!data.success) {
                 setError(data.error ?? 'Failed to delete user');
                 return data;

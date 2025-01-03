@@ -3,7 +3,7 @@
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { useEffect, useState } from "react"
-import { CreateStampDialog } from "./components/create-stamp-dialog"
+import { CreateStampDialog } from "../../../components/stamps/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
 import { StampItem } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
@@ -24,7 +24,7 @@ import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 import { isClaimable } from "@/utils"
-import StampCard from "./components/stamp-card"
+import StampCard from "../../../components/stamps/stamp-card"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;

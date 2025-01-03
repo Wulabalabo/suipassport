@@ -2,7 +2,7 @@ import { queryD1 } from '@/lib/db';
 import type { ClaimStamp } from '@/lib/validations/claim-stamp';
 import type { SafeClaimStamp } from '@/types/db';
 
-export async function getClaimStamps() {
+export async function getClaimStamps(): Promise<SafeClaimStamp[]|undefined> {
   try {
     const query = `
     SELECT 

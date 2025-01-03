@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ConnectModal, useAccounts, useCurrentAccount, useCurrentWallet, useDisconnectWallet, useSwitchAccount } from '@mysten/dapp-kit'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +16,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { useNetworkVariables } from '@/contracts'
 import { isValidSuiObjectId } from '@mysten/sui/utils'
+import { setToken, removeToken } from '@/lib/jwtManager'
 
 export function CustomConnectButton() {
   const [open, setOpen] = useState(false)
@@ -29,11 +30,21 @@ export function CustomConnectButton() {
   const networkVariables = useNetworkVariables()
   const currentAccount = useCurrentAccount()
 
-  useEffect(() => {
-    if (currentAccount?.address) {
-      refreshProfile(currentAccount.address, networkVariables)
+
+  const onConnected = useCallback(async () => {
+    if (currentAccount?.address && connectionStatus === "connected") { 
+      const address = currentAccount.address
+      await setToken({ address })
+      await refreshProfile(address, networkVariables)
     }
-  }, [connectionStatus, currentAccount?.address, networkVariables, refreshProfile])
+    if (connectionStatus === "disconnected") {
+      await removeToken()
+    }
+  }, [currentAccount?.address, connectionStatus, networkVariables, refreshProfile])
+
+  useEffect(() => {
+    onConnected()
+  }, [onConnected])
 
   if (!accounts.length) {
     return (

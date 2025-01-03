@@ -6,15 +6,6 @@ import { fromHex } from '@mysten/sui/utils';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { ClaimStampResponse } from '@/types';
 
-export const config = {
-    api:{
-        responseLimit: false,
-        bodyParser:{
-            sizeLimit: '10mb'
-        }
-    }
-}
-
 export async function POST(request: Request) {
     try {
         // 验证请求体参数

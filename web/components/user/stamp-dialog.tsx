@@ -61,6 +61,16 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
         onCloseClick?.()
     }
 
+    const handleDownload = () => {
+        // 创建一个隐藏的 a 标签来触发下载
+        const link = document.createElement('a')
+        link.href = '/templates/address-template.xlsx'
+        link.download = 'address-template.xlsx'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+
     const handleUpload = () => {
         const input = document.createElement('input')
         input.type = 'file'
@@ -167,12 +177,32 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
 
                 {admin && (
                     <div className="flex flex-col gap-4 gap-y-6 pt-6">
-                        <div className="flex items-center gap-2">
-                            <p className="text-sm text-gray-500 flex-shrink-0">
-                                Send To
-                            </p>
-                            <Input placeholder="Address" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
-                            <Button className="rounded-full" variant="outline" onClick={handleUpload}>Upload</Button>
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1">
+                                    <Input 
+                                        placeholder="Enter wallet address" 
+                                        value={recipient} 
+                                        onChange={(e) => setRecipient(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        className="rounded-full whitespace-nowrap"
+                                        variant="outline"
+                                        onClick={handleUpload}
+                                    >
+                                        Upload CSV
+                                    </Button>
+                                    <Button
+                                        className="rounded-full whitespace-nowrap"
+                                        variant="ghost"
+                                        onClick={handleDownload}
+                                    >
+                                        Get Template
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                         {addresses.length > 0 && (
                             <div className="max-h-[200px] overflow-y-auto border rounded-lg p-4 space-y-2">
