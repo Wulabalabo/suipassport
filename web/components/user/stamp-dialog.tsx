@@ -94,7 +94,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
         <Dialog open={open} onOpenChange={resetAndClose}>
             <DialogContent
                 className="overflow-y-auto lg:p-6 lg:max-w-screen-md w-11/12 focus:outline-none"
-                hideCloseButton={true}
+                hideCloseButton
                 aria-description="Stamp Dialog"
                 aria-describedby={undefined}
             >

@@ -16,11 +16,11 @@ import {
 } from "@tanstack/react-table"
 
 interface DataTableProps<TData> {
-  columns: ColumnDef<TData, any>[]
+  columns: ColumnDef<TData, unknown>[]
   data: TData[]
 }
 
-export function DataTable<TData extends Record<string, any>>({
+export function DataTable<TData extends Record<string, unknown>>({
   columns,
   data,
 }: DataTableProps<TData>) {
