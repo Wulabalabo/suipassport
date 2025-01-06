@@ -3,7 +3,12 @@ import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/jwtManager'
 
 export const config = {
-  matcher: ['/api/:path*', '/user/:path*','/admin/:path*'],
+  matcher: [
+    '/api/:path*',
+    '/user',
+    '/user/(?!\\[id\\])[^/]*$',
+    '/admin/:path*'
+  ],
 }
 
 export function middleware(request: NextRequest) {
