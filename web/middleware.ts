@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/jwtManager'
 
+// 配置中间件匹配的路由规则
 export const config = {
   matcher: [
     '/api/:path*',
-    '/user',
-    '/user/(?!\\[id\\])[^/]*$',
+    '/user$',
     '/admin/:path*'
   ],
 }
