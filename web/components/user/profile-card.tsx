@@ -15,11 +15,13 @@ interface ProfileCardProps {
     userProfile: UserProfile | null
     onEdit?: (passportFormValues: PassportFormValues) => Promise<void>
     hideEditButton?: boolean
+    isLoading?: boolean
 }
 
 export function ProfileCard({
     userProfile,
-    onEdit
+    onEdit,
+    isLoading
 }: ProfileCardProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [showEditDialog, setShowEditDialog] = useState(false)
@@ -82,7 +84,7 @@ export function ProfileCard({
                         </div>
                         {isEditing && (
                             <div className="self-start flex-1 flex justify-end">
-                                <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={handleEditClick}><EditIcon className="w-4 h-4 text-gray-400" /> Edit</Button>
+                                <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={handleEditClick} disabled={isLoading}><EditIcon className="w-4 h-4 text-gray-400" /> Edit</Button>
                             </div>
                         )}
                     </div>

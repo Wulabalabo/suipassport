@@ -6,7 +6,7 @@ import { useNetworkVariables } from '@/contracts'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { useCurrentAccount } from '@mysten/dapp-kit'
 import { isValidSuiAddress } from '@mysten/sui/utils'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PassportFormValues } from '@/components/passport/passport-form'
 import { edit_passport, show_stamp } from '@/contracts/passport'
@@ -23,7 +23,7 @@ export default function UserPage() {
   const { updateUserData } = useUserCrud();
   const { stamps } = usePassportsStamps();
   const networkVariables = useNetworkVariables();
-  const { handleSignAndExecuteTransaction: handleEditStamp } = useBetterSignAndExecuteTransaction({
+  const { handleSignAndExecuteTransaction: handleEditStamp, isLoading: isEditingStamp } = useBetterSignAndExecuteTransaction({
     tx: edit_passport
   })
   const { handleSignAndExecuteTransaction: handleShowStamp } = useBetterSignAndExecuteTransaction({
@@ -93,22 +93,24 @@ export default function UserPage() {
     }).execute()
   }
 
-  useEffect(() => {
-    if (!userProfile || userProfile?.last_time === 0) {
-      router.push("/")
-      return
-    }
+  const fetchUserProfile = useCallback(async () => {
     if (currentAccount?.address && isValidSuiAddress(currentAccount.address)) {
+      await refreshProfile(currentAccount.address, networkVariables)
+    }else{
       if (!userProfile) {
-        refreshProfile(currentAccount.address, networkVariables)
+        router.push("/")  
       }
     }
-  }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router, stamps])
+  }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router])
+
+  useEffect(() => {
+    fetchUserProfile()
+  }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router, stamps, fetchUserProfile])
 
   return (
     <div className="lg:p-24 bg-background">
       <div className="bg-card lg:shadow-lg lg:shadow-border lg:border border-border rounded-t-2xl lg:pb-6 lg:rounded-b-2xl">
-        <ProfileCard userProfile={userProfile} onEdit={handleEdit} />
+        <ProfileCard userProfile={userProfile} onEdit={handleEdit} isLoading={isEditingStamp} />
         <p className="pt-6 lg:pt-12 px-6 text-muted-foreground text-2xl font-medium leading-loose tracking-tight lg:text-3xl lg:font-bold">
           My Stamps
         </p>

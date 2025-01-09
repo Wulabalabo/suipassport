@@ -10,6 +10,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StampItem } from "@/types/stamp"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { PassportItem } from "@/types/passport"
+import Link from "next/link"
 
 const stampColumns: ColumnDef<StampItem>[] = [
   {
@@ -62,9 +63,8 @@ const passportColumns: ColumnDef<PassportItem>[] = [
       return (
         <div 
           className="max-w-xs cursor-pointer underline text-blue-600 truncate" 
-          onClick={() => window.open(`/user/${row.original.sender}`, '_blank')}
         >
-          {row.original.sender}
+          <Link href={`/user/${row.original.sender}`} target="_blank">{row.original.sender}</Link>
         </div>
       )
     }
