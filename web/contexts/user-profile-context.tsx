@@ -5,12 +5,14 @@ import { UserProfile } from '@/types';
 import { checkUserState } from '@/contracts/query';
 import { NetworkVariables } from '@/contracts';
 import { useUserCrud } from '@/hooks/use-user-crud';
+import { setToken } from '@/lib/jwtManager'
 
 interface UserProfileContextType {
   userProfile: UserProfile | null;
   isLoading: boolean;
   error: Error | null;
   refreshProfile: (address: string, networkVariables: NetworkVariables) => Promise<void>;
+  getPageUserProfile: (address: string, networkVariables: NetworkVariables) => Promise<UserProfile | undefined | null>;
   clearProfile: () => void;
 }
 
@@ -30,6 +32,7 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
     try {
       setIsLoading(true);
       setError(null);
+      await setToken({ address })
       const profile = await checkUserState(address, networkVariables);
       await syncUserPoints(address, profile?.points ?? 0);
       const dbProfile = await fetchUserByAddress(address);
@@ -53,6 +56,16 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
     }
   }, []);
 
+  const getPageUserProfile = useCallback(async (address: string, networkVariables: NetworkVariables): Promise<UserProfile| undefined | null> => {
+    try {
+      const profile = await checkUserState(address, networkVariables);
+      return profile;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
+      console.error('Error fetching profile:', err);
+    }
+  }, []);
+
   const clearProfile = useCallback(() => {
     setUserProfile(null);
     setError(null);
@@ -63,8 +76,9 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
     isLoading,
     error,
     refreshProfile,
+    getPageUserProfile,
     clearProfile,
-  }), [userProfile, isLoading, error, refreshProfile, clearProfile]);
+  }), [userProfile, isLoading, error, refreshProfile, getPageUserProfile, clearProfile]);
 
   return (
     <UserProfileContext.Provider value={value}>

@@ -205,8 +205,8 @@ export default function AdminDashboard() {
             </div>
           </div>
           <DataTable
-            columns={columns}
-            data={paginatedData}
+            columns={columns as ColumnDef<Record<string, unknown>, unknown>[]}
+            data={paginatedData as Record<string, unknown>[]}
           />
           <div className="lg:hidden">
             <PaginationControls

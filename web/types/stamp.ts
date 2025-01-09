@@ -34,4 +34,10 @@ export type displayStamp = StampItem & {
     isCollectable?: boolean
 }
 
+export type VerifyClaimStampRequest = {
+    stamp_id: string
+    claim_code: string
+    passport_id: string
+    last_time: number
+}
 

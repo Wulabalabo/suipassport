@@ -58,7 +58,7 @@ export default function UserPage() {
       github: passportFormValues.github ?? '',
       email: "",
     }).onSuccess(async () => {
-      await refreshProfile(currentAccount?.address ?? '', networkVariables)
+      await refreshProfile(currentAccount?.address, networkVariables)
       toast({
         title: "Edit Success",
         description: "Your passport has been updated",

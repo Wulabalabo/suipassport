@@ -8,6 +8,7 @@ import { use, useEffect, useState } from 'react'
 import { isValidSuiAddress } from '@mysten/sui/utils'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { useNetworkVariables } from '@/contracts'
+import { UserProfile } from '@/types'
 
 interface UserProfilePageProps {
   params: Promise<{
@@ -21,26 +22,31 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   const resolvedParams = use(params)
   const userId = resolvedParams.id
   const [isLoading, setIsLoading] = useState(true)
-  const { userProfile, refreshProfile } = useUserProfile();
+  const { getPageUserProfile} = useUserProfile();
   const networkVariables = useNetworkVariables();
   const [isVisitor, setIsVisitor] = useState(false)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   useEffect(() => {
     if(!isValidSuiAddress(userId)){
       router.replace('/')
       return
     }
-    if (currentAccount?.address === userId) {
-      router.replace('/user')
+    if (currentAccount?.address === userId) {      
       setIsVisitor(false)
+      router.replace('/user')
       return
     }
     setIsVisitor(true)
     setIsLoading(false)
     if(!userProfile){
-      refreshProfile(userId, networkVariables)
+      getPageUserProfile(userId, networkVariables).then((profile) => {
+        if(profile){
+          setUserProfile(profile)
+        }
+      })
     }
-  }, [currentAccount?.address, userId, networkVariables, router, refreshProfile, userProfile])
+  }, [currentAccount?.address, userId, networkVariables, router, userProfile, getPageUserProfile])
   
   return (
     !isLoading ? <div className="lg:p-24 bg-background">

@@ -16,7 +16,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { useNetworkVariables } from '@/contracts'
 import { isValidSuiObjectId } from '@mysten/sui/utils'
-import { setToken, removeToken } from '@/lib/jwtManager'
+import { removeToken } from '@/lib/jwtManager'
 
 export function CustomConnectButton() {
   const [open, setOpen] = useState(false)
@@ -34,7 +34,6 @@ export function CustomConnectButton() {
   const onConnected = useCallback(async () => {
     if (currentAccount?.address && connectionStatus === "connected") { 
       const address = currentAccount.address
-      await setToken({ address })
       await refreshProfile(address, networkVariables)
     }
     if (connectionStatus === "disconnected") {

@@ -5,7 +5,7 @@ import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { useEffect, useState } from "react"
 import { CreateStampDialog } from "../../../components/stamps/create-stamp-dialog"
 import { StampDialog } from "@/components/user/stamp-dialog"
-import { StampItem } from "@/types/stamp"
+import { StampItem, VerifyClaimStampRequest } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
 import { batch_send_stamp, create_event_stamp, send_stamp } from "@/contracts/stamp"
 import { useUserProfile } from "@/contexts/user-profile-context"
@@ -15,7 +15,6 @@ import { getEventFromDigest } from "@/contracts/query"
 import { ClaimStamp } from "@/lib/validations/claim-stamp"
 import { getDataFromEffects } from "@/lib/utils"
 import { claim_stamp } from "@/contracts/claim"
-import { ClaimStampResponse } from "@/types"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { useNetworkVariables } from "@/contracts"
 import { useCurrentAccount } from "@mysten/dapp-kit"
@@ -46,10 +45,11 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
-    const { createClaimStamp,isLoading:isCreatingClaimStamp } = useClaimStamps()
+    const { createClaimStamp,isLoading:isCreatingClaimStamp,verifyClaimStamp,increaseClaimStampCount } = useClaimStamps()
     const { toast } = useToast();
     const { updateUserData,fetchUserByAddress,isLoading:isUserLoading } = useUserCrud()
     const networkVariables = useNetworkVariables()
+
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
         tx: create_event_stamp
     })
@@ -91,18 +91,14 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             });
             return
         }
-        const requestBody = {
+        const requestBody: VerifyClaimStampRequest = {
             stamp_id: selectedStamp?.id,
             claim_code: claimCode,
             passport_id: userProfile?.id.id,
             last_time: userProfile?.last_time
         }
         console.log(requestBody)
-        const result = await fetch("/api/claim-stamps/verify", {
-            method: "POST",
-            body: JSON.stringify(requestBody)
-        })
-        const data = await result.json() as ClaimStampResponse
+        const data = await verifyClaimStamp(requestBody)
 
         if (!data.signature || !data.valid) {
             toast({
@@ -112,10 +108,8 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             });
             return
         }
-
         // Convert signature object to array
         const signatureArray = Object.values(data.signature)
-
         await handleClaimStampTx({
             event: selectedStamp?.id ?? "",
             passport: userProfile?.id.id ?? "",
@@ -250,12 +244,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             stamp: { id: selectedStamp?.id, claim_count: 1 },
             points: selectedStamp?.points
         })
-        await fetch(`/api/claim-stamps/add`, {
-            method: "PATCH",
-            body: JSON.stringify({
-                stamp_id: selectedStamp?.id
-            })
-        })
+        await increaseClaimStampCount(selectedStamp?.id)
     }
 
 

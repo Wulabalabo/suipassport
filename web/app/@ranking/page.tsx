@@ -50,7 +50,7 @@ const columns: ColumnDef<RankItem>[] = [
     header: "View",
     cell: ({ row }) => {
       const address = row.original.address
-      return <Link href={`/user/${address}`} target="_blank" className="text-blue-500 hover:underline">View</Link>
+      return <Link href={`/user/${address}`} className="text-blue-500 hover:underline">View</Link>
     }
   },
 ]
