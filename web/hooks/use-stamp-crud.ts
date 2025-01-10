@@ -31,13 +31,13 @@ export function useClaimStamps() {
   const createClaimStamp = async (data: ClaimStamp) => {
     try {
       setIsLoading(true)
-      const response = await apiFetch<{ results: SafeClaimStamp[] }>(`/api/stamps`, {
+      const response = await apiFetch(`/api/stamps`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
       const result = await response
-      return result.results
+      return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to create claim stamp'))
       throw err

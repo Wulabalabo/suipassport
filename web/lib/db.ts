@@ -6,6 +6,15 @@ interface D1Response<T> {
 
 type SQLParams = (string | number | null)[];
 
+export async function checkDatabaseConnection(): Promise<boolean> {
+    try {
+        const response = await queryD1('SELECT 1');
+        return response.success;
+    } catch {
+        return false;
+    }
+}
+
 export async function queryD1<T>(
     query: string,
     params?: SQLParams

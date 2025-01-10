@@ -24,6 +24,7 @@ import { stamp } from "@/types/db"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 import { isClaimable } from "@/utils"
 import StampCard from "../../../components/stamps/stamp-card"
+import { apiFetch } from "@/lib/apiClient"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -126,8 +127,17 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).execute()
     }
 
-    const handleCreateStamp = async (values: CreateStampFormValues) => {
-        if (!userProfile?.db_profile) {
+    const handleCreateStamp = async (values: CreateStampFormValues) => {        
+        if (!userProfile?.admincap || !userProfile?.db_profile) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Something went wrong",
+            });
+            return
+        }
+        const isConnected = await apiFetch<{ isConnected: boolean }>('/api/check', { method: 'GET' });
+        if(!isConnected.isConnected){
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -135,7 +145,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             });
             return
         }
-        if (!userProfile?.admincap) return;
         handleCreateStampTx({
             adminCap: userProfile.admincap,
             event: values.name,
@@ -144,8 +153,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             points: Number(values.point)
         }).onSuccess(async (result) => {
             if (result?.effects) {
-                await onStampCreated(result.effects, values)
-                refreshPassportStamps(networkVariables)
+                await Promise.all([
+                    onStampCreated(result.effects, values),
+                    refreshPassportStamps(networkVariables)
+                ])
             }
 
             toast({
@@ -219,7 +230,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         const digest = getDataFromEffects(effects)
         if (!digest) return
         const stamp = await getEventFromDigest(digest)
-        console.log(stamp)
         // Check if createStampValues exists before using it
         if (!values) {
             console.error('createStampValues is undefined');

@@ -84,7 +84,7 @@ export default function RankingPage() {
       }))
     },
     {
-      refreshInterval: 30000, // 每30秒自动刷新一次
+      refreshInterval: 300000, // 每30秒自动刷新一次
       revalidateOnFocus: false, // 窗口获得焦点时不重新验证
     }
   )
