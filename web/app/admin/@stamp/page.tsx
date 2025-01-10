@@ -281,7 +281,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             return dateB - dateA
         })
 
-    const ITEMS_PER_PAGE = 3
+    const ITEMS_PER_PAGE = 4
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
     const currentStamps = filteredStamps?.slice(startIndex, endIndex)
@@ -345,7 +345,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                     ))}
                 </div>
                 <div className="lg:block hidden pt-6">
-                    <div className="grid grid-cols-3 gap-6">
+                    <div className="grid grid-cols-4 gap-6">
                         {currentStamps?.map((stamp) => (
                             <StampCard key={stamp.id} stamp={stamp} setSelectedStamp={()=>{
                                 setSelectedStamp(stamp)
