@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
@@ -9,6 +9,7 @@ import { useUserCrud } from "@/hooks/use-user-crud"
 import { stamp } from "@/types/db"
 import Link from "next/link"
 import useSWR from "swr"
+import { Loader2 } from "lucide-react"
 
 interface RankItem {
   rank: number
@@ -58,11 +59,20 @@ const columns: ColumnDef<RankItem>[] = [
 export default function RankingPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
+  const [countdown, setCountdown] = useState(30)
   const ITEMS_PER_PAGE = 7
   const { fetchUsers } = useUserCrud()
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 30))
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
   // 使用 SWR 获取数据
-  const { data: rankings = [], isLoading, error } = useSWR<RankItem[]>(
+  const { data: rankings = [], isLoading, error, isValidating } = useSWR<RankItem[]>(
     'rankings',
     async () => {
       const users = await fetchUsers()
@@ -84,7 +94,7 @@ export default function RankingPage() {
       }))
     },
     {
-      refreshInterval: 300000, // 每30秒自动刷新一次
+      refreshInterval: 30000, // 每30秒自动刷新一次
       revalidateOnFocus: false, // 窗口获得焦点时不重新验证
     }
   )
@@ -128,6 +138,17 @@ export default function RankingPage() {
     <div className="p-6 space-y-6 lg:rounded-3xl bg-card shadow-lg shadow-border border border-border lg:p-12">
       <div className="lg:flex lg:justify-between lg:items-center space-y-6 lg:space-y-0 pb-6">
         <h1 className="text-4xl font-bold">Top Contributors</h1>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            Next refresh in {countdown}s
+          </div>
+          {isValidating && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Refreshing...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-6 space-y-4">

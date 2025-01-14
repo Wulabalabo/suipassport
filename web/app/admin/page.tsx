@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import AdminStamp from './@stamp/page'
+import AdminStamp from '../@stamp/page'
 import AdminDashboard from './@dashboard/page'
 import { useNetworkVariables } from '@/contracts'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
@@ -10,9 +10,9 @@ import { isValidSuiAddress, isValidSuiObjectId } from '@mysten/sui/utils'
 import { useRouter } from 'next/navigation'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
 import { set_admin } from '@/contracts/stamp'
-import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { showToast } from '@/lib/toast'
 
 export default function AdminPage() {
   const networkVariables = useNetworkVariables()
@@ -22,35 +22,22 @@ export default function AdminPage() {
   const { handleSignAndExecuteTransaction: handleSetAdminTx } = useBetterSignAndExecuteTransaction({
     tx: set_admin
   })
-  const { toast } = useToast()
   const [recipient, setRecipient] = useState('')
 
   const handleSetAdmin = async () => {
     if (!userProfile?.admincap || !isValidSuiObjectId(userProfile.admincap)) {
-      toast({
-        title: 'Admin Cap is not valid',
-        description: 'Please mint a new passport',
-        variant: 'destructive',
-      })
+      showToast.error('Admin Cap is not valid')
       return
     }
     if (!isValidSuiAddress(recipient)) {
-      toast({
-        title: 'Recipient is not valid',
-        description: 'Please enter a valid Sui address',
-        variant: 'destructive',
-      })
+      showToast.error('Recipient is not valid')
       return
     }
     await handleSetAdminTx({
       adminCap: userProfile?.admincap,
       recipient: recipient
     }).onSuccess(() => {
-      toast({
-        title: 'Admin set successfully',
-        description: 'The admin has been set successfully',
-        variant: 'default',
-      })
+      showToast.success('Admin set successfully')
     }).execute()
   }
 

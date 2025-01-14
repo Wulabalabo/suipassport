@@ -79,8 +79,13 @@ export function useUserCrud(): UseUserCrudReturn {
             const response = await apiFetch<DbResponse>(`/api/user/id?address=${address}`, {
                 method: 'GET',
             })
-            const data = await response
-            console.log("fetchUserByAddress data", data)
+            const data = await response;
+            if (data.data?.results[0]?.stamps) {
+                // Handle double-quoted JSON string by removing outer quotes first
+                const stampsString = (data.data.results[0].stamps as unknown as string).replace(/^"(.*)"$/, '$1');
+                data.data.results[0].stamps = JSON.parse(stampsString);
+            }            
+            console.log("fetchUserByAddress data", data);
             if (!data.success) {
                 setError(data.error ?? 'Failed to fetch user');
                 return data;

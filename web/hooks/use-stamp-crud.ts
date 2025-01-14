@@ -81,12 +81,12 @@ export function useClaimStamps() {
   const increaseClaimStampCount = async (stamp_id: string) => {
     try {
       setIsLoading(true)
-      const response = await apiFetch<{ results: SafeClaimStamp[] }>(`/api/stamps/add`, {
+      const response = await apiFetch(`/api/stamps/add`, {
         method: 'PATCH',
         body: JSON.stringify({ stamp_id })
       })
       const result = await response
-      return result.results
+      return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to increase claim stamp count'))
       throw err

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { EditIcon } from "lucide-react"
+import { EditIcon, LinkIcon } from "lucide-react"
 import { UserAvatar } from "./user-avatar"
 import { UserProfile } from "@/types"
 import { useEffect } from "react"
@@ -62,11 +62,11 @@ export function ProfileCard({
                 {/* Mobile View */}
                 <div className="mt-6 bg-muted border border-border shadow-md shadow-border max-h-48 rounded-2xl lg:hidden">
                     <div className="pl-6 pr-4 py-4">
-                        {isEditing ? (
+                        {isEditing && (
                             <div className="flex justify-end">
                                 <Button variant="outline" className="rounded-full bg-card border border-border shadow-md shadow-border text-lg font-me" onClick={handleEditClick}><EditIcon className="w-4 h-4 text-muted-foreground" /> Edit</Button>
                             </div>
-                        ) : <div className="flex justify-end min-h-9"></div>}
+                        )}
                         {/* Avatar */}
                         <div className="flex flex-col justify-between gap-y-2 mt-6">
                             <h2 className="text-2xl font-medium">{userProfile.name}</h2>
@@ -82,11 +82,14 @@ export function ProfileCard({
                             <h2 className="text-3xl font-bold">{userProfile.name}</h2>
                             <p className="font-normal tracking-tight leading-loose overflow-hidden">{userProfile.introduction}</p>
                         </div>
+                        <div className="self-start flex-1 flex justify-end gap-x-2">
                         {isEditing && (
                             <div className="self-start flex-1 flex justify-end">
                                 <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={handleEditClick} disabled={isLoading}><EditIcon className="w-4 h-4 text-gray-400" /> Edit</Button>
                             </div>
-                        )}
+                        )}                        
+                        <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={() => window.open(`https://testnet.suivision.xyz/object/${userProfile.id.id}`, '_blank')} disabled={isLoading}><LinkIcon className="w-4 h-4 text-gray-400" />SuiVision</Button>
+                        </div>
                     </div>
                 </div>
             </div>}

@@ -5,22 +5,23 @@ import { StampGrid } from '@/components/user/stamp-grid'
 import { useNetworkVariables } from '@/contracts'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { useCurrentAccount } from '@mysten/dapp-kit'
-import { isValidSuiAddress } from '@mysten/sui/utils'
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PassportFormValues } from '@/components/passport/passport-form'
 import { edit_passport, show_stamp } from '@/contracts/passport'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
-import { useToast } from '@/hooks/use-toast'
 import { displayStamp } from '@/types/stamp'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 import { useUserCrud } from '@/hooks/use-user-crud'
+import { showToast } from '@/lib/toast'
+import { useClaimStamps } from '@/hooks/use-stamp-crud'
 
 export default function UserPage() {
   const router = useRouter();
   const currentAccount = useCurrentAccount()
   const { userProfile, refreshProfile } = useUserProfile();
   const { updateUserData } = useUserCrud();
+  const { increaseClaimStampCount } = useClaimStamps();
   const { stamps } = usePassportsStamps();
   const networkVariables = useNetworkVariables();
   const { handleSignAndExecuteTransaction: handleEditStamp, isLoading: isEditingStamp } = useBetterSignAndExecuteTransaction({
@@ -29,21 +30,6 @@ export default function UserPage() {
   const { handleSignAndExecuteTransaction: handleShowStamp } = useBetterSignAndExecuteTransaction({
     tx: show_stamp
   })
-  const { toast } = useToast()
-
-  const onStampSent = async (stamp: displayStamp) => {
-    if (!stamp?.eventId || !userProfile?.current_user) return
-    await fetch(`/api/claim-stamps/add`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        stamp_id: stamp?.eventId
-      })
-    })
-    await updateUserData(userProfile?.current_user, {
-      stamp: { id: stamp?.eventId, claim_count: 1 },
-      points: stamp?.points
-    })
-  }
 
   const handleEdit = async (passportFormValues: PassportFormValues) => {
     if (!userProfile?.id.id || !currentAccount?.address) {
@@ -59,53 +45,55 @@ export default function UserPage() {
       email: "",
     }).onSuccess(async () => {
       await refreshProfile(currentAccount?.address, networkVariables)
-      toast({
-        title: "Edit Success",
-        description: "Your passport has been updated",
-        variant: "default"
-      })
+      showToast.success("Edit Success")
     }).execute()
   }
 
   const handleCollect = async (stamp: displayStamp) => {
-    if (!stamp.isCollectable) {
-      toast({
-        title: "Collect Failed",
-        description: "You have already collected this stamp",
-        variant: "default"
-      })
-      return
-    }
     if (!userProfile?.id.id || !currentAccount?.address) {
+      showToast.error("Please connect your wallet first")
       return
     }
+
+    if (!stamp.eventId) {
+      showToast.error("Invalid stamp ID")
+      return
+    }
+
+    if (!stamp.isCollectable) {
+      showToast.error("You have already collected this stamp")
+      return
+    }
+
     await handleShowStamp({
       passport: userProfile?.id.id,
       stamp: stamp.id,
     }).onSuccess(async () => {
-      await onStampSent(stamp)
-      await refreshProfile(currentAccount?.address ?? '', networkVariables)
-      toast({
-        title: "Collect Success",
-        description: "You have collected this stamp",
-        variant: "default"
+      showToast.success("Collect Success")
+      await increaseClaimStampCount(stamp.eventId ?? '')
+      await updateUserData(userProfile?.current_user, {
+        stamp: { id: stamp.eventId ?? '', claim_count: 1 },
+        points: stamp?.points
       })
+      await refreshProfile(currentAccount?.address ?? '', networkVariables)
     }).execute()
   }
 
-  const fetchUserProfile = useCallback(async () => {
-    if (currentAccount?.address && isValidSuiAddress(currentAccount.address)) {
-      await refreshProfile(currentAccount.address, networkVariables)
-    }else{
-      if (!userProfile) {
-        router.push("/")  
-      }
-    }
-  }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router])
+  // const fetchUserProfile = useCallback(async () => {
+  //   if (currentAccount?.address && isValidSuiAddress(currentAccount.address)) {
+  //     await refreshProfile(currentAccount.address, networkVariables)
+  //   } else {
+  //     if (!userProfile) {
+  //       router.push("/")
+  //     }
+  //   }
+  // }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router])
 
   useEffect(() => {
-    fetchUserProfile()
-  }, [currentAccount?.address, networkVariables, refreshProfile, userProfile, router, stamps, fetchUserProfile])
+    if (!userProfile) {
+      router.push("/")
+    }
+  }, [userProfile, router])
 
   return (
     <div className="lg:p-24 bg-background">

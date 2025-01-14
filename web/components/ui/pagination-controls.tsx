@@ -26,17 +26,13 @@ export function PaginationControls({
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    // 初始化检查
     setIsMobile(window.innerWidth < 640)
 
-    // 添加resize监听
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640)
     }
 
     window.addEventListener('resize', handleResize)
-
-    // 清理监听器
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
@@ -50,35 +46,30 @@ export function PaginationControls({
   function getPageNumbers() {
     const pages: (number | string)[] = []
     
-    // 使用 isMobile 状态而不是直接检查 window
     if (isMobile) {
       return [currentPage]
     }
     
-    if (totalPages <= 3) {
+    if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1)
     }
 
-    // 始终添加第一页
     pages.push(1)
 
-    if (currentPage > 2) {
+    if (currentPage > 3) {
       pages.push('...')
     }
 
-    // 在较大页数时只显示当前页
-    if (currentPage !== 1 && currentPage !== totalPages) {
-      pages.push(currentPage)
+    // 显示当前页及其前后页
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      pages.push(i)
     }
 
-    if (currentPage < totalPages - 1) {
+    if (currentPage < totalPages - 2) {
       pages.push('...')
     }
 
-    // 始终添加最后一页
-    if (totalPages > 1) {
-      pages.push(totalPages)
-    }
+    pages.push(totalPages)
 
     return pages
   }
@@ -109,7 +100,6 @@ export function PaginationControls({
           </PaginationItem>
         ))}
 
-        {/* 移动端显示当前页码 */}
         <div className="sm:hidden flex items-center">
           <span className="text-sm">
             {currentPage} / {totalPages}
@@ -125,4 +115,4 @@ export function PaginationControls({
       </PaginationContent>
     </Pagination>
   )
-} 
+}

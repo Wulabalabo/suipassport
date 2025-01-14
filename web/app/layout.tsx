@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
 import { MainNav } from '@/components/main-nav'
-import { Toaster } from '@/components/ui/toaster'
+import { ToastProvider } from '@/contexts/toast-provider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -33,7 +33,7 @@ export default function RootLayout({
               </p>
             </div>
           </footer>
-          <Toaster />
+          <ToastProvider />
         </Providers>
       </body>
     </html>

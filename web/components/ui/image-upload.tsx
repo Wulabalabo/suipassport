@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageIcon, Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { useToast } from "@/hooks/use-toast";
+import { showToast } from "@/lib/toast";
+
 
 interface ImageUploadProps {
   value: string;
@@ -18,7 +19,7 @@ export function ImageUpload({
   disabled
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
+  
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,22 +27,14 @@ export function ImageUpload({
 
     const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validImageTypes.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a valid image file (JPEG, PNG, GIF, or WebP)",
-        variant: "destructive"
-      });
+      showToast.error("Invalid file type")
       e.target.value = '';
       return;
     }
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: "Image size should be less than 5MB",
-        variant: "destructive"
-      });
+      showToast.error("File too large")
       e.target.value = '';
       return;
     }

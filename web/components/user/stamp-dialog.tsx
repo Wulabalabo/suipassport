@@ -3,13 +3,14 @@
 import { StampItem } from "@/types/stamp"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Loader2 } from "lucide-react"
+import { LinkIcon, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { isClaimable, parseExcel } from "@/utils"
+import { useUserProfile } from "@/contexts/user-profile-context"
 
 interface StampDialogProps {
     stamp: StampItem | null
@@ -40,7 +41,9 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     const [claimCode, setClaimCode] = useState('')
     const [isClaiming, setIsClaiming] = useState(false)
     const [canClaim, setCanClaim] = useState(false)
+    const [alreadyClaimed, setAlreadyClaimed] = useState(false)
     const [addresses, setAddresses] = useState<string[]>([])
+    const { userProfile } = useUserProfile()
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
@@ -57,6 +60,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
         setRecipient('')
         setClaimCode('')
         setIsClaiming(false)
+        setAlreadyClaimed(false)
         onOpenChange(false)
         onCloseClick?.()
     }
@@ -87,7 +91,10 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
 
     useEffect(() => {
         if(stamp) setCanClaim(isClaimable(stamp))
-    }, [stamp, claimCode])
+        if(userProfile?.db_profile?.stamps?.find((s) => s.id === stamp?.id)){    
+            setAlreadyClaimed(true)
+        }
+    }, [stamp, claimCode, userProfile?.db_profile?.stamps])
 
 
     return (
@@ -100,7 +107,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
             >
                 <DialogHeader className="flex flex-row justify-between">
                     <DialogTitle className="flex justify-between gap-x-4 items-center text-3xl font-bold">
-                        <p className="text-primary">{stamp?.name.split('#')[0]}</p>
+                        <p className="text-primary">{stamp?.name.split('#')[0]}{alreadyClaimed && <span className="text-muted-foreground"> (Claimed)</span>}</p>
                         <p className="text-primary">{stamp?.name.split('#')[1] ?  '#' + stamp?.name.split('#')[1] : ''}</p>
                     </DialogTitle>
                     <X
@@ -140,9 +147,10 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                             label="Point"
                             value={stamp?.points}
                         />
+                        <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={() => window.open(`https://testnet.suivision.xyz/object/${stamp?.event}`, '_blank')} disabled={isLoading}><LinkIcon className="w-4 h-4 text-gray-400" />SuiVision</Button>
                     </div>
                 </div>
-                {stamp?.hasClaimCode && !admin && (
+                {canClaim && stamp?.hasClaimCode && !admin && !alreadyClaimed && (
                     <div className="flex flex-col gap-4 gap-y-6 pt-6">
                         <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 w-2/3">

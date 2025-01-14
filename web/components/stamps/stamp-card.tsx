@@ -1,6 +1,7 @@
-import { DisplayStamp } from "@/app/admin/@stamp/page"
+import { DisplayStamp } from "@/app/@stamp/page"
 import Image from "next/image"
 import { useState, useEffect } from "react"
+import { Ribbon } from "../ribbon"
 
 export default function StampCard({ stamp, setSelectedStamp }: { stamp: DisplayStamp, setSelectedStamp: (stamp: DisplayStamp) => void }) {
     const [imageUrl, setImageUrl] = useState<string>("/mockStamp.png")
@@ -23,8 +24,13 @@ export default function StampCard({ stamp, setSelectedStamp }: { stamp: DisplayS
                     <div className="font-bold text-lg w-full text-nowrap truncate">{stamp.name}</div>
                 </div>
                 <div className="w-full aspect-square relative">
-                    <Image src={imageUrl} alt={stamp.name} fill className={`object-cover ${!stamp.isClaimable ? "grayscale" : ""}`} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+                    <Image src={imageUrl} alt={stamp.name} fill className={`object-cover`} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                 </div>
+                <Ribbon 
+                    text={stamp.isClaimed ? "Claimed" : stamp.isClaimable ? "Claimable" : "Unclaimable"}
+                    bgColor={stamp.isClaimed ? "bg-green-500" : stamp.isClaimable ? "bg-blue-500" : "bg-gray-500"}
+                    borderColor={stamp.isClaimed ? "border-green-700" : stamp.isClaimable ? "border-blue-700" : "border-gray-700"}
+                />
 
                 <div className="text-blue-400 max-w-32">
                     <p className="truncate">{stamp.description}</p>

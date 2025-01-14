@@ -14,10 +14,10 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useNetworkVariables } from "@/contracts";
 import { useRouter } from "next/navigation";
 import { isValidSuiAddress, isValidSuiObjectId } from "@mysten/sui/utils";
-import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/contexts/user-profile-context";
 import { X } from "lucide-react";
 import { PassportForm, PassportFormValues } from "./passport-form";
+import { showToast } from "@/lib/toast";
 
 export function PassportFormDialog({ onSubmit, isLoading }: { onSubmit: (values: PassportFormValues) => Promise<void>, isLoading: boolean }) {
   const currentAccount = useCurrentAccount();
@@ -26,7 +26,6 @@ export function PassportFormDialog({ onSubmit, isLoading }: { onSubmit: (values:
   const [hasPassport, setHasPassport] = useState(false);
   const networkVariables = useNetworkVariables();
   const router = useRouter();
-  const { toast } = useToast();
   const { userProfile } = useUserProfile();
 
   useEffect(() => {
@@ -53,10 +52,7 @@ export function PassportFormDialog({ onSubmit, isLoading }: { onSubmit: (values:
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen && (!currentAccount || !isValidSuiAddress(currentAccount.address))) {
-      toast({
-        title: "Please connect your wallet first",
-        description: "Please connect your wallet to create your passport",
-      });
+      showToast.error("Please connect your wallet first")
       return;
     }
     setOpen(newOpen);
