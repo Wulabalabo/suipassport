@@ -147,7 +147,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                             label="Point"
                             value={stamp?.points}
                         />
-                        <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={() => window.open(`https://testnet.suivision.xyz/object/${stamp?.event}`, '_blank')} disabled={isLoading}><LinkIcon className="w-4 h-4 text-gray-400" />SuiVision</Button>
+                        <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={() => window.open(`https://testnet.suivision.xyz/object/${stamp?.id}`, '_blank')} disabled={isLoading}><LinkIcon className="w-4 h-4 text-gray-400" />SuiVision</Button>
                     </div>
                 </div>
                 {canClaim && stamp?.hasClaimCode && !admin && !alreadyClaimed && (
