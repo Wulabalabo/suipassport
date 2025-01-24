@@ -13,7 +13,7 @@ export const config = {
 
 export function middleware(request: NextRequest) {
   const origin = request.headers.get('origin')
-  const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const allowedOrigins = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').split(',').map(url => url.trim())
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
 
   // 允许 API 路由的 OPTIONS 和 GET 请求通过
@@ -57,7 +57,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (!origin.startsWith(allowedOrigin)) {
+  if (!allowedOrigins.includes(origin)) {
     return NextResponse.json(
       { error: 'Unauthorized access' },
       {
