@@ -31,10 +31,6 @@ export default function StampCard({ stamp, setSelectedStamp }: { stamp: DisplayS
                     bgColor={stamp.isClaimed ? "bg-green-500" : stamp.isClaimable ? "bg-blue-500" : "bg-gray-500"}
                     borderColor={stamp.isClaimed ? "border-green-700" : stamp.isClaimable ? "border-blue-700" : "border-gray-700"}
                 />
-
-                <div className="text-blue-400 max-w-32">
-                    <p className="truncate">{stamp.description}</p>
-                </div>
                 <div className="text-xs text-gray-500">
                     Created at: {stamp.timestamp ? new Date(stamp.timestamp).toLocaleDateString() : "N/A"}
                 </div>
