@@ -90,6 +90,9 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     }
 
     useEffect(() => {
+        if(stamp?.publicClaim){
+            setClaimCode("00000")
+        }
         if(stamp) setCanClaim(isClaimable(stamp))
         if(userProfile?.db_profile?.stamps?.find((s) => s.id === stamp?.id)){    
             setAlreadyClaimed(true)
@@ -153,12 +156,12 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                 {canClaim && stamp?.hasClaimCode && !admin && !alreadyClaimed && (
                     <div className="flex flex-col gap-4 gap-y-6 pt-6">
                         <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 w-2/3">
+                           {!stamp.publicClaim && <div className="flex items-center gap-2 w-2/3">
                                 <p className="text-sm text-gray-500 flex-shrink-0">
                                     Claim Code
                                 </p>
-                                <Input placeholder="Claim Code" value={claimCode} onChange={(e) => setClaimCode(e.target.value)} />
-                            </div>
+                                <Input disabled={stamp.publicClaim} placeholder={stamp.publicClaim ? "00000" : "Claim Code"} value={claimCode} onChange={(e) => setClaimCode(e.target.value)} />
+                            </div>}
                             <div>
                                {stamp.totalCountLimit!==0? <p>{stamp.claimCount}/{stamp.totalCountLimit}</p>:<p className="text-sm text-primary flex-shrink-0 uppercase">unlimited</p>}
                             </div>
@@ -175,7 +178,7 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                         )}
                         <Button
                             className="rounded-full"
-                            disabled={!canClaim || claimCode.length === 0}
+                            disabled={!canClaim || claimCode.length === 0 && !stamp.publicClaim}
                             onClick={handleClaimStamp}
                         >
                             {isClaiming ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Claim Stamp'}

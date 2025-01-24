@@ -24,4 +24,5 @@ export interface SafeClaimStamp {
     total_count_limit: number | null;
     user_count_limit: number | null;
     claim_count: number;
+    public_claim: boolean;
 }

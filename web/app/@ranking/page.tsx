@@ -129,6 +129,7 @@ export default function RankingPage() {
       <div className="p-6 space-y-6 lg:rounded-3xl bg-card shadow-lg shadow-border border border-border lg:p-12">
         <div className="text-destructive">
           Error loading rankings. Please try again later.
+          {error.message}
         </div>
       </div>
     )

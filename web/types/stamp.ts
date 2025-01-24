@@ -12,6 +12,7 @@ export type StampItem = {
     userCountLimit?: number
     claimCount?: number
     event?: string
+    publicClaim?: boolean
 }
 
 export interface StampGridProps {

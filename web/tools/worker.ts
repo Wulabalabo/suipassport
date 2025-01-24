@@ -1,4 +1,3 @@
-import { queryD1 } from "@/lib/db";
 import { D1Database } from "@cloudflare/workers-types";
 
 interface Env {
@@ -7,6 +6,7 @@ interface Env {
 
 type SQLParams = (string | number | null)[];
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default {
     async fetch(request: Request, env: Env) {
         const url = new URL(request.url);

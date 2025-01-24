@@ -12,6 +12,7 @@ CREATE TABLE claim_stamps (
     claim_count INTEGER DEFAULT 0,
     claim_code_start_timestamp INTEGER,
     claim_code_end_timestamp INTEGER,
+    public_claim BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

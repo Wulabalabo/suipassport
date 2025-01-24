@@ -128,7 +128,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                     refreshPassportStamps(networkVariables)
                 ])
             }
-
             showToast.success("Stamp created successfully")
         }).onError((e) => {
             showToast.error(e.message)
@@ -194,10 +193,10 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             claim_code_start_timestamp: values.startDate ? new Date(values.startDate).getTime().toString() : null,
             claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null,
             total_count_limit: values.totalCountLimit ?? null,
-            user_count_limit: values.userCountLimit ?? null
+            user_count_limit: values.userCountLimit ?? null,
+            public_claim: values.publicClaim ?? false
         }
         await createClaimStamp(claimStamp)
-        showToast.success("Stamp created successfully")
     }
     const onStampClaimed = async () => {
         if (!userProfile?.current_user || !selectedStamp?.id) return

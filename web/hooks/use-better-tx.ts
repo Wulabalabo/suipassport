@@ -45,15 +45,13 @@ export function useBetterSignAndExecuteTransaction<TArgs extends unknown[] = unk
                 setIsLoading(true)
                 await signAndExecuteTransaction({ transaction: tx }, {
                     onSuccess: async (result) => {
-                        if (props.waitForTx) {
-                            await suiClient.waitForTransaction({ digest: result.digest })
-                        }
+                        await suiClient.waitForTransaction({ digest: result.digest })
                         await successCallback?.(result)
                     },
                     onError: (error) => {
                         errorCallback?.(error)
                     },
-                    onSettled: async (result) => {                       
+                    onSettled: async (result) => {
                         await settledCallback?.(result)
                         setIsLoading(false)
                     }

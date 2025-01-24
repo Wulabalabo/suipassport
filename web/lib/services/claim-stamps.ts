@@ -12,6 +12,7 @@ export async function getClaimStamps(): Promise<SafeClaimStamp[]|undefined> {
       total_count_limit,
       user_count_limit,
       claim_count,
+      public_claim,
       CASE WHEN claim_code IS NULL THEN 0 ELSE 1 END as has_claim_code
     FROM claim_stamps`;
     
@@ -31,8 +32,9 @@ export async function createClaimStamp(data: ClaimStamp) {
       claim_code_start_timestamp, 
       claim_code_end_timestamp,
       total_count_limit,
-      user_count_limit
-    ) VALUES (?, ?, ?, ?, ?, ?)
+      user_count_limit,
+      public_claim
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
     RETURNING *`,
     [
       data.stamp_id,
@@ -40,7 +42,8 @@ export async function createClaimStamp(data: ClaimStamp) {
       data.claim_code_start_timestamp,
       data.claim_code_end_timestamp,
       data.total_count_limit,
-      data.user_count_limit
+      data.user_count_limit,
+      data.public_claim ? 1 : 0
     ]
   );
 }

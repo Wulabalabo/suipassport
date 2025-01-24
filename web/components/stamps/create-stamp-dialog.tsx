@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form"
 import { useState } from "react"
 import { createStampFormSchema, CreateStampFormValues } from "@/types/form"
 import { ImageUpload } from "@/components/ui/image-upload"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface CreateStampDialogProps {
   handleCreateStamp: (values: CreateStampFormValues) => void;
@@ -42,18 +43,22 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
       startDate: undefined,
       endDate: undefined,
       totalCountLimit: 0,
-      userCountLimit: 1
+      userCountLimit: 1,
+      publicClaim: false
     },
   })
 
+  const publicClaim = form.watch("publicClaim")
+
   const onSubmit = async (values: CreateStampFormValues) => {
-    // Handle form submission
-    handleCreateStamp(values);
+    const finalValues = {
+      ...values,
+      claimCode: values.publicClaim ? "00000" : values.claimCode
+    }
+    handleCreateStamp(finalValues);
     setIsOpen(false)
     form.reset()
   }
-
-
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -128,12 +133,34 @@ export function CreateStampDialog({ handleCreateStamp }: CreateStampDialogProps)
               />
               <FormField
                 control={form.control}
+                name="publicClaim"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Public Claim</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="claimCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Claim Code (optional)</FormLabel>
+                    <FormLabel>Claim Code {!publicClaim && "(optional)"}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Claim Code" {...field} />
+                      <Input 
+                        placeholder={publicClaim ? "00000" : "Claim Code"} 
+                        {...field} 
+                        disabled={publicClaim}
+                        value={publicClaim ? "00000" : field.value}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
