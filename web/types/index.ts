@@ -19,6 +19,7 @@ export type UserProfile = {
     stamps?: StampItem[],
     db_profile?:DbUser
     collection_detail?: string[]
+    passport_id?: string
 }
 
 export type ClaimStampResponse = {

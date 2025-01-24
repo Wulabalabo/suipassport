@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
@@ -59,20 +59,10 @@ const columns: ColumnDef<RankItem>[] = [
 export default function RankingPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
-  const [countdown, setCountdown] = useState(30)
   const ITEMS_PER_PAGE = 7
   const { fetchUsers } = useUserCrud()
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 30))
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
-
   // 使用 SWR 获取数据
-  const { data: rankings = [], isLoading, error, isValidating } = useSWR<RankItem[]>(
+  const { data: rankings = [], isLoading, error, isValidating} = useSWR<RankItem[]>(
     'rankings',
     async () => {
       const users = await fetchUsers()
@@ -140,9 +130,6 @@ export default function RankingPage() {
       <div className="lg:flex lg:justify-between lg:items-center space-y-6 lg:space-y-0 pb-6">
         <h1 className="text-4xl font-bold">Top Contributors</h1>
         <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            Next refresh in {countdown}s
-          </div>
           {isValidating && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />

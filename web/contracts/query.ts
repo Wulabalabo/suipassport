@@ -60,6 +60,7 @@ export const checkUserState = async (
         admincap: "",
         points: 0,
         x: "",
+        passport_id: ""
     }
     let hasNextPage = true;
     let nextCursor: string | null = null;
@@ -108,6 +109,7 @@ export const checkUserState = async (
                 profile.name = passport.name;
                 profile.points = passport.points;
                 profile.x = passport.x;
+                profile.passport_id = passport.id.id;
             }
             if (contentType === `${networkVariables.package}::stamp::AdminCap`) {
                 const adminCap = data.content.fields as unknown as { id: { id: string } };
@@ -134,6 +136,7 @@ export const checkUserState = async (
     })
     const collection = collectionDetail.data?.owner?.dynamicFields?.nodes?.map((node) => node.name?.json) ?? []
     profile.collection_detail = collection as string[]
+    console.log("profile", profile)
     return profile;
 };
 

@@ -70,12 +70,12 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             showToast.error("Database connection error")
             return
         }
-        if (!selectedStamp?.id || !userProfile?.db_profile) {
+        if (!selectedStamp?.id || !userProfile?.passport_id) {
             showToast.error("You should have a passport to claim a stamp")
             return;
         }
         const stamps = userProfile?.db_profile?.stamps
-        if (stamps.some(stamp => stamp.id === selectedStamp?.id)) {
+        if (stamps?.some(stamp => stamp.id === selectedStamp?.id)) {
             showToast.error(`You have already have this stamp`)
             return
         }
