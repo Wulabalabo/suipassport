@@ -65,6 +65,11 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
 
 
     const handleStampClaim = async (claimCode: string) => {
+        const isConnected = await apiFetch<{ isConnected: boolean }>('/api/check', { method: 'GET' });
+        if (!isConnected.isConnected) {
+            showToast.error("Database connection error")
+            return
+        }
         if (!selectedStamp?.id || !userProfile?.db_profile) {
             showToast.error("You should have a passport to claim a stamp")
             return;
@@ -97,7 +102,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             passport: userProfile?.id.id ?? "",
             name: selectedStamp?.name ?? "",
             sig: signatureArray
-        }).onSuccess(async () => {            
+        }).onSuccess(async () => {
             showToast.success("Stamp claimed successfully")
             await onStampClaimed()
             await refreshProfile(currentAccount?.address ?? '', networkVariables)

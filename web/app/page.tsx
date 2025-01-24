@@ -14,18 +14,24 @@ import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
 import { useUserCrud } from '@/hooks/use-user-crud'
 import RankingPage from './@ranking/page'
 import { showToast } from '@/lib/toast'
+import { apiFetch } from '@/lib/apiClient'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
-  const { stamps,refreshPassportStamps } = usePassportsStamps()
-  const { refreshProfile,isLoading:isUserLoading } = useUserProfile()
+  const { stamps, refreshPassportStamps } = usePassportsStamps()
+  const { refreshProfile, isLoading: isUserLoading } = useUserProfile()
   const currentAccount = useCurrentAccount()
-  const { handleSignAndExecuteTransaction,isLoading:isMintingPassport } = useBetterSignAndExecuteTransaction({
+  const { handleSignAndExecuteTransaction, isLoading: isMintingPassport } = useBetterSignAndExecuteTransaction({
     tx: mint_passport
   })
-  const { createNewUser,fetchUserByAddress,isLoading:isUserCrudLoading} = useUserCrud()
+  const { createNewUser, fetchUserByAddress, isLoading: isUserCrudLoading } = useUserCrud()
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
+    const isConnected = await apiFetch<{ isConnected: boolean }>('/api/check', { method: 'GET' });
+    if (!isConnected.isConnected) {
+      showToast.error("Database connection error")
+      return
+    }
     await handleSignAndExecuteTransaction({
       name: values.name,
       avatar: values.avatar ?? '',
@@ -33,25 +39,25 @@ export default function Home() {
       x: values.x ?? '',
       github: values.github ?? '',
       email: ''
-    }).onSuccess(async () => {      
+    }).onSuccess(async () => {
       showToast.success("Passport minted successfully")
       await onPassportCreated(values.name)
     }).execute()
   }
 
   const onPassportCreated = async (name: string) => {
-    if(!currentAccount?.address){
+    if (!currentAccount?.address) {
       showToast.error("You need to connect your wallet to create a passport")
       return
     }
     const dbUser = await fetchUserByAddress(currentAccount?.address)
-    if(!dbUser?.data?.results[0]?.address){
+    if (!dbUser?.data?.results[0]?.address) {
       await createNewUser({
         address: currentAccount?.address,
         stamps: [],
         points: 0,
         name: name
-      })        
+      })
     }
     await refreshProfile(currentAccount?.address ?? '', networkVariables)
     await refreshPassportStamps(networkVariables)
