@@ -17,6 +17,7 @@ import { useUserProfile } from '@/contexts/user-profile-context'
 import { useNetworkVariables } from '@/contracts'
 import { isValidSuiObjectId } from '@mysten/sui/utils'
 import { removeToken } from '@/lib/jwtManager'
+import { showToast } from '@/lib/toast'
 
 export function CustomConnectButton() {
   const [open, setOpen] = useState(false)
@@ -69,6 +70,10 @@ export function CustomConnectButton() {
   }
 
   const handleProfile = () => {
+    if (!userProfile?.id.id) {
+      showToast.error("Please create your passport first")
+      return
+    }
     router.push(pathname === '/user' ? '/' : '/user')
   }
 

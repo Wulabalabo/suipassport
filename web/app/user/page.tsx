@@ -49,9 +49,14 @@ export default function UserPage() {
     }).execute()
   }
 
-  const handleCollect = async (stamp: displayStamp) => {
-    if (!userProfile?.id.id || !currentAccount?.address) {
+  const handleCollect = async (stamp: displayStamp) => {    
+    if (!currentAccount?.address) {
       showToast.error("Please connect your wallet first")
+      return
+    }
+
+    if (!userProfile?.id.id) {
+      showToast.error("Please create your passport first")
       return
     }
 
