@@ -11,7 +11,7 @@ function getNetworkVariables() {
 }
 
 function createBetterTxFactory<T extends Record<string, unknown>>(
-    fn: (tx: Transaction, networkVariables: NetworkVariables, params:T) => Transaction
+    fn: (tx: Transaction, networkVariables: NetworkVariables, params:T) => Transaction,
 ) {
     return (params:T) => {
         const tx = new Transaction();

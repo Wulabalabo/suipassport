@@ -10,7 +10,7 @@ import { useUserProfile } from '@/contexts/user-profile-context'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 import { useEffect } from 'react'
 import { passportFormSchema } from '@/components/passport/passport-form'
-import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
+import { useBetterSignAndExecuteTransactionWithSponsor } from '@/hooks/use-better-tx'
 import { useUserCrud } from '@/hooks/use-user-crud'
 import RankingPage from './@ranking/page'
 import { showToast } from '@/lib/toast'
@@ -21,7 +21,11 @@ export default function Home() {
   const { stamps, refreshPassportStamps } = usePassportsStamps()
   const { refreshProfile, isLoading: isUserLoading } = useUserProfile()
   const currentAccount = useCurrentAccount()
-  const { handleSignAndExecuteTransaction, isLoading: isMintingPassport } = useBetterSignAndExecuteTransaction({
+  // const { handleSignAndExecuteTransaction, isLoading: isMintingPassport } = useBetterSignAndExecuteTransaction({
+  //   tx: mint_passport
+  // })
+
+  const { handleSignAndExecuteTransactionWithSponsor, isLoading: isMintingPassportWithSponsor } = useBetterSignAndExecuteTransactionWithSponsor({
     tx: mint_passport
   })
   const { createNewUser, fetchUserByAddress, isLoading: isUserCrudLoading } = useUserCrud()
@@ -32,16 +36,34 @@ export default function Home() {
       showToast.error("Database connection error")
       return
     }
-    await handleSignAndExecuteTransaction({
-      name: values.name,
-      avatar: values.avatar ?? '',
-      introduction: values.introduction ?? '',
-      x: values.x ?? '',
-      github: values.github ?? '',
-      email: ''
-    }).onSuccess(async () => {
+    // await handleSignAndExecuteTransaction({
+    //   name: values.name,
+    //   avatar: values.avatar ?? '',
+    //   introduction: values.introduction ?? '',
+    //   x: values.x ?? '',
+    //   github: values.github ?? '',
+    //   email: ''
+    // }).onSuccess(async () => {
+    //   showToast.success("Passport minted successfully")
+    //   await onPassportCreated(values.name)
+    // }).execute()
+    await handleSignAndExecuteTransactionWithSponsor(
+      process.env.NEXT_PUBLIC_NETWORK as 'testnet' | 'mainnet', 
+      currentAccount?.address ?? '',
+      [currentAccount?.address ?? ''],
+      {
+        name: values.name,
+        avatar: values.avatar ?? '',
+        introduction: values.introduction ?? '',
+        x: values.x ?? '',
+        github: values.github ?? '',
+        email: ''
+      }
+    ).onSuccess(async () => {
       showToast.success("Passport minted successfully")
       await onPassportCreated(values.name)
+    }).onError((error) => {
+      showToast.error(`Error minting passport: ${error.message}`)
     }).execute()
   }
 
@@ -81,7 +103,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="lg:ml-auto text-center">
-                <PassportFormDialog onSubmit={handleSubmit} isLoading={isUserLoading || isUserCrudLoading || isMintingPassport} />
+                <PassportFormDialog onSubmit={handleSubmit} isLoading={isUserLoading || isUserCrudLoading || isMintingPassportWithSponsor} />
               </div>
             </div>
             <p className="text-base lg:text-lg">The Sui community flourishes because of passionate members like you. Through content, conferences, events, and hackathons, your contributions help elevate our Sui Community. Now it&apos;s time to showcase your impact, gain recognition, and unlock rewards for your active participation. Connect your wallet today and claim your first stamp!</p>

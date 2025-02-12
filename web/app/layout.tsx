@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Sui Passport',
   description: 'Sui Passport',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
