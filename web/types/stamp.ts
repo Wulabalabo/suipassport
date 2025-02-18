@@ -29,10 +29,12 @@ export interface ClaimStampProps {
     claimCodeEndTimestamp: number
 }
 
-export type displayStamp = StampItem & {
+export type DisplayStamp = StampItem & {
     isActive?: boolean
     eventId?: string
-    isCollectable?: boolean
+    isClaimable?: boolean
+    claimedCount?: number
+    isClaimed?: boolean
 }
 
 export type VerifyClaimStampRequest = {

@@ -10,6 +10,8 @@ import { stamp } from "@/types/db"
 import Link from "next/link"
 import useSWR from "swr"
 import { Loader2 } from "lucide-react"
+import { useCurrentAccount } from "@mysten/dapp-kit"
+import { useUserProfile } from "@/contexts/user-profile-context"
 
 interface RankItem {
   rank: number
@@ -59,21 +61,35 @@ const columns: ColumnDef<RankItem>[] = [
 export default function RankingPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isRefreshDisabled, setIsRefreshDisabled] = useState(false)
   const ITEMS_PER_PAGE = 7
-  const { fetchUsers } = useUserCrud()
-  // 使用 SWR 获取数据
-  const { data: rankings = [], isLoading, error, isValidating} = useSWR<RankItem[]>(
+  const { fetchUsers, fetchUserByAddress, createNewUser } = useUserCrud()
+  const currentAccount = useCurrentAccount()
+  const { userProfile } = useUserProfile()
+
+  const { data: rankings = [], isLoading, error, isValidating, mutate } = useSWR<RankItem[]>(
     'rankings',
     async () => {
+      if (currentAccount?.address && userProfile?.name) {
+        const dbUser = await fetchUserByAddress(currentAccount?.address)
+        if (!dbUser?.data?.results[0]?.address) {
+          await createNewUser({
+            address: currentAccount?.address,
+            stamps: [],
+            points: 0,
+            name: userProfile?.name
+          })
+        }
+      }
       const users = await fetchUsers()
-      
+
       if (!users) return []
-      
+
       const sortedUsers = users.sort((a, b) => b.points - a.points)
       return Promise.all(sortedUsers.map(async (user, index) => {
         const stamps = JSON.parse(user.stamps as unknown as string) as stamp[]
         const stampsCount = stamps.reduce((acc, stamp) => acc + stamp.claim_count, 0)
-        
+
         return {
           rank: index + 1,
           user: user.name ?? '',
@@ -84,10 +100,15 @@ export default function RankingPage() {
       }))
     },
     {
-      refreshInterval: 30000, // 每30秒自动刷新一次
-      revalidateOnFocus: false, // 窗口获得焦点时不重新验证
+      revalidateOnFocus: false,
     }
   )
+
+  const handleRefresh = () => {
+    mutate()
+    setIsRefreshDisabled(true)
+    setTimeout(() => setIsRefreshDisabled(false), 30000) // 30秒后才能再次刷新
+  }
 
   // 处理搜索过滤
   const filteredData = rankings.filter((item: RankItem) =>
@@ -127,14 +148,23 @@ export default function RankingPage() {
 
   return (
     <div className="p-6 space-y-6 lg:rounded-3xl bg-card shadow-lg shadow-border border border-border lg:p-12">
-      <div className="lg:flex lg:justify-between lg:items-center space-y-6 lg:space-y-0 pb-6">
-        <h1 className="text-4xl font-bold">Top Contributors</h1>
-        <div className="flex items-center gap-4">
-          {isValidating && (
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-6 lg:space-y-0 pb-6">
+        <h1 className="text-2xl lg:text-4xl font-bold">Top Contributors</h1>
+        <div className="flex items-center">
+          {isValidating ? (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="text-sm">Refreshing...</span>
             </div>
+          ) : (
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshDisabled}
+              className="flex items-center gap-2 px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Loader2 className={`h-4 w-4 ${isValidating ? 'animate-spin' : ''}`} />
+              <p className="text-sm p-1">Refresh</p>
+            </button>
           )}
         </div>
       </div>

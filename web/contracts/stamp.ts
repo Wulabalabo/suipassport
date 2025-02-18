@@ -127,3 +127,23 @@ export const set_admin = createBetterTxFactory<{
     return tx;
 });
 
+/*public fun remove_event_stamp(
+    _admin: &AdminCap, 
+    event: &mut Event, 
+    name: String,
+) */
+export const delete_stamp = createBetterTxFactory<{
+    adminCap: string;
+    event: string;
+    name: string;
+}>((tx, networkVariables, params) => {
+    tx.moveCall({
+        package: `${networkVariables.package}`,
+        module: `stamp`,
+        function: `remove_event_stamp`,
+        arguments: [tx.object(params.adminCap), tx.object(params.event), tx.pure.string(params.name)]
+    });
+    return tx;
+});
+
+

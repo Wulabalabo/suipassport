@@ -11,7 +11,6 @@ import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 import { useEffect } from 'react'
 import { passportFormSchema } from '@/components/passport/passport-form'
 import { useBetterSignAndExecuteTransactionWithSponsor } from '@/hooks/use-better-tx'
-import { useUserCrud } from '@/hooks/use-user-crud'
 import RankingPage from './@ranking/page'
 import { showToast } from '@/lib/toast'
 import { apiFetch } from '@/lib/apiClient'
@@ -28,7 +27,6 @@ export default function Home() {
   const { handleSignAndExecuteTransactionWithSponsor, isLoading: isMintingPassportWithSponsor } = useBetterSignAndExecuteTransactionWithSponsor({
     tx: mint_passport
   })
-  const { createNewUser, fetchUserByAddress, isLoading: isUserCrudLoading } = useUserCrud()
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
     const isConnected = await apiFetch<{ isConnected: boolean }>('/api/check', { method: 'GET' });
@@ -36,17 +34,6 @@ export default function Home() {
       showToast.error("Database connection error")
       return
     }
-    // await handleSignAndExecuteTransaction({
-    //   name: values.name,
-    //   avatar: values.avatar ?? '',
-    //   introduction: values.introduction ?? '',
-    //   x: values.x ?? '',
-    //   github: values.github ?? '',
-    //   email: ''
-    // }).onSuccess(async () => {
-    //   showToast.success("Passport minted successfully")
-    //   await onPassportCreated(values.name)
-    // }).execute()
     await handleSignAndExecuteTransactionWithSponsor(
       process.env.NEXT_PUBLIC_NETWORK as 'testnet' | 'mainnet', 
       currentAccount?.address ?? '',
@@ -61,25 +48,16 @@ export default function Home() {
       }
     ).onSuccess(async () => {
       showToast.success("Passport minted successfully")
-      await onPassportCreated(values.name)
+      await onPassportCreated()
     }).onError((error) => {
       showToast.error(`Error minting passport: ${error.message}`)
     }).execute()
   }
 
-  const onPassportCreated = async (name: string) => {
+  const onPassportCreated = async () => {
     if (!currentAccount?.address) {
       showToast.error("You need to connect your wallet to create a passport")
       return
-    }
-    const dbUser = await fetchUserByAddress(currentAccount?.address)
-    if (!dbUser?.data?.results[0]?.address) {
-      await createNewUser({
-        address: currentAccount?.address,
-        stamps: [],
-        points: 0,
-        name: name
-      })
     }
     await refreshProfile(currentAccount?.address ?? '', networkVariables)
     await refreshPassportStamps(networkVariables)
@@ -103,7 +81,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="lg:ml-auto text-center">
-                <PassportFormDialog onSubmit={handleSubmit} isLoading={isUserLoading || isUserCrudLoading || isMintingPassportWithSponsor} />
+                <PassportFormDialog onSubmit={handleSubmit} isLoading={isUserLoading || isMintingPassportWithSponsor} />
               </div>
             </div>
             <p className="text-base lg:text-lg">The Sui community flourishes because of passionate members like you. Through content, conferences, events, and hackathons, your contributions help elevate our Sui Community. Now it&apos;s time to showcase your impact, gain recognition, and unlock rewards for your active participation. Connect your wallet today and claim your first stamp!</p>

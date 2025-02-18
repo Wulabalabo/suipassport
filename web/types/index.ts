@@ -1,4 +1,3 @@
-import { DbUser } from "@/hooks/use-user-crud"
 import { StampItem } from "@/types/stamp"
 
 
@@ -17,7 +16,6 @@ export type UserProfile = {
     current_user: string,
     admincap: string,
     stamps?: StampItem[],
-    db_profile?:DbUser
     collection_detail?: string[]
     passport_id?: string
 }

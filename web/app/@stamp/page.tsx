@@ -4,37 +4,30 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { useEffect, useState } from "react"
 import { StampDialog } from "@/components/user/stamp-dialog"
-import { StampItem, VerifyClaimStampRequest } from "@/types/stamp"
+import { StampItem, VerifyClaimStampRequest, DisplayStamp } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
-import { batch_send_stamp, create_event_stamp, send_stamp } from "@/contracts/stamp"
+import { batch_send_stamp, create_event_stamp, delete_stamp, send_stamp } from "@/contracts/stamp"
 import { useUserProfile } from "@/contexts/user-profile-context"
 import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
-import { getEventFromDigest } from "@/contracts/query"
-import { ClaimStamp } from "@/lib/validations/claim-stamp"
-import { getDataFromEffects } from "@/lib/utils"
 import { claim_stamp } from "@/contracts/claim"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { useNetworkVariables } from "@/contracts"
 import { useCurrentAccount } from "@mysten/dapp-kit"
-import { useClaimStamps } from "@/hooks/use-stamp-crud"
-import { useUserCrud } from "@/hooks/use-user-crud"
-import { stamp } from "@/types/db"
+import { useClaimStamp } from "@/hooks/use-stamp-crud"
 import { isValidSuiAddress } from "@mysten/sui/utils"
-import { isClaimable } from "@/utils"
+import { getDisplayStamps } from "@/utils"
 import { apiFetch } from "@/lib/apiClient"
 import { showToast } from "@/lib/toast"
 import { StampHeader } from "@/components/stamps/stamp-header"
 import { StampGrid } from "@/components/stamps/stamp-grid"
 import { useStampFiltering } from "@/hooks/use-stamp-filtering"
+import { getEventFromDigest } from "@/contracts/query"
+import { ClaimStamp } from "@/lib/validations/claim-stamp"
+import { createClaimStamp } from "@/lib/services/claim-stamps"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
     admin: boolean
-}
-
-export type DisplayStamp = StampItem & {
-    isClaimable: boolean
-    isClaimed: boolean
 }
 
 export default function AdminStamp({ stamps, admin }: AdminStampProps) {
@@ -46,8 +39,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
-    const { createClaimStamp, isLoading: isCreatingClaimStamp, verifyClaimStamp, increaseClaimStampCount } = useClaimStamps()
-    const { updateUserData, fetchUserByAddress, isLoading: isUserLoading } = useUserCrud()
+    const { verifyClaimStamp } = useClaimStamp()
     const networkVariables = useNetworkVariables()
 
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
@@ -62,6 +54,9 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const { handleSignAndExecuteTransaction: handleBatchSendStampTx, isLoading: isBatchSending } = useBetterSignAndExecuteTransaction({
         tx: batch_send_stamp
     })
+    const { handleSignAndExecuteTransaction: handleDeleteStampTx, isLoading: isDeleting } = useBetterSignAndExecuteTransaction({
+        tx: delete_stamp
+    })
 
 
     const handleStampClaim = async (claimCode: string) => {
@@ -74,8 +69,8 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             showToast.error("You should have a passport to claim a stamp")
             return;
         }
-        const stamps = userProfile?.db_profile?.stamps
-        if (stamps?.some(stamp => stamp.id === selectedStamp?.id)) {
+        const stamps = userProfile?.stamps
+        if (stamps?.some(stamp => stamp.name.split("#")[0] === selectedStamp?.name)) {
             showToast.error(`You have already have this stamp`)
             return
         }
@@ -104,20 +99,14 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             sig: signatureArray
         }).onSuccess(async () => {
             showToast.success("Stamp claimed successfully")
-            await onStampClaimed()
             await refreshProfile(currentAccount?.address ?? '', networkVariables)
             await refreshPassportStamps(networkVariables)
         }).execute()
     }
 
     const handleCreateStamp = async (values: CreateStampFormValues) => {
-        if (!userProfile?.admincap || !userProfile?.db_profile) {
-            showToast.error("Something went wrong")
-            return
-        }
-        const isConnected = await apiFetch<{ isConnected: boolean }>('/api/check', { method: 'GET' });
-        if (!isConnected.isConnected) {
-            showToast.error("Database connection error")
+        if (!userProfile?.admincap) {
+            showToast.error("Only admin can create stamp")
             return
         }
         handleCreateStampTx({
@@ -127,12 +116,14 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             image_url: values.image,
             points: Number(values.point)
         }).onSuccess(async (result) => {
-            if (result?.effects) {
-                await Promise.all([
-                    onStampCreated(result.effects, values),
-                    refreshPassportStamps(networkVariables)
-                ])
+            if (!result) {
+                showToast.error("Something went wrong")
+                return
             }
+            await Promise.all([
+                refreshPassportStamps(networkVariables),
+                onStampCreated(result.digest, values)
+            ])
             showToast.success("Stamp created successfully")
         }).onError((e) => {
             showToast.error(e.message)
@@ -145,15 +136,15 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }
         if (!userProfile?.admincap || !selectedStamp?.id) return
         {/* check if user has this stamp */ }
-        const dbUser = await fetchUserByAddress(recipient)
-        if (dbUser?.data?.results[0]?.address && isValidSuiAddress(dbUser?.data?.results[0]?.address)) {
-            const stamps = dbUser?.data?.results[0]?.stamps
-            const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
-            if (parsedStamps.some(stamp => stamp.id === selectedStamp?.id)) {
-                showToast.error("User already has this stamp")
-                return
-            }
-        }
+        // const dbUser = await fetchUserByAddress(recipient)
+        // if (dbUser?.data?.results[0]?.address && isValidSuiAddress(dbUser?.data?.results[0]?.address)) {
+        //     const stamps = dbUser?.data?.results[0]?.stamps
+        //     const parsedStamps: stamp[] = Array.isArray(stamps) ? stamps : JSON.parse(stamps as unknown as string)
+        //     if (parsedStamps.some(stamp => stamp.id === selectedStamp?.id)) {
+        //         showToast.error("User already has this stamp")
+        //         return
+        //     }
+        // }
 
         handleSendStampTx({
             adminCap: userProfile?.admincap,
@@ -178,19 +169,22 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             setDisplayDialog(false)
         }).execute()
     }
+    const handleDeleteStamp = async () => {
+        if (!userProfile?.admincap || !selectedStamp?.id) return
+        handleDeleteStampTx({
+            adminCap: userProfile?.admincap,
+            event: selectedStamp?.id,
+            name: selectedStamp?.name
+        }).onSuccess(async () => {
+            showToast.success("Stamp deleted successfully")
+            await refreshPassportStamps(networkVariables)
+        }).onError((e) => {
+            showToast.error(e.message)
+        }).execute()
+    }
 
-    const onStampCreated = async (effects: string, values?: CreateStampFormValues) => {
-        const digest = getDataFromEffects(effects)
-        if (!digest) {
-            showToast.error("Something went wrong")
-            return
-        }
+    const onStampCreated = async (digest: string, values: CreateStampFormValues) => {        
         const stamp = await getEventFromDigest(digest)
-        // Check if createStampValues exists before using it
-        if (!values) {
-            showToast.error("Something went wrong")
-            return;
-        }
 
         const claimStamp: ClaimStamp = {
             stamp_id: stamp.id,
@@ -203,29 +197,19 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }
         await createClaimStamp(claimStamp)
     }
-    const onStampClaimed = async () => {
-        if (!userProfile?.current_user || !selectedStamp?.id) return
-        await updateUserData(userProfile?.current_user, {
-            stamp: { id: selectedStamp?.id, claim_count: 1 },
-            points: selectedStamp?.points
-        })
-        await increaseClaimStampCount(selectedStamp?.id)
-    }
 
 
     useEffect(() => {
-        if (stamps) {
-            const stampsWithClaimable = stamps.map(stamp => {
-                const isClaimed = userProfile?.db_profile?.stamps.some(userStamp => userStamp.id === stamp.id) ?? false
-                return {
-                    ...stamp,
-                    isClaimed,
-                    isClaimable: isClaimed === true ? false : isClaimable(stamp)
-                }
-            })
-            setDisplayStamps(stampsWithClaimable)
+        if (!stamps) return;
+        
+        if (userProfile) {
+            const stampsWithClaimable = getDisplayStamps(stamps, userProfile);
+            console.log(stampsWithClaimable)
+            setDisplayStamps(stampsWithClaimable);
+        } else {
+            setDisplayStamps(stamps);
         }
-    }, [stamps, userProfile?.db_profile?.stamps])
+    }, [stamps, userProfile])
 
     const ITEMS_PER_PAGE = 4
     const {
@@ -304,7 +288,8 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                     onClaim={handleStampClaim}
                     onSend={handleSendStamp}
                     onMultipleSend={handleMultipleSendStamp}
-                    isLoading={isSending || isCreatingClaimStamp || isUserLoading || isBatchSending}
+                    onDelete={handleDeleteStamp}
+                    isLoading={isSending || isBatchSending || isDeleting}
                     onCloseClick={() => {
                         setDisplayDialog(false)
                         setSelectedStamp(null)

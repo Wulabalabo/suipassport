@@ -7,7 +7,7 @@ import { apiFetch } from '@/lib/apiClient'
 import { ClaimStampResponse } from '@/types'
 import { VerifyClaimStampRequest } from '@/types/stamp'
 
-export function useClaimStamps() {
+export function useClaimStamp() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
