@@ -5,7 +5,7 @@ import { UserProfile } from "@/types";
 import { StampItem } from "@/types/stamp";
 import { PassportItem } from "@/types/passport";
 import { graphqlClient, NetworkVariables, suiClient } from "@/contracts";
-import { getCollectionDetail } from "./graphql";
+import { getCollectionDetail, getStampsEventRecordData } from "./graphql";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
     if (!isValidSuiAddress(address)) {
@@ -34,16 +34,16 @@ export const getUserProfile = async (address: string): Promise<CategorizedObject
 };
 
 interface ParsedContent<T = unknown> {
-  type: string;
-  fields: T;
+    type: string;
+    fields: T;
 }
 
 function parseObjectData<T>(data: SuiObjectData): ParsedContent<T> | null {
-  if (data.content?.dataType !== "moveObject") return null;
-  return {
-    type: data.content.type,
-    fields: data.content.fields as T,
-  };
+    if (data.content?.dataType !== "moveObject") return null;
+    return {
+        type: data.content.type,
+        fields: data.content.fields as T,
+    };
 }
 
 export const checkUserState = async (
@@ -71,25 +71,25 @@ export const checkUserState = async (
 
     try {
         const objects = await fetchAllOwnedObjects(address, networkVariables);
-        
+
         objects.forEach((obj) => {
             if (!obj.data) return;
-            
+
             const parsed = parseObjectData(obj.data);
             if (!parsed) return;
 
             const { type, fields } = parsed;
-            
+
             switch (type) {
                 case `${networkVariables.package}::sui_passport::SuiPassport`:
                     updateProfileFromPassport(profile, fields as UserProfile);
                     break;
-                    
+
                 case `${networkVariables.package}::stamp::AdminCap`:
                     const adminCapId = (fields as { id: { id: string } })?.id?.id;
                     if (adminCapId) profile.admincap = adminCapId;
                     break;
-                    
+
                 case `${networkVariables.package}::stamp::Stamp`:
                     const stamp = createStampFromFields(fields as StampFields);
                     if (stamp) profile.stamps?.push(stamp);
@@ -98,7 +98,7 @@ export const checkUserState = async (
         });
 
         await enrichProfileWithCollectionDetails(profile, graphqlClient);
-        
+
         return profile;
     } catch (error) {
         console.error('Error in checkUserState:', error);
@@ -107,7 +107,7 @@ export const checkUserState = async (
 };
 
 async function fetchAllOwnedObjects(
-    address: string, 
+    address: string,
     networkVariables: NetworkVariables
 ): Promise<SuiObjectResponse[]> {
     const allObjects: SuiObjectResponse[] = [];
@@ -137,15 +137,15 @@ async function fetchAllOwnedObjects(
 }
 
 function updateProfileFromPassport(profile: UserProfile, passportFields: Partial<UserProfile>) {
-    type ValidKeys = keyof Pick<UserProfile, 'avatar' | 'collections' | 'email' | 'exhibit' | 
+    type ValidKeys = keyof Pick<UserProfile, 'avatar' | 'collections' | 'email' | 'exhibit' |
         'github' | 'id' | 'introduction' | 'last_time' | 'name' | 'points' | 'x'>;
-    
+
     (Object.keys(passportFields) as ValidKeys[]).forEach(field => {
         if (field in passportFields && field in profile) {
             (profile[field] as UserProfile[ValidKeys]) = passportFields[field] as UserProfile[ValidKeys];
         }
     });
-    
+
     if (passportFields.id?.id) {
         profile.passport_id = passportFields.id.id;
     }
@@ -197,27 +197,84 @@ async function enrichProfileWithCollectionDetails(
         }
     }) as CollectionQueryResult;
 
-    profile.collection_detail = 
+    profile.collection_detail =
         collectionDetail.data?.owner?.dynamicFields?.nodes
             ?.map(node => node.name?.json)
             ?.filter((item): item is string => Boolean(item)) ?? [];
 }
 
-export const getStampsData = async (networkVariables: NetworkVariables) => {
+const getStampsEventRecord = async (networkVariables: NetworkVariables) => {
     let hasNextPage = true;
-    let nextCursor: EventId | null = null;
+    let nextCursor: string | null = null;
+    let stamps: string[] = [];
+    interface StampsEventResponse {
+        data?: {
+            owner?: {
+                dynamicFields?: {
+                    nodes?: Array<{
+                        value?: {
+                            json: string;
+                        };
+                    }>;
+                    pageInfo?: {
+                        hasNextPage: boolean;
+                        endCursor: string | null;
+                    };
+                };
+            };
+        };
+    }
+    while (hasNextPage) {
+        const stampsData: StampsEventResponse = await graphqlClient.query({
+            query: getStampsEventRecordData,
+            variables: {
+                address: networkVariables.stampEventRecordTable,
+                after: nextCursor
+            }
+        }) as StampsEventResponse;
+        nextCursor = stampsData.data?.owner?.dynamicFields?.pageInfo?.endCursor ?? null;
+        hasNextPage = stampsData.data?.owner?.dynamicFields?.pageInfo?.hasNextPage ?? false;
+        stamps = stamps.concat(stampsData.data?.owner?.dynamicFields?.nodes?.map((node) => {
+            return node.value?.json as string;
+        }) ?? []);
+    }
+    return stamps;
+}
+
+export const getStampsData = async (networkVariables: NetworkVariables) => {
+    
+    const stampsEvents: StampsEvent[] = [];
+    interface StampsEvent {
+        description: string;
+        event: string;
+        id: { id: string };
+        stamp_type: string[];
+    }
+
+    const stampsEventRecord = await getStampsEventRecord(networkVariables);
+    const stampsEvent = await suiClient.multiGetObjects({
+        ids: stampsEventRecord,
+        options: {
+            showContent: true,
+        }
+    });
+    stampsEvent.map((event) => {
+        const stampEvent = event.data?.content as unknown as { fields: StampsEvent };
+        if (stampEvent.fields.stamp_type.length > 0) {
+            stampsEvents.push(stampEvent.fields);
+        }
+    })
+
     let stamps: StampItem[] = [];
+    let nextCursor: EventId | null = null;
+    let hasNextPage = true;
     while (hasNextPage) {
         const stampsEvent = await suiClient.queryEvents({
             query: {
-                MoveEventModule:{
-                    module: `stamp`,
-                    package: `${networkVariables.package}`
-                }
+                MoveEventType: `${networkVariables.package}::stamp::SetEventStamp`
             },
             cursor: nextCursor,
         });
-        console.log("stampsEvent", stampsEvent)
         nextCursor = stampsEvent.nextCursor ?? null;
         hasNextPage = stampsEvent.hasNextPage;
         stamps = stamps.concat(stampsEvent.data.map((event) => {
@@ -229,8 +286,12 @@ export const getStampsData = async (networkVariables: NetworkVariables) => {
                 return stamp;
             }
             return undefined;
-        }).filter((stamp) => stamp !== undefined) as StampItem[]);
+        }).filter((stamp) => {
+            if (!stamp) return false;
+            return stampsEvents.some(event => event.event === stamp.name);
+        }) as StampItem[]);
     }
+
     return stamps;
 }
 
@@ -277,8 +338,10 @@ export const getSuiNSName = async (address: string) => {
         format: "dot",
         address: address
     })
-    if(name.data.length > 0) {
+    if (name.data.length > 0) {
         return name.data[0]
     }
     return address
 }
+
+

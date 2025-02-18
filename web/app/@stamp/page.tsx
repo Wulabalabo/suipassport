@@ -23,7 +23,6 @@ import { StampGrid } from "@/components/stamps/stamp-grid"
 import { useStampFiltering } from "@/hooks/use-stamp-filtering"
 import { getEventFromDigest } from "@/contracts/query"
 import { ClaimStamp } from "@/lib/validations/claim-stamp"
-import { createClaimStamp } from "@/lib/services/claim-stamps"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -33,13 +32,12 @@ interface AdminStampProps {
 export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [selectedStamp, setSelectedStamp] = useState<DisplayStamp | null>(null)
     const [displayStamps, setDisplayStamps] = useState<DisplayStamp[]>([])
-
     const [displayDialog, setDisplayDialog] = useState(false)
     const { userProfile } = useUserProfile();
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
-    const { verifyClaimStamp } = useClaimStamp()
+    const { verifyClaimStamp, createClaimStamp } = useClaimStamp()
     const networkVariables = useNetworkVariables()
 
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
@@ -104,6 +102,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).execute()
     }
 
+    //Todo: what if onStampCreated failed?
     const handleCreateStamp = async (values: CreateStampFormValues) => {
         if (!userProfile?.admincap) {
             showToast.error("Only admin can create stamp")
@@ -120,9 +119,9 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 showToast.error("Something went wrong")
                 return
             }
-            await Promise.all([
-                refreshPassportStamps(networkVariables),
-                onStampCreated(result.digest, values)
+            await Promise.all([                
+                await onStampCreated(result.digest, values),
+                await refreshPassportStamps(networkVariables),
             ])
             showToast.success("Stamp created successfully")
         }).onError((e) => {

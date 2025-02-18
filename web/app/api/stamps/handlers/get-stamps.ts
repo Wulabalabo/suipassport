@@ -6,7 +6,6 @@ import { SafeClaimStamp } from "@/types/db";
 export async function getStamps() {
     try {
       const result:SafeClaimStamp[]|undefined = await getClaimStamps();
-      console.log(result)
       return NextResponse.json(result);
     } catch (error) {
       console.error('Error fetching claim stamps:', error);
