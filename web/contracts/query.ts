@@ -5,7 +5,7 @@ import { UserProfile } from "@/types";
 import { StampItem } from "@/types/stamp";
 import { PassportItem } from "@/types/passport";
 import { graphqlClient, NetworkVariables, suiClient } from "@/contracts";
-import { getCollectionDetail } from "./graphql";
+import { getCollectionDetail, getStampsEventRecordData } from "./graphql";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
     if (!isValidSuiAddress(address)) {
@@ -33,117 +33,241 @@ export const getUserProfile = async (address: string): Promise<CategorizedObject
     return categorizeSuiObjects(allObjects);
 };
 
+interface ParsedContent<T = unknown> {
+    type: string;
+    fields: T;
+}
+
+function parseObjectData<T>(data: SuiObjectData): ParsedContent<T> | null {
+    if (data.content?.dataType !== "moveObject") return null;
+    return {
+        type: data.content.type,
+        fields: data.content.fields as T,
+    };
+}
+
 export const checkUserState = async (
     address: string,
     networkVariables: NetworkVariables
 ): Promise<UserProfile | null> => {
     const profile: UserProfile = {
         avatar: "",
-        collections: {
-            fields: {
-                id: {
-                    id: ""
-                },
-                size: 0
-            }
-        },
+        collections: { fields: { id: { id: "" }, size: 0 } },
         email: "",
         exhibit: [],
         github: "",
         current_user: address,
-        id: {
-            id: ""
-        },
+        id: { id: "" },
         introduction: "",
         last_time: 0,
         name: "",
         admincap: "",
         points: 0,
         x: "",
-        passport_id: ""
+        passport_id: "",
+        stamps: [],
+        collection_detail: [],
+    };
+
+    try {
+        const objects = await fetchAllOwnedObjects(address, networkVariables);
+
+        objects.forEach((obj) => {
+            if (!obj.data) return;
+
+            const parsed = parseObjectData(obj.data);
+            if (!parsed) return;
+
+            const { type, fields } = parsed;
+
+            switch (type) {
+                case `${networkVariables.package}::sui_passport::SuiPassport`:
+                    updateProfileFromPassport(profile, fields as UserProfile);
+                    break;
+
+                case `${networkVariables.package}::stamp::AdminCap`:
+                    const adminCapId = (fields as { id: { id: string } })?.id?.id;
+                    if (adminCapId) profile.admincap = adminCapId;
+                    break;
+
+                case `${networkVariables.package}::stamp::Stamp`:
+                    const stamp = createStampFromFields(fields as StampFields);
+                    if (stamp) profile.stamps?.push(stamp);
+                    break;
+            }
+        });
+
+        await enrichProfileWithCollectionDetails(profile, graphqlClient);
+
+        return profile;
+    } catch (error) {
+        console.error('Error in checkUserState:', error);
+        return null;
     }
+};
+
+async function fetchAllOwnedObjects(
+    address: string,
+    networkVariables: NetworkVariables
+): Promise<SuiObjectResponse[]> {
+    const allObjects: SuiObjectResponse[] = [];
     let hasNextPage = true;
     let nextCursor: string | null = null;
-    const stamps: StampItem[] = [];
-    // Get owned objects filtered by AdminCap and SuiPassport types
+
     while (hasNextPage) {
-        const objects = await suiClient.getOwnedObjects({
+        const response = await suiClient.getOwnedObjects({
             owner: address,
-            options: {
-                showContent: true
-            },
+            options: { showContent: true },
             filter: {
                 MatchAny: [
-                    {
-                        StructType: `${networkVariables.package}::stamp::AdminCap`
-                    },
-                    {
-                        StructType: `${networkVariables.package}::sui_passport::SuiPassport`
-                    },
-                    {
-                        StructType: `${networkVariables.package}::stamp::Stamp`
-                    }
+                    { StructType: `${networkVariables.package}::stamp::AdminCap` },
+                    { StructType: `${networkVariables.package}::sui_passport::SuiPassport` },
+                    { StructType: `${networkVariables.package}::stamp::Stamp` }
                 ]
             },
             cursor: nextCursor,
         });
-        nextCursor = objects.nextCursor ?? null;
-        hasNextPage = objects.hasNextPage;
-        // Process each object to find passport and admin status
-        objects.data.forEach((obj) => {
-            const data = obj.data as unknown as SuiObjectData;
-            if (data.content?.dataType !== "moveObject") {
-                return;
-            }
-            const contentType = data.content?.type;
-            if (contentType === `${networkVariables.package}::sui_passport::SuiPassport`) {
-                const passport = data.content.fields as unknown as UserProfile;
-                profile.avatar = passport.avatar;
-                profile.collections = passport.collections;
-                profile.email = passport.email;
-                profile.exhibit = passport.exhibit;
-                profile.github = passport.github;
-                profile.id = passport.id;
-                profile.introduction = passport.introduction;
-                profile.last_time = passport.last_time;
-                profile.name = passport.name;
-                profile.points = passport.points;
-                profile.x = passport.x;
-                profile.passport_id = passport.id.id;
-            }
-            if (contentType === `${networkVariables.package}::stamp::AdminCap`) {
-                const adminCap = data.content.fields as unknown as { id: { id: string } };
-                const adminCapId = adminCap?.id?.id;
-                if (adminCapId) {                    
-                    profile.admincap = adminCapId;
-                }
-            }
-            if (contentType === `${networkVariables.package}::stamp::Stamp`) {
-                const stamp = data.content.fields as unknown as StampItem;
-                stamp.id = (data.content.fields as unknown as { id: { id: string } }).id.id;
-                stamp.imageUrl = (data.content.fields as unknown as { image_url: string }).image_url;
-                stamps.push(stamp);
-            }
-        });
+
+        allObjects.push(...response.data);
+        hasNextPage = response.hasNextPage;
+        nextCursor = response.nextCursor ?? null;
     }
-    profile.stamps = stamps;
-    //TODO: HasNextPage
-    const collectionDetail = await graphqlClient.query({
+
+    return allObjects;
+}
+
+function updateProfileFromPassport(profile: UserProfile, passportFields: Partial<UserProfile>) {
+    type ValidKeys = keyof Pick<UserProfile, 'avatar' | 'collections' | 'email' | 'exhibit' |
+        'github' | 'id' | 'introduction' | 'last_time' | 'name' | 'points' | 'x'>;
+
+    (Object.keys(passportFields) as ValidKeys[]).forEach(field => {
+        if (field in passportFields && field in profile) {
+            (profile[field] as UserProfile[ValidKeys]) = passportFields[field] as UserProfile[ValidKeys];
+        }
+    });
+
+    if (passportFields.id?.id) {
+        profile.passport_id = passportFields.id.id;
+    }
+}
+
+interface StampFields {
+    id: { id: string };
+    image_url: string;
+    name: string;
+    [key: string]: unknown;
+}
+
+function createStampFromFields(fields: StampFields): StampItem | null {
+    try {
+        return {
+            ...fields,
+            id: fields.id.id,
+            imageUrl: fields.image_url,
+            name: fields.name
+        };
+    } catch (error) {
+        console.error('Error creating stamp:', error);
+        return null;
+    }
+}
+
+async function enrichProfileWithCollectionDetails(
+    profile: UserProfile,
+    client: typeof graphqlClient
+): Promise<void> {
+    interface CollectionQueryResult {
+        data?: {
+            owner?: {
+                dynamicFields?: {
+                    nodes?: Array<{
+                        name?: {
+                            json: string;
+                        };
+                    }>;
+                };
+            };
+        };
+    }
+
+    const collectionDetail = await client.query({
         query: getCollectionDetail,
         variables: {
             address: profile.collections.fields.id.id,
         }
-    })
-    const collection = collectionDetail.data?.owner?.dynamicFields?.nodes?.map((node) => node.name?.json) ?? []
-    profile.collection_detail = collection as string[]
-    console.log("profile", profile)
-    return profile;
-};
+    }) as CollectionQueryResult;
+
+    profile.collection_detail =
+        collectionDetail.data?.owner?.dynamicFields?.nodes
+            ?.map(node => node.name?.json)
+            ?.filter((item): item is string => Boolean(item)) ?? [];
+}
+
+const getStampsEventRecord = async (networkVariables: NetworkVariables) => {
+    let hasNextPage = true;
+    let nextCursor: string | null = null;
+    let stamps: string[] = [];
+    interface StampsEventResponse {
+        data?: {
+            owner?: {
+                dynamicFields?: {
+                    nodes?: Array<{
+                        value?: {
+                            json: string;
+                        };
+                    }>;
+                    pageInfo?: {
+                        hasNextPage: boolean;
+                        endCursor: string | null;
+                    };
+                };
+            };
+        };
+    }
+    while (hasNextPage) {
+        const stampsData: StampsEventResponse = await graphqlClient.query({
+            query: getStampsEventRecordData,
+            variables: {
+                address: networkVariables.stampEventRecordTable,
+                after: nextCursor
+            }
+        }) as StampsEventResponse;
+        nextCursor = stampsData.data?.owner?.dynamicFields?.pageInfo?.endCursor ?? null;
+        hasNextPage = stampsData.data?.owner?.dynamicFields?.pageInfo?.hasNextPage ?? false;
+        stamps = stamps.concat(stampsData.data?.owner?.dynamicFields?.nodes?.map((node) => {
+            return node.value?.json as string;
+        }) ?? []);
+    }
+    return stamps;
+}
 
 export const getStampsData = async (networkVariables: NetworkVariables) => {
-    let hasNextPage = true;
-    let nextCursor: EventId | null = null;
+    
+    const stampsEvents: StampsEvent[] = [];
+    interface StampsEvent {
+        description: string;
+        event: string;
+        id: { id: string };
+        stamp_type: string[];
+    }
+
+    const stampsEventRecord = await getStampsEventRecord(networkVariables);
+    const stampsEvent = await suiClient.multiGetObjects({
+        ids: stampsEventRecord,
+        options: {
+            showContent: true,
+        }
+    });
+    stampsEvent.map((event) => {
+        const stampEvent = event.data?.content as unknown as { fields: StampsEvent };
+        if (stampEvent.fields.stamp_type.length > 0) {
+            stampsEvents.push(stampEvent.fields);
+        }
+    })
+
     let stamps: StampItem[] = [];
+    let nextCursor: EventId | null = null;
+    let hasNextPage = true;
     while (hasNextPage) {
         const stampsEvent = await suiClient.queryEvents({
             query: {
@@ -162,8 +286,12 @@ export const getStampsData = async (networkVariables: NetworkVariables) => {
                 return stamp;
             }
             return undefined;
-        }).filter((stamp) => stamp !== undefined) as StampItem[]);
+        }).filter((stamp) => {
+            if (!stamp) return false;
+            return stampsEvents.some(event => event.event === stamp.name);
+        }) as StampItem[]);
     }
+
     return stamps;
 }
 
@@ -210,8 +338,10 @@ export const getSuiNSName = async (address: string) => {
         format: "dot",
         address: address
     })
-    if(name.data.length > 0) {
+    if (name.data.length > 0) {
         return name.data[0]
     }
     return address
 }
+
+

@@ -1,13 +1,13 @@
-import { increaseClaimStampCount } from "@/lib/services/claim-stamps";
+import { increaseStampCountToDb } from "@/lib/services/stamps";
 import { NextResponse } from "next/server";
 
 
 export async function PATCH(request: Request) {
     try {
         const { stamp_id } = await request.json();
-        const result = await increaseClaimStampCount(stamp_id);
+        const result = await increaseStampCountToDb(stamp_id);
         return NextResponse.json(result);
     } catch (error) {
-        return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Failed to fetch claim stamps' }, { status: 500 });
+        return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Failed to increase stamp count' }, { status: 500 });
     }
 }

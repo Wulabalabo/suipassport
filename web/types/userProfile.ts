@@ -1,6 +1,5 @@
-import { StampItem } from "@/types/stamp"
-
-
+import { type StampItem } from "./stamp"
+import { z } from "zod"
 export type UserProfile = {
     avatar: string
     collections: { fields: { id: { id: string }, size: number } },
@@ -20,8 +19,18 @@ export type UserProfile = {
     passport_id?: string
 }
 
-export type ClaimStampResponse = {
-    success: boolean;
-    valid: boolean;
-    signature?: Uint8Array;
+export type DbUserResponse = {
+    address: string
+    points: number
+    stamp_count: number
+    name: string
 }
+
+export const createUserParams = z.object({
+    address: z.string(),
+    points: z.number(),
+    stamp_count: z.number(),
+    name: z.string()
+})
+
+export type CreateUserParams = z.infer<typeof createUserParams>

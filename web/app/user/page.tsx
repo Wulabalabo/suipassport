@@ -10,18 +10,14 @@ import { useRouter } from 'next/navigation'
 import { PassportFormValues } from '@/components/passport/passport-form'
 import { edit_passport, show_stamp } from '@/contracts/passport'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
-import { displayStamp } from '@/types/stamp'
+import { DisplayStamp } from '@/types/stamp'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
-import { useUserCrud } from '@/hooks/use-user-crud'
 import { showToast } from '@/lib/toast'
-import { useClaimStamps } from '@/hooks/use-stamp-crud'
 
 export default function UserPage() {
   const router = useRouter();
   const currentAccount = useCurrentAccount()
   const { userProfile, refreshProfile } = useUserProfile();
-  const { updateUserData } = useUserCrud();
-  const { increaseClaimStampCount } = useClaimStamps();
   const { stamps } = usePassportsStamps();
   const networkVariables = useNetworkVariables();
   const { handleSignAndExecuteTransaction: handleEditStamp, isLoading: isEditingStamp } = useBetterSignAndExecuteTransaction({
@@ -49,7 +45,7 @@ export default function UserPage() {
     }).execute()
   }
 
-  const handleCollect = async (stamp: displayStamp) => {    
+  const handleCollect = async (stamp: DisplayStamp) => {    
     if (!currentAccount?.address) {
       showToast.error("Please connect your wallet first")
       return
@@ -65,8 +61,13 @@ export default function UserPage() {
       return
     }
 
-    if (!stamp.isCollectable) {
+    if (stamp.isClaimed) {
       showToast.error("You have already collected this stamp")
+      return
+    }
+
+    if (!stamp.isClaimable) {
+      showToast.error("Stamp is not claimable")
       return
     }
 
@@ -75,11 +76,6 @@ export default function UserPage() {
       stamp: stamp.id,
     }).onSuccess(async () => {
       showToast.success("Collect Success")
-      await increaseClaimStampCount(stamp.eventId ?? '')
-      await updateUserData(userProfile?.current_user, {
-        stamp: { id: stamp.eventId ?? '', claim_count: 1 },
-        points: stamp?.points
-      })
       await refreshProfile(currentAccount?.address ?? '', networkVariables)
     }).execute()
   }

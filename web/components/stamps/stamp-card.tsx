@@ -1,4 +1,4 @@
-import { DisplayStamp } from "@/app/@stamp/page"
+import { DisplayStamp } from "@/types/stamp"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { Ribbon } from "../ribbon"

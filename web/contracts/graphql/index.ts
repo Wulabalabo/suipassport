@@ -17,3 +17,27 @@ export const getCollectionDetail = graphql(`
     }
 }
 `)
+
+export const getStampsEventRecordData = graphql(`
+query getStampsEventRecordData($address: SuiAddress!, $after: String) {
+  owner(address: $address) {
+    __typename
+    dynamicFields(after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        name {
+          json
+        }
+        value {
+          ... on MoveValue {
+            json
+          }
+        }
+      }
+    }
+  }
+}
+`)

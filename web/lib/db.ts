@@ -46,7 +46,6 @@ export async function queryD1<T>(
         if (!response.ok) {
             throw new Error(result.errors?.[0]?.message || 'Database query failed');
         }
-
         // 统一处理 result.result 格式
         const normalizedResult = Array.isArray(result.result) 
             ? result.result[0]

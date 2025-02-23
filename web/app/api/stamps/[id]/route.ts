@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import {
-    getClaimStampById,
-    updateClaimStamp,
-    deleteClaimStamp
-} from '@/lib/services/claim-stamps';
-import { claimStampSchema } from '@/lib/validations/claim-stamp';
+    getStampByIdFromDb,
+    updateStampToDb,
+    deleteStampFromDb
+} from '@/lib/services/stamps';
+import { createOrUpdateStampParams } from '@/types/stamp';
 
 // 获取单个记录
 export async function GET(
@@ -12,7 +12,7 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        const result = await getClaimStampById(params.id);
+        const result = await getStampByIdFromDb(params.id);
         if (!result.success || !result.data) {
             return NextResponse.json(
                 { success: false, error: 'Claim stamp not found' },
@@ -36,9 +36,9 @@ export async function PUT(
     try {
       const {id} = await params
       const data = await request.json();
-      const validatedData = claimStampSchema.parse(data);
+      const validatedData = createOrUpdateStampParams.parse(data);
       console.log('Updating claim stamp:', id, validatedData); // 添加日志
-      const result = await updateClaimStamp(id, validatedData);
+      const result = await updateStampToDb(validatedData);
       console.log('Update result:', result); // 添加日志
       
       if (!result.success || !result.data) {
@@ -70,7 +70,7 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        const result = await deleteClaimStamp(params.id);
+        const result = await deleteStampFromDb(params.id);
         if (!result.success || !result.data) {
             return NextResponse.json(
                 { success: false, error: 'Claim stamp not found' },

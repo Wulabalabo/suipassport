@@ -4,9 +4,8 @@ import { createContext, useContext, useCallback, useMemo, useState } from 'react
 import { UserProfile } from '@/types';
 import { checkUserState } from '@/contracts/query';
 import { NetworkVariables } from '@/contracts';
-import { useUserCrud } from '@/hooks/use-user-crud';
+// import { useUserCrud } from '@/hooks/use-user-crud';
 import { setToken } from '@/lib/jwtManager'
-import { createUser } from '@/lib/services/user';
 
 interface UserProfileContextType {
   userProfile: UserProfile | null;
@@ -27,7 +26,7 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { fetchUserByAddress, syncUserPoints } = useUserCrud();
+  // const { fetchUserByAddress, syncUserPoints } = useUserCrud();
 
   const refreshProfile = useCallback(async (address: string, networkVariables: NetworkVariables) => {
     try {
@@ -35,23 +34,23 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
       setError(null);
       await setToken({ address })
       const profile = await checkUserState(address, networkVariables);
-      await syncUserPoints(address, profile?.points ?? 0);
-      const dbProfile = await fetchUserByAddress(address);
-      console.log("dbProfile", dbProfile)
-      if (dbProfile?.success && profile?.passport_id) {
-        const results = dbProfile.data?.results;
-        if (Array.isArray(results) && results.length > 0) {
-          profile.db_profile = results[0];
-        } else {
-          console.warn('No results found in dbProfile');
-          await createUser({
-            address: profile.passport_id,
-            name: profile.name,
-            points: profile.points,
-            stamps: []
-          })
-        }
-      }
+      // await syncUserPoints(address, profile?.points ?? 0);
+      // const dbProfile = await fetchUserByAddress(address);
+      // console.log("dbProfile", dbProfile)
+      // if (dbProfile?.success && profile?.passport_id) {
+      //   const results = dbProfile.data?.results;
+      //   if (Array.isArray(results) && results.length > 0) {
+      //     profile.db_profile = results[0];
+      //   } else {
+      //     console.warn('No results found in dbProfile');
+      //     await createUser({
+      //       address: profile.passport_id,
+      //       name: profile.name,
+      //       points: profile.points,
+      //       stamps: []
+      //     })
+      //   }
+      // }
 
       console.log('Profile fetched:', profile);
       setUserProfile(profile);

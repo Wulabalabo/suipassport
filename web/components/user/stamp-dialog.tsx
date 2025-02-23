@@ -1,6 +1,6 @@
 'use client'
 
-import { StampItem } from "@/types/stamp"
+import { DisplayStamp } from "@/types/stamp"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LinkIcon, Loader2 } from "lucide-react"
@@ -9,18 +9,17 @@ import Image from "next/image"
 import { X } from "lucide-react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
-import { isClaimable, parseExcel } from "@/utils"
-import { useUserProfile } from "@/contexts/user-profile-context"
+import { parseExcel } from "@/utils"
 
 interface StampDialogProps {
-    stamp: StampItem | null
+    stamp: DisplayStamp | null
     open: boolean
     admin?: boolean
     isLoading?: boolean
-    isClaimable?: boolean
     onOpenChange: (open: boolean) => void
     onClaim?: (claimCode: string) => Promise<void>
     onSend?: (recipient: string) => Promise<void>
+    onDelete?: () => Promise<void>
     onMultipleSend?: (addresses: string[]) => Promise<void>
     onCloseClick?: () => void
 }
@@ -35,7 +34,7 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend, onMultipleSend, onCloseClick }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend, onMultipleSend, onCloseClick, onDelete }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [recipient, setRecipient] = useState('')
     const [claimCode, setClaimCode] = useState('')
@@ -43,7 +42,6 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     const [canClaim, setCanClaim] = useState(false)
     const [alreadyClaimed, setAlreadyClaimed] = useState(false)
     const [addresses, setAddresses] = useState<string[]>([])
-    const { userProfile } = useUserProfile()
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
@@ -93,11 +91,10 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
         if(stamp?.publicClaim){
             setClaimCode("00000")
         }
-        if(stamp) setCanClaim(isClaimable(stamp))
-        if(userProfile?.db_profile?.stamps?.find((s) => s.id === stamp?.id)){    
-            setAlreadyClaimed(true)
-        }
-    }, [stamp, claimCode, userProfile?.db_profile?.stamps])
+        setCanClaim(stamp?.isClaimable ?? false)
+        setAlreadyClaimed(stamp?.isClaimed ?? false)
+
+    }, [stamp?.isClaimable,stamp?.isClaimed,stamp?.publicClaim])
 
 
     return (
@@ -225,12 +222,30 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                                 ))}
                             </div>
                         )}
-                        {addresses.length === 0 && <Button className="rounded-full text-xl font-bold" onClick={() => onSend && onSend(recipient)} disabled={isLoading}>
-                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send'}
-                        </Button>}
-                        {addresses.length > 0 && <Button className="rounded-full text-xl font-bold" onClick={() => onMultipleSend && onMultipleSend(addresses)} disabled={isLoading}>
-                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Multiple'}
-                        </Button>}
+                        <div className="flex justify-between space-x-2">
+                            <Button 
+                                className="flex-1 rounded-full text-xl font-bold" 
+                            onClick={() => {
+                                if (addresses.length > 0) {
+                                    onMultipleSend?.(addresses)
+                                } else {
+                                    onSend?.(recipient)
+                                }
+                            }}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : addresses.length > 0 ? (
+                                'Send Multiple'
+                            ) : (
+                                'Send'
+                                )}
+                            </Button>
+                            <Button variant="destructive" className="rounded-full text-xl font-bold" onClick={onDelete}>
+                                Delete
+                            </Button>
+                        </div>
                     </div>
                 )}
             </DialogContent>

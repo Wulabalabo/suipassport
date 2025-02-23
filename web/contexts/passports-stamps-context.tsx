@@ -3,10 +3,9 @@
 import { createContext, useContext, useCallback, useMemo, useState } from 'react';
 import { NetworkVariables } from '@/contracts';
 import { getPassportData, getStampsData } from '@/contracts/query';
-import { StampItem } from '@/types/stamp';
+import { DbStampResponse, StampItem } from '@/types/stamp';
 import { PassportItem } from '@/types/passport';
-import { useClaimStamps } from '@/hooks/use-stamp-crud';
-import { SafeClaimStamp } from '@/types/db';
+import { useStampCRUD } from '@/hooks/use-stamp-crud';
 
 interface PassportsStampsContextType {
   stamps: StampItem[] | null;
@@ -28,7 +27,7 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [passport, setPassport] = useState<PassportItem[] | null>(null);
-  const { listClaimStamps } = useClaimStamps();
+  const { getStamps } = useStampCRUD();
 
   const refreshPassportStamps = useCallback(async (networkVariables: NetworkVariables) => {
     try {
@@ -36,10 +35,9 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
       setError(null);
       const fetchedStamps = await getStampsData(networkVariables);
       const fetchedPassport = await getPassportData(networkVariables);
-      const claimStamps = await listClaimStamps();
-      console.log(claimStamps)
+      const claimStamps = await getStamps();
       const updatedStamps = fetchedStamps?.map(stamp => {
-        const claimStamp = claimStamps?.find((cs: SafeClaimStamp) => cs.stamp_id === stamp.id)
+        const claimStamp = claimStamps?.find((cs: DbStampResponse) => cs.stamp_id === stamp.id)
         
         if (claimStamp) {
           return {
@@ -55,8 +53,9 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
         }
         return stamp;
       }) ?? [];
-      console.log(updatedStamps)
+      
       setStamps(updatedStamps as StampItem[]);
+      console.log(updatedStamps)
       setPassport(fetchedPassport as PassportItem[]);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));

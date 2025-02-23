@@ -1,4 +1,5 @@
-import { StampItem } from "@/types/stamp"
+import { UserProfile } from "@/types"
+import { DisplayStamp, StampItem } from "@/types/stamp"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 import { read, utils } from "xlsx"
 
@@ -32,6 +33,10 @@ export const isClaimable = (stamp: StampItem) => {
         return now >= startTime && now <= endTime
     }
 
+    if(stamp.claimCount && stamp.totalCountLimit && stamp.claimCount >= stamp.totalCountLimit){
+        return false
+    }
+
     return false
 }
 
@@ -59,4 +64,37 @@ export const parseExcel = (file: File): Promise<string[]> => {
         }
         reader.readAsArrayBuffer(file)
     })
+}
+
+
+export const getDisplayStamps = (stamps: StampItem[], userProfile: UserProfile): DisplayStamp[] => {
+    // Create a map to count claimed stamps per event
+    const eventClaimCounts = new Map<string, number>();
+    
+    // Count existing claimed stamps per event
+    userProfile?.stamps?.forEach(userStamp => {
+        const event = userStamp.event;
+        if (event) {
+            eventClaimCounts.set(event, (eventClaimCounts.get(event) || 0) + 1);
+        }
+    });
+
+    return stamps.map(stamp => {
+        const isClaimed = userProfile?.stamps?.some(
+            userStamp => userStamp.name.split("#")[0] === stamp.name
+        ) ?? false;
+
+        const claimedCount = stamp.event ? (eventClaimCounts.get(stamp.event) || 0) : 0;
+        
+        const isClaimable = stamp.event && stamp.userCountLimit 
+            ? claimedCount < stamp.userCountLimit
+            : true;
+
+        return {
+            ...stamp,
+            isClaimed,
+            isClaimable,
+            claimedCount
+        };
+    });
 }

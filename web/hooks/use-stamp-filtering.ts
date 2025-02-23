@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DisplayStamp } from '@/app/@stamp/page'
+import { DisplayStamp } from '@/types/stamp'
 
 interface UseStampFilteringProps {
   stamps: DisplayStamp[]

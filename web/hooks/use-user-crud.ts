@@ -1,61 +1,38 @@
 import { apiFetch } from '@/lib/apiClient';
-import { stamp } from '@/types/db';
 import { useState } from 'react';
+import { DbUserResponse, CreateUserParams } from '@/types/userProfile';
 
-export interface DbResponse {
+interface DbResponse<T> {
     success: boolean;
     data?: {
         success: boolean;
         meta:unknown;
-        results: DbUser[];
+        results: T[];
     };
     error?: string;
-}
-
-export interface DbUser{
-    id: string;
-    address: string;
-    stamps: stamp[];
-    points: number;
-    created_at: string;
-    updated_at: string;
-    name: string;
-}
-
-interface CreateUser {
-    address: string;
-    stamps: stamp[];
-    points: number;
-    name: string;
-}
-
-interface SafeUpdateUser {
-    stamp?: stamp;
-    points?: number;
 }
 
 interface UseUserCrudReturn {
     isLoading: boolean;
     error: string | null;
-    users: DbUser[];
-    fetchUsers: () => Promise<DbUser[] | undefined>;
-    fetchUserByAddress: (address: string) => Promise<DbResponse | null>;
-    createNewUser: (user: CreateUser) => Promise<DbResponse | null>;
-    updateUserData: (address: string, updates: SafeUpdateUser) => Promise<DbResponse | null>;
-    removeUser: (address: string) => Promise<DbResponse | null>;
-    syncUserPoints: (address: string, points: number) => Promise<DbResponse | null>;
+    users: DbUserResponse[];
+    fetchUsers: () => Promise<DbUserResponse[] | undefined>;
+    fetchUserByAddress: (address: string) => Promise<DbResponse<DbUserResponse> | null>;
+    createOrUpdateUser: (user: CreateUserParams) => Promise<DbResponse<DbUserResponse> | null>;
+    removeUser: (address: string) => Promise<DbResponse<DbUserResponse> | null>;
+    syncUserPoints: (address: string, points: number) => Promise<DbResponse<DbUserResponse> | null>;
 }
 
 export function useUserCrud(): UseUserCrudReturn {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [users, setUsers] = useState<DbUser[]>([]);
+    const [users, setUsers] = useState<DbUserResponse[]>([]);
 
     const fetchUsers = async () => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await apiFetch<DbResponse>('/api/user', {
+            const response = await apiFetch<DbResponse<DbUserResponse>>('/api/user', {
                 method: 'GET'
             })
             const data = await response;
@@ -72,19 +49,14 @@ export function useUserCrud(): UseUserCrudReturn {
         }
     };
 
-    const fetchUserByAddress = async (address: string): Promise<DbResponse | null> => {
+    const fetchUserByAddress = async (address: string): Promise<DbResponse<DbUserResponse> | null> => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await apiFetch<DbResponse>(`/api/user/id?address=${address}`, {
+            const response = await apiFetch<DbResponse<DbUserResponse>>(`/api/user/id?address=${address}`, {
                 method: 'GET',
             })
-            const data = await response;
-            if (data.data?.results[0]?.stamps) {
-                // Handle double-quoted JSON string by removing outer quotes first
-                const stampsString = (data.data.results[0].stamps as unknown as string).replace(/^"(.*)"$/, '$1');
-                data.data.results[0].stamps = JSON.parse(stampsString);
-            }            
+            const data = await response;      
             console.log("fetchUserByAddress data", data);
             if (!data.success) {
                 setError(data.error ?? 'Failed to fetch user');
@@ -99,11 +71,11 @@ export function useUserCrud(): UseUserCrudReturn {
         }
     };
 
-    const createNewUser = async (user: CreateUser): Promise<DbResponse | null> => {
+    const createOrUpdateUser = async (user: CreateUserParams): Promise<DbResponse<DbUserResponse> | null> => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await apiFetch<DbResponse>('/api/user', {
+            const response = await apiFetch<DbResponse<DbUserResponse>>('/api/user', {
                 method: 'POST',
                 body: JSON.stringify(user)
             })
@@ -122,36 +94,11 @@ export function useUserCrud(): UseUserCrudReturn {
         }
     };
 
-    const updateUserData = async (
-        address: string,
-        updates: SafeUpdateUser
-    ): Promise<DbResponse | null> => {
+    const syncUserPoints = async (address: string, points: number): Promise<DbResponse<DbUserResponse> | null> => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await apiFetch<DbResponse>('/api/user', {
-                method: 'PATCH',
-                body: JSON.stringify({ address, ...updates })
-            })
-            const data = await response
-            if (!data.success) {
-                setError(data.error ?? 'Failed to update user');
-                return data;
-            }
-            return data;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update user');
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const syncUserPoints = async (address: string, points: number) => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const response = await apiFetch<DbResponse>('/api/user/points', {
+            const response = await apiFetch<DbResponse<DbUserResponse>>('/api/user/points', {
                 method: 'PATCH',
                 body: JSON.stringify({ address, points })
             })
@@ -169,11 +116,11 @@ export function useUserCrud(): UseUserCrudReturn {
         }
     }
 
-    const removeUser = async (address: string): Promise<DbResponse | null> => {
+    const removeUser = async (address: string): Promise<DbResponse<DbUserResponse> | null> => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await apiFetch<DbResponse>('/api/user', {
+            const response = await apiFetch<DbResponse<DbUserResponse>>('/api/user', {
                 method: 'DELETE',
                 body: JSON.stringify({ address })
             })
@@ -197,8 +144,7 @@ export function useUserCrud(): UseUserCrudReturn {
         users,
         fetchUsers,
         fetchUserByAddress,
-        createNewUser,
-        updateUserData,
+        createOrUpdateUser,
         removeUser,
         syncUserPoints
     };

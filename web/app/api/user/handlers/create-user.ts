@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser as createUserService } from "@/lib/services/user";
-import { stamp } from "@/types/db";
+import { createOrUpdateUser as createOrUpdateUserToDb} from "@/lib/services/user";
+import { createUserParams } from "@/types/userProfile";
 
-export async function createUser(request: NextRequest) {
+
+export async function createOrUpdateUser(request: NextRequest) {
     try {
-        const { address, stamps, points, name } = await request.json() as { address: string, stamps: stamp[], points: number, name: string };   
-        const user = await createUserService({
-            address,
-            stamps,
-            points,
-            name
-        });
-
+        const requestBody = await request.json()
+        const validatedRequestBody = createUserParams.parse(requestBody)
+        const user = await createOrUpdateUserToDb(validatedRequestBody);
         return NextResponse.json(user, { status: 201 });
     } catch (error) {
         console.error('Error in POST /api/users:', error);
         return NextResponse.json(
-            { error: "Internal Server Error" }, 
+            { error: "Internal Server Error" },
             { status: 500 }
         );
     }

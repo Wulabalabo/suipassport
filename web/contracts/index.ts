@@ -30,6 +30,7 @@ const mainnetVariables = {
     stampDisplay: "0x2411283eb31a77a811d9cc22e471976c13a7de03bdae244da4f0013851a96682",
     passportDisplay: "0x9e753b65c85340d6bcf313ab7f3f9851d165995e35a767f3ec07968444277a5d",
     stampEventRecord: "0xe824719c4a84c52fc607f775a62f5f2a639c9f0db81d34f60504a68b603cfdf2",
+    stampEventRecordTable:"0xf9df7047b15be40896fd665f6ef982b3cf91207109e3a6cdbbeae34f93d1a203",
     stampAdminCap: "0x56dd26c960d9edd28d62143deb15240ca25b56e53f75c9bc26dd52396fd74da8",
 }
 
@@ -39,6 +40,7 @@ const testnetVariables = {
     stampDisplay: "0xdf32c6afe5fa32f604746a53813f14c1c73982b163f72fec42fcebbabba5e91c",
     passportDisplay: "0x9acd069be290f1002e3252466d66cb6d287369e112fd1b3abd89d4ffe2fb360e",
     stampEventRecord: "0x2815e9e800d36f3e6e0a5a2c22f39cf259ff0095ab14b85b61568ec669b24068",
+    stampEventRecordTable:"0xf9df7047b15be40896fd665f6ef982b3cf91207109e3a6cdbbeae34f93d1a203",
     stampAdminCap: "0x505cbf834135ee90afc42c36727bb1d2746149b46a7668d4eb7c201c001c9c91",
 }
 

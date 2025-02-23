@@ -1,4 +1,4 @@
-import { DisplayStamp } from '@/app/@stamp/page'
+import { DisplayStamp } from '@/types/stamp'
 import StampCard from './stamp-card'
 
 interface StampGridProps {
