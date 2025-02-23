@@ -1,16 +1,16 @@
-import { createClaimStamp } from "@/lib/services/claim-stamps";
-import { claimStampSchema } from "@/lib/validations/claim-stamp";
+import { createStampToDb } from "@/lib/services/stamps";
+import { createOrUpdateStampParams } from "@/types/stamp";
 
 import { NextResponse } from "next/server";
 
-export async function updateStamps(request: Request) {
+export async function createStamp(request: Request) {
     try {
       const data = await request.json();
       
       // 验证输入数据
-      const validatedData = claimStampSchema.parse(data);
+      const validatedData = createOrUpdateStampParams.parse(data);
       console.log( "validatedData", validatedData)
-      const result = await createClaimStamp(validatedData);
+      const result = await createStampToDb(validatedData);
       return NextResponse.json(result);
     } catch (error) {
       if (error instanceof Error) {

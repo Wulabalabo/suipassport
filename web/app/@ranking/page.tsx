@@ -6,7 +6,6 @@ import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { useUserCrud } from "@/hooks/use-user-crud"
-import { stamp } from "@/types/db"
 import Link from "next/link"
 import useSWR from "swr"
 import { Loader2 } from "lucide-react"
@@ -63,7 +62,7 @@ export default function RankingPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isRefreshDisabled, setIsRefreshDisabled] = useState(false)
   const ITEMS_PER_PAGE = 7
-  const { fetchUsers, fetchUserByAddress, createNewUser } = useUserCrud()
+  const { fetchUsers, createOrUpdateUser } = useUserCrud()
   const currentAccount = useCurrentAccount()
   const { userProfile } = useUserProfile()
 
@@ -71,15 +70,12 @@ export default function RankingPage() {
     'rankings',
     async () => {
       if (currentAccount?.address && userProfile?.name) {
-        const dbUser = await fetchUserByAddress(currentAccount?.address)
-        if (!dbUser?.data?.results[0]?.address) {
-          await createNewUser({
-            address: currentAccount?.address,
-            stamps: [],
-            points: 0,
-            name: userProfile?.name
-          })
-        }
+        await createOrUpdateUser({
+          address: currentAccount?.address,
+          stamp_count: userProfile?.stamps?.length ?? 0,
+          points: Number(userProfile?.points) ?? 0,
+          name: userProfile?.name
+        })
       }
       const users = await fetchUsers()
 
@@ -87,15 +83,12 @@ export default function RankingPage() {
 
       const sortedUsers = users.sort((a, b) => b.points - a.points)
       return Promise.all(sortedUsers.map(async (user, index) => {
-        const stamps = JSON.parse(user.stamps as unknown as string) as stamp[]
-        const stampsCount = stamps.reduce((acc, stamp) => acc + stamp.claim_count, 0)
-
         return {
           rank: index + 1,
           user: user.name ?? '',
           address: user.address,
           points: user.points,
-          stampsCount
+          stampsCount: user.stamp_count
         }
       }))
     },

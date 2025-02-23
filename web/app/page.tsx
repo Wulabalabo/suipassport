@@ -13,7 +13,6 @@ import { passportFormSchema } from '@/components/passport/passport-form'
 import { useBetterSignAndExecuteTransactionWithSponsor } from '@/hooks/use-better-tx'
 import RankingPage from './@ranking/page'
 import { showToast } from '@/lib/toast'
-import { apiFetch } from '@/lib/apiClient'
 
 export default function Home() {
   const networkVariables = useNetworkVariables();
@@ -29,11 +28,6 @@ export default function Home() {
   })
 
   const handleSubmit = async (values: z.infer<typeof passportFormSchema>) => {
-    const isConnected = await apiFetch<{ isConnected: boolean }>('/api/check', { method: 'GET' });
-    if (!isConnected.isConnected) {
-      showToast.error("Database connection error")
-      return
-    }
     await handleSignAndExecuteTransactionWithSponsor(
       process.env.NEXT_PUBLIC_NETWORK as 'testnet' | 'mainnet', 
       currentAccount?.address ?? '',

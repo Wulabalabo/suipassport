@@ -1,9 +1,9 @@
 -- 删除已存在的表（如果需要）
-DROP TABLE IF EXISTS claim_stamps;
+DROP TABLE IF EXISTS stamps;
 DROP TABLE IF EXISTS users;
 
--- 创建 claim_stamps 表
-CREATE TABLE claim_stamps (
+-- 创建 stamps 表
+CREATE TABLE stamps (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     stamp_id TEXT NOT NULL,
     claim_code TEXT,
@@ -18,15 +18,15 @@ CREATE TABLE claim_stamps (
 );
 
 -- 创建索引以优化查询
-CREATE INDEX idx_stamp_id ON claim_stamps(stamp_id);
-CREATE INDEX idx_claim_code ON claim_stamps(claim_code);
-CREATE INDEX idx_timestamps ON claim_stamps(claim_code_start_timestamp, claim_code_end_timestamp);
+CREATE INDEX idx_stamp_id ON stamps(stamp_id);
+CREATE INDEX idx_claim_code ON stamps(claim_code);
+CREATE INDEX idx_timestamps ON stamps(claim_code_start_timestamp, claim_code_end_timestamp);
 
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     address TEXT NOT NULL UNIQUE,
     name TEXT,
-    stamps JSON,  -- Cloudflare D1 supports JSON type for storing arrays
+    stamp_count INTEGER DEFAULT 0,
     points INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

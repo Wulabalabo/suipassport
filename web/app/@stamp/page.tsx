@@ -4,7 +4,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SearchFilterBar } from "@/components/ui/search-filter-bar"
 import { useEffect, useState } from "react"
 import { StampDialog } from "@/components/user/stamp-dialog"
-import { StampItem, VerifyClaimStampRequest, DisplayStamp } from "@/types/stamp"
+import { StampItem, VerifyStampParams, DisplayStamp } from "@/types/stamp"
 import { CreateStampFormValues } from "@/types/form"
 import { batch_send_stamp, create_event_stamp, delete_stamp, send_stamp } from "@/contracts/stamp"
 import { useUserProfile } from "@/contexts/user-profile-context"
@@ -13,7 +13,7 @@ import { claim_stamp } from "@/contracts/claim"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { useNetworkVariables } from "@/contracts"
 import { useCurrentAccount } from "@mysten/dapp-kit"
-import { useClaimStamp } from "@/hooks/use-stamp-crud"
+import { useStampCRUD } from "@/hooks/use-stamp-crud"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 import { getDisplayStamps } from "@/utils"
 import { apiFetch } from "@/lib/apiClient"
@@ -22,7 +22,7 @@ import { StampHeader } from "@/components/stamps/stamp-header"
 import { StampGrid } from "@/components/stamps/stamp-grid"
 import { useStampFiltering } from "@/hooks/use-stamp-filtering"
 import { getEventFromDigest } from "@/contracts/query"
-import { ClaimStamp } from "@/lib/validations/claim-stamp"
+import { CreateOrUpdateStampParams } from "@/types/stamp"
 
 interface AdminStampProps {
     stamps: StampItem[] | null;
@@ -37,7 +37,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
-    const { verifyClaimStamp, createClaimStamp } = useClaimStamp()
+    const { verifyClaimStamp, createStamp } = useStampCRUD()
     const networkVariables = useNetworkVariables()
 
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
@@ -76,7 +76,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             showToast.error("Stamp is claimed out")
             return
         }
-        const requestBody: VerifyClaimStampRequest = {
+        const requestBody: VerifyStampParams = {
             stamp_id: selectedStamp?.id,
             claim_code: claimCode,
             passport_id: userProfile?.id.id,
@@ -185,7 +185,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const onStampCreated = async (digest: string, values: CreateStampFormValues) => {        
         const stamp = await getEventFromDigest(digest)
 
-        const claimStamp: ClaimStamp = {
+        const claimStamp: CreateOrUpdateStampParams = {
             stamp_id: stamp.id,
             claim_code: values.claimCode && values.claimCode.length > 0 ? values.claimCode : null,
             claim_code_start_timestamp: values.startDate ? new Date(values.startDate).getTime().toString() : null,
@@ -194,7 +194,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             user_count_limit: values.userCountLimit ?? null,
             public_claim: values.publicClaim ?? false
         }
-        await createClaimStamp(claimStamp)
+        await createStamp(claimStamp)
     }
 
 

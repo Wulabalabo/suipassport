@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateUser as updateUserService } from "@/lib/services/user";
-import { stamp } from "@/types/db";
+import { createOrUpdateUser as createOrUpdateUserToDb } from "@/lib/services/user";
 
 export async function updateUser(request: NextRequest) {
     try {
-        const { address, stamp, points, name } = await request.json() as { address: string, stamp: stamp, points: number, name: string };
-        console.log(address, stamp, points, name)
-        const user = await updateUserService(address, { stamp, points, name });
+        const { address, stamp_count, points, name } = await request.json() as { address: string, stamp_count: number, points: number, name: string };
+        console.log(address, stamp_count, points, name)
+        const user = await createOrUpdateUserToDb({ address, stamp_count, points, name });
 
         return NextResponse.json(user);
     } catch (error) {

@@ -1,25 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import type { ClaimStamp } from '@/lib/validations/claim-stamp'
-import { SafeClaimStamp } from '@/types/db'
 import { apiFetch } from '@/lib/apiClient'
-import { ClaimStampResponse } from '@/types'
-import { VerifyClaimStampRequest } from '@/types/stamp'
+import { DbStampResponse, VerifyClaimStampResponse, VerifyStampParams, CreateOrUpdateStampParams } from '@/types/stamp'
 
-export function useClaimStamp() {
+export function useStampCRUD() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const listClaimStamps = async () => {
+  const getStamps = async () => {
     try {
       setIsLoading(true)
-      const response = await apiFetch<{ results: SafeClaimStamp[] }>(`/api/stamps`,{
+      const response = await apiFetch<{ results: DbStampResponse[] }>(`/api/stamps`,{
         method: 'GET'
       })
       const result = await response
 
-      return result.results as SafeClaimStamp[]
+      return result.results as DbStampResponse[]
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch claim stamps'))
       throw err
@@ -28,13 +25,13 @@ export function useClaimStamp() {
     }
   }
 
-  const createClaimStamp = async (data: ClaimStamp) => {
+  const createStamp = async (params: CreateOrUpdateStampParams) => {
     try {
       setIsLoading(true)
       const response = await apiFetch(`/api/stamps`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(params)
       })
       const result = await response
       return result
@@ -46,10 +43,10 @@ export function useClaimStamp() {
     }
   }
 
-  const getClaimStamp = async (id: string) => {
+  const getStampByIdFromDb = async (id: string) => {
     try {
       setIsLoading(true)
-      const response = await apiFetch<{ results: SafeClaimStamp[] }>(`/api/stamps/${id}`)
+      const response = await apiFetch<{ results: DbStampResponse }>(`/api/stamps/${id}`)
       const result = await response
       return result.results
     } catch (err) {
@@ -60,13 +57,13 @@ export function useClaimStamp() {
     }
   }
 
-  const updateClaimStamp = async (id: string, data: ClaimStamp) => {
+  const updateStamp = async (params: CreateOrUpdateStampParams) => {  
     try {
       setIsLoading(true)
-      const response = await apiFetch<{ results: SafeClaimStamp[] }>(`/api/stamps/${id}`, {
+      const response = await apiFetch<{ results: DbStampResponse }>(`/api/stamps/${params.stamp_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(params)
       })
       const result = await response
       return result.results
@@ -78,7 +75,7 @@ export function useClaimStamp() {
     }
   }
 
-  const increaseClaimStampCount = async (stamp_id: string) => {
+  const increaseStampCount = async (stamp_id: string) => {
     try {
       setIsLoading(true)
       const response = await apiFetch(`/api/stamps/add`, {
@@ -95,10 +92,10 @@ export function useClaimStamp() {
     }
   }
 
-  const deleteClaimStamp = async (id: string) => {
+  const deleteStamp = async (id: string) => {
     try {
       setIsLoading(true)
-      const response = await apiFetch<{ results: SafeClaimStamp[] }>(`/api/stamps/${id}`, {
+      const response = await apiFetch<{ results: DbStampResponse }>(`/api/stamps/${id}`, {
         method: 'DELETE'
       })
       const result = await response
@@ -111,9 +108,9 @@ export function useClaimStamp() {
     }
   }
 
-  const verifyClaimStamp = async (data: VerifyClaimStampRequest) => {
+  const verifyClaimStamp = async (data: VerifyStampParams) => {
     try {
-      const response = await apiFetch<ClaimStampResponse>(`/api/stamps/verify`, {
+      const response = await apiFetch<VerifyClaimStampResponse>(`/api/stamps/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -131,12 +128,12 @@ export function useClaimStamp() {
   return {
     isLoading,
     error,
-    listClaimStamps,
-    getClaimStamp,
-    updateClaimStamp,
-    deleteClaimStamp,
-    createClaimStamp,
-    increaseClaimStampCount,
+    getStamps,
+    getStampByIdFromDb,
+    updateStamp,
+    deleteStamp,
+    createStamp,
+    increaseStampCount,
     verifyClaimStamp
   }
 }
