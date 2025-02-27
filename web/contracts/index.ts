@@ -24,15 +24,15 @@ function createBetterTxFactory<T extends Record<string, unknown>>(
 
 type Network = "mainnet" | "testnet"
 
-//6i6HeqCBEsTTaX5Ni4MHH8GPCoYBRcKdZggfubHrL5B8
+//AKW5RUoYgaoT2JebZv3psJBJq8FwkrqfrVRqmWUanQyM
 const mainnetVariables = {
-    package: "0xd9e4c4d7b3604b34fabea5a336c39fff23f03b67127499ccfde740fc872d0d92",
-    suiPassportRecord: "0xa724aaaf003aeef49574dcae670df82a494defe4c387469c82c795306db35cf9",
-    stampDisplay: "0x50bb8c5f734ed52ace655ceb96b546eb41cc3d2bdea9f39667a92cfa15ab5f8b",
-    passportDisplay: "0x7c0c2087639833e88e2df3ed40dcb40e0bbc849c6b7191afe5ddb1e6fceefdb9",
-    stampEventRecord: "0x4886a40467c02d7f5dba6a728f5e88704c0f4703b69b081fa653c2538d4a5794",
-    stampEventRecordTable:"0xec0ba2d92eafd17b186c7dbf6d9debf9060aba2103cc3eb6c6ceb61e97a0c03f",
-    stampAdminCap: "0x6141c5fa2d501da3954dd32705c36e0465ef3466e29c45526150e14302832c27",
+    package: "0x5210d4ce766f63de862d1e095d0608791d58c9ec33c97a518049d4375754cea8",
+    suiPassportRecord: "0x293d3fe7714a3c119dbf0f99d4774ce9245e7f5b78f469b738bae3b1093c61a5",
+    stampDisplay: "0xc5b25e9e4ed7f8a6ab2b0fc45a406dc39ea580fa98dee7e60929b530024b85b7",
+    passportDisplay: "0xb53c4b93bc7b22be6ee9f036da19e042288eecccb32008122e451db23893b97e",
+    stampEventRecord: "0xb58b65f1e10d75bfc5fa936ef69df3da8d9712c998b0e30546494272991d2f89",
+    stampEventRecordTable:"0xadfe6cc8685af7251c660cebbf1f18b987897932c11041cc9a9833db19e9ce69",
+    stampAdminCap: "0xc6959493989d15d66e513d8ada5dc853cdf883d937b1b1164d23e2b3c7cadec9",
 }
 
 const testnetVariables = {
