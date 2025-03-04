@@ -80,7 +80,8 @@ export const send_stamp = createBetterTxFactory<{
             tx.object(params.adminCap),
             tx.object(params.event),
             tx.pure.string(params.name),
-            tx.pure.address(params.recipient)
+            tx.pure.address(params.recipient),
+            tx.object(networkVariables.version)
         ]
     });
     return tx;
@@ -107,7 +108,8 @@ export const batch_send_stamp = createBetterTxFactory<{
             tx.object(params.adminCap), 
             tx.object(params.event), 
             tx.pure.string(params.name), 
-            tx.pure.vector('address', params.recipients)
+            tx.pure.vector('address', params.recipients),
+            tx.object(networkVariables.version)
         ]
     });
     return tx;
@@ -122,7 +124,11 @@ export const set_admin = createBetterTxFactory<{
         package: `${networkVariables.package}`,
         module: `stamp`,
         function: `set_admin`,
-        arguments: [tx.object(params.adminCap), tx.pure.address(params.recipient)]
+        arguments: [
+            tx.object(params.adminCap),
+            tx.object(networkVariables.adminSet),
+            tx.pure.address(params.recipient)
+        ]
     });
     return tx;
 });

@@ -32,6 +32,7 @@ export const mint_passport = createBetterTxFactory<{
             tx.pure.string(params.x),
             tx.pure.string(params.github),
             tx.pure.string(params.email),
+            tx.object(networkVariables.version),
             tx.object("0x6"),
         ],
     });
@@ -71,6 +72,7 @@ export const edit_passport = createBetterTxFactory<{
             tx.pure.option("string", params.x),
             tx.pure.option("string", params.github),
             tx.pure.option("string", params.email),
+            tx.object(networkVariables.version),
             tx.object("0x6"),
         ],
     });
@@ -94,6 +96,7 @@ export const show_stamp = createBetterTxFactory<{
         arguments: [
             tx.object(params.passport),
             tx.object(params.stamp),
+            tx.object(networkVariables.version),
             tx.object("0x6"),
         ],
     });
