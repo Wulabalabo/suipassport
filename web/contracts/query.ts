@@ -71,7 +71,6 @@ export const checkUserState = async (
 
     try {
         const objects = await fetchAllOwnedObjects(address, networkVariables);
-
         objects.forEach((obj) => {
             if (!obj.data) return;
 
@@ -120,7 +119,7 @@ async function fetchAllOwnedObjects(
             options: { showContent: true },
             filter: {
                 MatchAny: [
-                    { StructType: `${networkVariables.package}::stamp::AdminCap` },
+                    { StructType: `${networkVariables.package}::stamp::SuperAdminCap` },
                     { StructType: `${networkVariables.package}::sui_passport::SuiPassport` },
                     { StructType: `${networkVariables.package}::stamp::Stamp` }
                 ]
