@@ -85,7 +85,7 @@ export const checkUserState = async (
                     updateProfileFromPassport(profile, fields as UserProfile);
                     break;
 
-                case `${networkVariables.package}::stamp::AdminCap`:
+                case `${networkVariables.package}::stamp::SuperAdminCap`:
                     const adminCapId = (fields as { id: { id: string } })?.id?.id;
                     if (adminCapId) profile.admincap = adminCapId;
                     break;
