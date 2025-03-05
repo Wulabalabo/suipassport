@@ -34,24 +34,6 @@ export function UserProfileProvider({ children}: UserProfileProviderProps) {
       setError(null);
       await setToken({ address })
       const profile = await checkUserState(address, networkVariables);
-      // await syncUserPoints(address, profile?.points ?? 0);
-      // const dbProfile = await fetchUserByAddress(address);
-      // console.log("dbProfile", dbProfile)
-      // if (dbProfile?.success && profile?.passport_id) {
-      //   const results = dbProfile.data?.results;
-      //   if (Array.isArray(results) && results.length > 0) {
-      //     profile.db_profile = results[0];
-      //   } else {
-      //     console.warn('No results found in dbProfile');
-      //     await createUser({
-      //       address: profile.passport_id,
-      //       name: profile.name,
-      //       points: profile.points,
-      //       stamps: []
-      //     })
-      //   }
-      // }
-
       console.log('Profile fetched:', profile);
       setUserProfile(profile);
     } catch (err) {

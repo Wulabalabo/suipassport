@@ -6,6 +6,7 @@ import { StampItem } from "@/types/stamp";
 import { PassportItem } from "@/types/passport";
 import { graphqlClient, NetworkVariables, suiClient } from "@/contracts";
 import { getCollectionDetail, getStampsEventRecordData } from "./graphql";
+import { convertSuiObject } from "@/utils";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
     if (!isValidSuiAddress(address)) {
@@ -61,15 +62,27 @@ export const checkUserState = async (
         introduction: "",
         last_time: 0,
         name: "",
-        admincap: "",
+        superAdmincap: "",
         points: 0,
         x: "",
         passport_id: "",
         stamps: [],
         collection_detail: [],
+        is_admin: false
     };
 
     try {
+        const response = await suiClient.getObject({
+            id: networkVariables.adminSet,
+            options: {
+                showContent: true
+            }
+        })
+        const adminCap = convertSuiObject<{ admin:{fields:{contents:string[]}} }>(response);
+        if (adminCap?.admin.fields.contents.includes(address)) {
+            profile.is_admin = true;
+        }
+
         const objects = await fetchAllOwnedObjects(address, networkVariables);
         objects.forEach((obj) => {
             if (!obj.data) return;
@@ -86,7 +99,7 @@ export const checkUserState = async (
 
                 case `${networkVariables.package}::stamp::SuperAdminCap`:
                     const adminCapId = (fields as { id: { id: string } })?.id?.id;
-                    if (adminCapId) profile.admincap = adminCapId;
+                    if (adminCapId) profile.superAdmincap = adminCapId;
                     break;
 
                 case `${networkVariables.package}::stamp::Stamp`:
@@ -97,6 +110,8 @@ export const checkUserState = async (
         });
 
         await enrichProfileWithCollectionDetails(profile, graphqlClient);
+
+       
 
         return profile;
     } catch (error) {

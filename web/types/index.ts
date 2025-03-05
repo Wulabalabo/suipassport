@@ -14,10 +14,11 @@ export type UserProfile = {
     points: number,
     x: string,
     current_user: string,
-    admincap: string,
+    superAdmincap: string,
     stamps?: StampItem[],
     collection_detail?: string[]
     passport_id?: string
+    is_admin?: boolean
 }
 
 export type ClaimStampResponse = {

@@ -15,7 +15,6 @@ import { truncateAddress } from '@/lib/utils'
 import { usePathname, useRouter } from 'next/navigation'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { useNetworkVariables } from '@/contracts'
-import { isValidSuiObjectId } from '@mysten/sui/utils'
 import { removeToken } from '@/lib/jwtManager'
 import { showToast } from '@/lib/toast'
 
@@ -108,7 +107,7 @@ export function CustomConnectButton() {
           <User className="mr-2 h-4 w-4" />
           {pathname === '/user' ? 'Home' : 'Profile'}
         </DropdownMenuItem>
-        { userProfile?.admincap && isValidSuiObjectId(userProfile?.admincap) && (
+        { userProfile?.is_admin && (
           <DropdownMenuItem onClick={handleAdminCap}>
             <User className="mr-2 h-4 w-4" />
             Admin

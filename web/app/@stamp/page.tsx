@@ -104,12 +104,12 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
 
     //Todo: what if onStampCreated failed?
     const handleCreateStamp = async (values: CreateStampFormValues) => {
-        if (!userProfile?.admincap) {
+        if (!userProfile?.is_admin) {
             showToast.error("Only admin can create stamp")
             return
         }
         handleCreateStampTx({
-            adminCap: userProfile.admincap,
+            adminCap: userProfile.superAdmincap,
             event: values.name,
             description: values.description,
             image_url: values.image,
@@ -134,7 +134,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             showToast.error("Invalid address")
             return
         }
-        if (!userProfile?.admincap || !selectedStamp?.id) return
+        if (!userProfile?.is_admin || !selectedStamp?.id) return
         {/* check if user has this stamp */ }
         // const dbUser = await fetchUserByAddress(recipient)
         // if (dbUser?.data?.results[0]?.address && isValidSuiAddress(dbUser?.data?.results[0]?.address)) {
@@ -147,7 +147,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         // }
 
         handleSendStampTx({
-            adminCap: userProfile?.admincap,
+            adminCap: userProfile?.superAdmincap,
             event: selectedStamp?.id,
             name: selectedStamp?.name,
             recipient: recipient
@@ -157,9 +157,9 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).execute()
     }
     const handleMultipleSendStamp = async (addresses: string[]) => {
-        if (!userProfile?.admincap || !selectedStamp?.id) return
+        if (!userProfile?.is_admin || !selectedStamp?.id) return
         handleBatchSendStampTx({
-            adminCap: userProfile?.admincap,
+            adminCap: userProfile?.superAdmincap,
             event: selectedStamp?.id,
             name: selectedStamp?.name,
             recipients: addresses
@@ -170,9 +170,9 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).execute()
     }
     const handleDeleteStamp = async () => {
-        if (!userProfile?.admincap || !selectedStamp?.id) return
+        if (!userProfile?.is_admin || !selectedStamp?.id) return
         handleDeleteStampTx({
-            adminCap: userProfile?.admincap,
+            adminCap: userProfile?.superAdmincap,
             event: selectedStamp?.id,
             name: selectedStamp?.name
         }).onSuccess(async () => {

@@ -6,7 +6,7 @@ import AdminDashboard from './@dashboard/page'
 import { useNetworkVariables } from '@/contracts'
 import { usePassportsStamps } from '@/contexts/passports-stamps-context'
 import { useUserProfile } from '@/contexts/user-profile-context'
-import { isValidSuiAddress, isValidSuiObjectId } from '@mysten/sui/utils'
+import { isValidSuiAddress } from '@mysten/sui/utils'
 import { useRouter } from 'next/navigation'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
 import { set_admin } from '@/contracts/stamp'
@@ -25,8 +25,8 @@ export default function AdminPage() {
   const [recipient, setRecipient] = useState('')
 
   const handleSetAdmin = async () => {
-    if (!userProfile?.admincap || !isValidSuiObjectId(userProfile.admincap)) {
-      showToast.error('Admin Cap is not valid')
+    if (!userProfile?.is_admin) {
+      showToast.error('You are not admin')
       return
     }
     if (!isValidSuiAddress(recipient)) {
@@ -34,7 +34,7 @@ export default function AdminPage() {
       return
     }
     await handleSetAdminTx({
-      adminCap: userProfile?.admincap,
+      adminCap: userProfile?.superAdmincap,
       recipient: recipient
     }).onSuccess(() => {
       showToast.success('Admin set successfully')
@@ -42,7 +42,7 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (!userProfile?.admincap || !isValidSuiObjectId(userProfile.admincap)) {
+    if (!userProfile?.is_admin) {
       router.push('/')
       return
     }

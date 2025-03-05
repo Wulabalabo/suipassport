@@ -1,5 +1,6 @@
 import { UserProfile } from "@/types"
 import { DisplayStamp, StampItem } from "@/types/stamp"
+import { SuiObjectResponse } from "@mysten/sui/client"
 import { isValidSuiAddress } from "@mysten/sui/utils"
 import { read, utils } from "xlsx"
 
@@ -98,3 +99,25 @@ export const getDisplayStamps = (stamps: StampItem[], userProfile: UserProfile):
         };
     });
 }
+
+export function convertSuiObject<T>(response: SuiObjectResponse): T | null {
+    try {
+        // Check if response and data exist
+        if (!response?.data?.content?.dataType) {
+            return null;
+        }
+  
+        const content = response.data.content;
+        
+        // Ensure it's a moveObject with fields
+        if (content.dataType === 'moveObject' && 'fields' in content) {
+            // Cast fields to the generic type
+            return content.fields as unknown as T;
+        }
+  
+        return null;
+    } catch (error) {
+        console.error('Error converting SUI object:', error);
+        return null;
+    }
+  }
