@@ -159,7 +159,7 @@ export async function increaseStampCountToDb(id: string) {
 
 export async function deleteStampFromDb(id: string) {
   return queryD1<DbStampResponse>(
-    'DELETE FROM stamps WHERE id = ? RETURNING *',
+    'DELETE FROM stamps WHERE stamp_id = ? RETURNING *',
     [id]
   );
 }

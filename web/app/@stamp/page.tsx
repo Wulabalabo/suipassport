@@ -37,7 +37,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const currentAccount = useCurrentAccount()
     const { refreshPassportStamps } = usePassportsStamps()
     const { refreshProfile } = useUserProfile()
-    const { verifyClaimStamp, createStamp } = useStampCRUD()
+    const { verifyClaimStamp, createStamp,deleteStamp } = useStampCRUD()
     const networkVariables = useNetworkVariables()
 
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
@@ -119,6 +119,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                 showToast.error("Something went wrong")
                 return
             }
+            console.log("result", result)
             await Promise.all([                
                 await onStampCreated(result.digest, values),
                 await refreshPassportStamps(networkVariables),
@@ -176,13 +177,14 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             name: selectedStamp?.name
         }).onSuccess(async () => {
             showToast.success("Stamp deleted successfully")
+            await deleteStamp(selectedStamp?.id)
             await refreshPassportStamps(networkVariables)
         }).onError((e) => {
             showToast.error(e.message)
         }).execute()
     }
 
-    const onStampCreated = async (digest: string, values: CreateStampFormValues) => {        
+    const onStampCreated = async (digest: string, values: CreateStampFormValues) => {   
         const stamp = await getEventFromDigest(digest)
 
         const claimStamp: CreateOrUpdateStampParams = {

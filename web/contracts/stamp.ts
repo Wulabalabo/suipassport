@@ -147,7 +147,7 @@ export const delete_stamp = createBetterTxFactory<{
         package: `${networkVariables.package}`,
         module: `stamp`,
         function: `remove_event_stamp`,
-        arguments: [tx.object(params.adminCap), tx.object(params.event), tx.pure.string(params.name)]
+        arguments: [tx.object(`${networkVariables.adminSet}`), tx.object(params.event), tx.pure.string(params.name)]
     });
     return tx;
 });

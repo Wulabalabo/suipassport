@@ -70,7 +70,8 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        const result = await deleteStampFromDb(params.id);
+        const {id} = await params
+        const result = await deleteStampFromDb(id);
         if (!result.success || !result.data) {
             return NextResponse.json(
                 { success: false, error: 'Claim stamp not found' },
