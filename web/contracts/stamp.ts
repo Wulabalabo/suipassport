@@ -29,7 +29,7 @@ export const create_event_stamp = createBetterTxFactory<{
         module: "stamp",
         function: "create_event",
         arguments: [
-            tx.object(params.adminCap),
+            tx.object(`${networkVariables.adminSet}`),
             tx.object(`${networkVariables.stampEventRecord}`),
             tx.pure.string(params.event),
             tx.pure.string(params.description)
@@ -40,7 +40,7 @@ export const create_event_stamp = createBetterTxFactory<{
         module: `stamp`,
         function: `set_event_stamp`,
         arguments: [
-            tx.object(params.adminCap),
+            tx.object(`${networkVariables.adminSet}`),
             Event,
             tx.pure.string(params.event),
             tx.pure.string(params.image_url),
