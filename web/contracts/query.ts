@@ -100,6 +100,7 @@ export const checkUserState = async (
                 case `${networkVariables.package}::stamp::SuperAdminCap`:
                     const adminCapId = (fields as { id: { id: string } })?.id?.id;
                     if (adminCapId) profile.superAdmincap = adminCapId;
+                    profile.is_admin = true;
                     break;
 
                 case `${networkVariables.package}::stamp::Stamp`:
