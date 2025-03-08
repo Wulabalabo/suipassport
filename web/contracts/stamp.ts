@@ -77,11 +77,11 @@ export const send_stamp = createBetterTxFactory<{
         module: `send`,
         function: `send_stamp`,
         arguments: [
-            tx.object(params.adminCap),
+            tx.object(networkVariables.adminSet),
             tx.object(params.event),
             tx.pure.string(params.name),
             tx.pure.address(params.recipient),
-            tx.object(networkVariables.version)
+            tx.object(networkVariables.version),
         ]
     });
     return tx;
@@ -105,11 +105,11 @@ export const batch_send_stamp = createBetterTxFactory<{
         module: `send`,
         function: `batch_send_stamp`,
         arguments: [
-            tx.object(params.adminCap), 
+            tx.object(networkVariables.adminSet), 
             tx.object(params.event), 
             tx.pure.string(params.name), 
             tx.pure.vector('address', params.recipients),
-            tx.object(networkVariables.version)
+            tx.object(networkVariables.version),
         ]
     });
     return tx;
