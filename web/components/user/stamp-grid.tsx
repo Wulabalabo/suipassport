@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { StampDialog } from "./stamp-dialog"
 import { StampCard } from "./stamp-card"
-import { displayStamp, StampItem } from "@/types/stamp"
+import { DisplayStamp, StampItem } from "@/types/stamp"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { UserProfile } from "@/types"
 
@@ -15,13 +15,13 @@ interface StampGridProps {
     allstamps: StampItem[]
     collection_detail: string[]
     isVisitor?: boolean
-    onCollect?: (stamp: displayStamp) => void
+    onCollect?: (stamp: DisplayStamp) => void
 }
 
 export function StampGrid({ userProfile, allstamps, collection_detail, isVisitor, onCollect }: StampGridProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedStamp, setSelectedStamp] = useState<StampItem | null>(null)
-    const [items, setItems] = useState<displayStamp[]>([])
+    const [items, setItems] = useState<DisplayStamp[]>([])
 
     // 使用媒体查询来确定是否为桌面版
     const isDesktop = useMediaQuery("(min-width: 1024px)")
@@ -56,7 +56,7 @@ export function StampGrid({ userProfile, allstamps, collection_detail, isVisitor
             setItems(displayStamps)
         }
         
-    },[userProfile?.stamps,collection_detail,isVisitor,allstamps,userProfile?.db_profile])
+    },[userProfile?.stamps,collection_detail,isVisitor,allstamps])
     
     // 计算分页数据
     const paginatedData = useMemo(() => {
@@ -67,7 +67,7 @@ export function StampGrid({ userProfile, allstamps, collection_detail, isVisitor
 
     const totalPages = Math.ceil(items!.length / itemsPerPage)
 
-    const handleClick = (isActive: boolean,stamp: displayStamp) => {
+    const handleClick = (isActive: boolean,stamp: DisplayStamp) => {
         if(isActive){
             setSelectedStamp({...stamp})
         }else{
