@@ -11,6 +11,7 @@ import { StampItem } from "@/types/stamp"
 import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { PassportItem } from "@/types/passport"
 import Link from "next/link"
+import { DbUserResponse } from "@/types/userProfile"
 
 const stampColumns: ColumnDef<StampItem>[] = [
   {
@@ -48,33 +49,39 @@ const stampColumns: ColumnDef<StampItem>[] = [
   },
 ]
 
-const passportColumns: ColumnDef<PassportItem>[] = [
+const passportColumns: ColumnDef<DbUserResponse>[] = [
   {
-    accessorKey: "id",
-    header: "ID",
+    accessorKey: "address",
+    header: "Address",
     cell: ({ row }) => {
-      return <span className="text-sm">{row.original.id.slice(0, 6)}...</span>
+      return <span className="text-sm">{row.original.address.slice(0, 6)}...</span>
     }
   },
   {
-    accessorKey: "sender",
-    header: "Sender",
+    accessorKey: "name",
+    header: "Name",
     cell: ({ row }) => {
       return (
         <div 
           className="max-w-xs cursor-pointer underline text-blue-600 truncate" 
         >
-          <Link href={`/user/${row.original.sender}`} target="_blank">{row.original.sender}</Link>
+          <Link href={`/user/${row.original.address}`} target="_blank">{row.original.name}</Link>
         </div>
       )
     }
   },
   {
-    accessorKey: "timestamp",
-    header: () => <div className="text-right text-nowrap">Created At</div>,
+    accessorKey: "points",
+    header: () => <div className="text-right text-nowrap">Points</div>,
     cell: ({ row }) => {
-      const createdAt = new Date(row.original.timestamp ?? 0).toLocaleDateString()
-      return <div className="text-nowrap text-right">{createdAt}</div>
+      return <div className="text-nowrap text-right">{row.original.points}</div>
+    }
+  },
+  {
+    accessorKey: "stamp_count",
+    header: () => <div className="text-right text-nowrap">Stamps</div>,
+    cell: ({ row }) => {
+      return <div className="text-nowrap text-right">{row.original.stamp_count}</div>
     }
   },
 ]
@@ -102,18 +109,18 @@ export default function AdminDashboard() {
   const ITEMS_PER_PAGE = 7
 
   // 修改 getCurrentConfig 函数
-  const getCurrentConfig = (): TableConfig<StampItem | PassportItem> => {
+  const getCurrentConfig = (): TableConfig<StampItem | PassportItem | DbUserResponse> => {
     switch (activeTab) {
       case 'stamps':
         return {
           data: stamps ?? [],
-          columns: stampColumns as ColumnDef<StampItem | PassportItem, unknown>[]
+          columns: stampColumns as ColumnDef<StampItem | PassportItem | DbUserResponse, unknown>[]
         }
       case 'passports':
         return {
           data: passport ?? [],
-          columns: passportColumns as ColumnDef<StampItem | PassportItem, unknown>[]
-        }
+          columns: passportColumns as ColumnDef<StampItem | PassportItem | DbUserResponse, unknown>[]
+        } 
     }
   }
 

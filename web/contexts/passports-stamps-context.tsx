@@ -2,14 +2,14 @@
 
 import { createContext, useContext, useCallback, useMemo, useState } from 'react';
 import { NetworkVariables } from '@/contracts';
-import { getPassportData, getStampsData } from '@/contracts/query';
+import { getPassportDataFromDB, getStampsData } from '@/contracts/query';
 import { DbStampResponse, StampItem } from '@/types/stamp';
-import { PassportItem } from '@/types/passport';
 import { useStampCRUD } from '@/hooks/use-stamp-crud';
+import { DbUserResponse } from '@/types/userProfile';
 
 interface PassportsStampsContextType {
   stamps: StampItem[] | null;
-  passport: PassportItem[] | null;
+  passport: DbUserResponse[] | null;
   isLoading: boolean;
   error: Error | null;
   refreshPassportStamps: (networkVariables: NetworkVariables) => Promise<void>;
@@ -26,7 +26,7 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
   const [stamps, setStamps] = useState<StampItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [passport, setPassport] = useState<PassportItem[] | null>(null);
+  const [passport, setPassport] = useState<DbUserResponse[] | null>(null);
   const { getStamps } = useStampCRUD();
 
   const refreshPassportStamps = useCallback(async (networkVariables: NetworkVariables) => {
@@ -34,7 +34,7 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
       setIsLoading(true);
       setError(null);
       const fetchedStamps = await getStampsData(networkVariables);
-      const fetchedPassport = await getPassportData(networkVariables);
+      const fetchedPassport = await getPassportDataFromDB();
       const claimStamps = await getStamps();
       const updatedStamps = fetchedStamps?.map(stamp => {
         const claimStamp = claimStamps?.find((cs: DbStampResponse) => cs.stamp_id === stamp.id)
@@ -55,8 +55,7 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
       }) ?? [];
       
       setStamps(updatedStamps as StampItem[]);
-      console.log(updatedStamps)
-      setPassport(fetchedPassport as PassportItem[]);
+      setPassport(fetchedPassport as unknown as DbUserResponse[]);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
     } finally {

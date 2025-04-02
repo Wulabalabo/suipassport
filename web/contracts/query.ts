@@ -1,12 +1,14 @@
 import { isValidSuiAddress } from "@mysten/sui/utils";
 import { EventId, SuiObjectData, SuiObjectResponse } from "@mysten/sui/client";
 import { categorizeSuiObjects, CategorizedObjects } from "@/utils/assetsHelpers";
-import { UserProfile } from "@/types";
+import { DbResponse, UserProfile } from "@/types";
 import { StampItem } from "@/types/stamp";
 import { PassportItem } from "@/types/passport";
 import { graphqlClient, NetworkVariables, suiClient } from "@/contracts";
 import { getCollectionDetail, getStampsEventRecordData } from "./graphql";
 import { convertSuiObject } from "@/utils";
+import { apiFetch } from "@/lib/apiClient";
+import { DbUserResponse } from "@/types/userProfile";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
     if (!isValidSuiAddress(address)) {
@@ -330,6 +332,20 @@ export const getPassportData = async (networkVariables: NetworkVariables) => {
             return passport;
         }));
     }
+    return passport;
+}
+
+export const getPassportDataFromDB = async () => {
+    const users = await apiFetch<{data:DbResponse<DbUserResponse>}>('/api/user')
+    if (!users.data.success) return [];
+    const passport = users.data.results.map((user) => {
+        return {
+            address: user.address,
+            name: user.name,
+            points: user.points,
+            stamp_count: user.stamp_count,
+        }
+    })
     return passport;
 }
 

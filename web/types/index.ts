@@ -26,3 +26,9 @@ export type ClaimStampResponse = {
     valid: boolean;
     signature?: Uint8Array;
 }
+
+export interface DbResponse<T> {
+    success: boolean;
+    meta: unknown;
+    results: T[];
+}
