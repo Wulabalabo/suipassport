@@ -12,6 +12,7 @@ import { usePassportsStamps } from "@/contexts/passports-stamps-context"
 import { PassportItem } from "@/types/passport"
 import Link from "next/link"
 import { DbUserResponse } from "@/types/userProfile"
+import { StampDistributionChart } from "@/components/ui/stamp-distribution-chart"
 
 const stampColumns: ColumnDef<StampItem>[] = [
   {
@@ -169,6 +170,12 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/*Chart*/}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="col-span-2">
+          <StampDistributionChart users={passport ?? []} />
+        </div>
+      </div>
 
       {/* Tabs */}
       <Tabs

@@ -336,9 +336,9 @@ export const getPassportData = async (networkVariables: NetworkVariables) => {
 }
 
 export const getPassportDataFromDB = async () => {
-    const users = await apiFetch<{data:DbResponse<DbUserResponse>}>('/api/user')
-    if (!users.data.success) return [];
-    const passport = users.data.results.map((user) => {
+    const users = await apiFetch<DbResponse<DbUserResponse>>('/api/user')
+    if (!users.success) return [];
+    const passport = users.results.map((user) => {
         return {
             address: user.address,
             name: user.name,
