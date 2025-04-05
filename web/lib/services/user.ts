@@ -26,7 +26,7 @@ export const getUsers = async () => {
     return users.data
 }
 
-const CHUNK_SIZE = 10000; // Number of users per chunk
+const CHUNK_SIZE = 1000; // Number of users per chunk
 const CACHE_PREFIX = 'all_users:chunk:';
 
 export const getAllUsers = async () => {
