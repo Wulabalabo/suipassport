@@ -133,3 +133,4 @@ dist
 #wrangler
 .wrangler
 *.toml
+web/app/api/cache/

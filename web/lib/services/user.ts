@@ -26,7 +26,7 @@ export const getUsers = async () => {
     return users.data
 }
 
-const CHUNK_SIZE = 1000; // Number of users per chunk
+const CHUNK_SIZE = 5000; // Number of users per chunk
 const CACHE_PREFIX = 'all_users:chunk:';
 
 export const getAllUsers = async () => {
@@ -45,7 +45,7 @@ export const getAllUsers = async () => {
     console.log('[Redis MISS] Querying D1 for all users...');
     
     try {
-        const query = `SELECT * FROM users ORDER BY points DESC`;
+        const query = `SELECT * FROM users`;
         const users = await queryD1<DbUserResponse[]>(query);
         
         if (users.data) {

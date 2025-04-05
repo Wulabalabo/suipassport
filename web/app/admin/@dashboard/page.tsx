@@ -98,12 +98,14 @@ type TableConfig<T> = {
 
 // 简化排序类型
 type SortDirection = 'asc' | 'desc'
+type SortField = 'timestamp' | 'points'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabValue>('stamps')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
-  // 简化排序状态
+  // 更新排序状态
+  const [sortField, setSortField] = useState<SortField>('timestamp')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const { stamps, passport } = usePassportsStamps()
 
@@ -127,21 +129,40 @@ export default function AdminDashboard() {
 
   const { data, columns } = getCurrentConfig()
 
-  // 简化排序处理函数
+  // 更新排序处理函数
   const handleFilterChange = (value: string) => {
-    setSortDirection(value === 'createdAt↑' ? 'asc' : 'desc')
+    if (value === 'createdAt↑') {
+      setSortField('timestamp')
+      setSortDirection('asc')
+    } else if (value === 'createdAt↓') {
+      setSortField('timestamp')
+      setSortDirection('desc')
+    } else if (value === 'points↑') {
+      setSortField('points')
+      setSortDirection('asc')
+    } else if (value === 'points↓') {
+      setSortField('points')
+      setSortDirection('desc')
+    }
   }
 
-  // 简化数据过滤和排序逻辑
+  // 更新数据过滤和排序逻辑
   const filteredData = data
     .filter(item =>
       'name' in item && item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       'id' in item && item.id.includes(searchQuery)
     )
     .sort((a, b) => {
-      const dateA = new Date('timestamp' in a && a.timestamp ? a.timestamp : 0).getTime()
-      const dateB = new Date('timestamp' in b && b.timestamp ? b.timestamp : 0).getTime()
-      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA
+      if (sortField === 'timestamp') {
+        const dateA = new Date('timestamp' in a && a.timestamp ? a.timestamp : 0).getTime()
+        const dateB = new Date('timestamp' in b && b.timestamp ? b.timestamp : 0).getTime()
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA
+      } else if (sortField === 'points') {
+        const pointsA = 'points' in a ? (a as DbUserResponse).points : 0
+        const pointsB = 'points' in b ? (b as DbUserResponse).points : 0
+        return sortDirection === 'asc' ? pointsA - pointsB : pointsB - pointsA
+      }
+      return 0
     })
 
   // 处理分页
@@ -206,6 +227,14 @@ export default function AdminDashboard() {
                 {
                   value: "createdAt↓",
                   label: "Created At ↓"
+                },
+                {
+                  value: "points↑",
+                  label: "Points ↑"
+                },
+                {
+                  value: "points↓",
+                  label: "Points ↓"
                 }
               ]}
               onFilterChange={handleFilterChange}

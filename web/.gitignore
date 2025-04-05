@@ -21,6 +21,8 @@ bun.lockb
 # production
 /build
 
+/web/app/api/cache
+
 # misc
 .DS_Store
 *.pem
