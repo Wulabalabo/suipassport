@@ -26,6 +26,65 @@ export const getUsers = async () => {
     return users.data
 }
 
+const CHUNK_SIZE = 1000; // Number of users per chunk
+const CACHE_PREFIX = 'all_users:chunk:';
+
+export const getAllUsers = async () => {
+    const cacheKey = 'all_users:chunks';
+    const cachedChunks = await redis.get<string[]>(cacheKey);
+    
+    if (cachedChunks) {
+        console.log('[Redis HIT] all_users chunks');
+        // Fetch all chunks in parallel
+        const chunks = await Promise.all(
+            cachedChunks.map(chunkKey => redis.get<DbUserResponse[]>(chunkKey))
+        );
+        return chunks.flat();
+    }
+
+    console.log('[Redis MISS] Querying D1 for all users...');
+    
+    try {
+        const query = `SELECT * FROM users ORDER BY points DESC`;
+        const users = await queryD1<DbUserResponse[]>(query);
+        
+        if (users.data) {
+            // Split data into chunks
+            const chunks: DbUserResponse[][] = [];
+            for (let i = 0; i < users.data.length; i += CHUNK_SIZE) {
+                chunks.push(users.data.slice(i, i + CHUNK_SIZE));
+            }
+
+            // Store chunk keys
+            const chunkKeys = chunks.map((_, index) => `${CACHE_PREFIX}${index}`);
+            await redis.set(cacheKey, JSON.stringify(chunkKeys), {
+                ex: 3600, // 1 hour in seconds
+                nx: true
+            });
+
+            // Store chunks in parallel
+            await Promise.all(
+                chunks.map((chunk, index) => 
+                    redis.set(chunkKeys[index], JSON.stringify(chunk), {
+                        ex: 3600,
+                        nx: true
+                    })
+                )
+            );
+            
+            console.log(`[Redis] Successfully cached ${chunks.length} chunks of users`);
+        }
+        
+        return users.data;
+    } catch (error) {
+        console.error('[Redis] Error caching all users:', error);
+        // If caching fails, still return the data
+        const query = `SELECT * FROM users ORDER BY points DESC`;
+        const users = await queryD1<DbUserResponse[]>(query);
+        return users.data;
+    }
+}
+
 export const getUserByAddress = async (address: string) => {
     const query = `SELECT * FROM users WHERE address = ?`;
     const users = await queryD1<DbResponse<DbUserResponse>>(query, [address]);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUsers as getUsersService } from "@/lib/services/user";
+import { getAllUsers as getUsersService } from "@/lib/services/user";
 
 export async function getUsers() {
     try {
