@@ -5,6 +5,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromHex } from '@mysten/sui/utils';
 import { keccak256 } from 'js-sha3';
 import { z } from 'zod';
+import { redis } from '../kv-cache';
 
 const verifyStampSchema = z.object({
   stamp_id: z.string(),
@@ -14,8 +15,16 @@ const verifyStampSchema = z.object({
 });
 
 export async function getStampsFromDb(): Promise<DbStampResponse[]|undefined> {
-  try {
-    const query = `
+  const cacheKey = 'stamps';
+  const cached = await redis.get<DbStampResponse[]>(cacheKey);
+
+  if (cached) {
+    console.log('[Upstash Redis HIT]');
+    return cached;
+  }
+
+  console.log('[Redis MISS] Querying D1...');
+  const query = `
     SELECT 
       stamp_id, 
       claim_code_start_timestamp, 
@@ -26,13 +35,13 @@ export async function getStampsFromDb(): Promise<DbStampResponse[]|undefined> {
       public_claim,
       CASE WHEN claim_code IS NULL THEN 0 ELSE 1 END as has_claim_code
     FROM stamps`;
-    
-    const response = await queryD1<DbStampResponse[]>(query);    
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching stamps:', error);
-    throw error;
-  }
+
+  const response = await queryD1<DbStampResponse[]>(query);
+
+  // 设置缓存，有效期 1 小时（3600 秒）
+  await redis.set(cacheKey, response.data, { ex: 3600 });
+
+  return response.data;
 }
 
 export async function createStampToDb(params: CreateOrUpdateStampParams) {

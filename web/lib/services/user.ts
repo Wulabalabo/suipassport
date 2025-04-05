@@ -1,5 +1,6 @@
 import { queryD1 } from "../db";
 import { DbUserResponse, CreateUserParams, createUserParams } from "@/types/userProfile";
+import { redis } from "../kv-cache";
 
 interface DbResponse<T> {
     success: boolean;
@@ -8,9 +9,21 @@ interface DbResponse<T> {
 }
 
 export const getUsers = async () => {
-    const query = `SELECT * FROM users ORDER BY created_at DESC`;
+    const cacheKey = 'top_users';
+    const cached = await redis.get<DbUserResponse[]>(cacheKey);
+    if (cached) {
+        console.log('[Redis HIT] top_users');
+        return cached;
+    }
+
+    console.log('[Redis MISS] Querying D1...');
+
+    const query = `SELECT * FROM users ORDER BY points DESC LIMIT 100`;
     const users = await queryD1<DbUserResponse[]>(query);
-    return users;
+
+    await redis.set(cacheKey, JSON.stringify(users.data));
+
+    return users.data
 }
 
 export const getUserByAddress = async (address: string) => {
