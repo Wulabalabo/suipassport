@@ -3,13 +3,9 @@ import { useState } from 'react';
 import { DbUserResponse, CreateUserParams } from '@/types/userProfile';
 
 interface DbResponse<T> {
-    success: boolean;
-    data?: {
         success: boolean;
         meta:unknown;
         results: T[];
-    };
-    error?: string;
 }
 
 interface UseUserCrudReturn {
@@ -38,10 +34,10 @@ export function useUserCrud(): UseUserCrudReturn {
             const data = await response;
             console.log("fetchUsers data", data)
             if (!data.success) {
-                throw new Error(data.error);
+                throw new Error("Failed to fetch users");
             }
-            setUsers(data.data?.results || []);
-            return data.data?.results || [];
+            setUsers(data.results || []);
+            return data.results || [];
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch users');
         } finally {
@@ -59,8 +55,7 @@ export function useUserCrud(): UseUserCrudReturn {
             const data = await response;      
             console.log("fetchUserByAddress data", data);
             if (!data.success) {
-                setError(data.error ?? 'Failed to fetch user');
-                return data;
+                throw new Error("Failed to fetch user");
             }
             return data;
         } catch (err) {
@@ -81,8 +76,7 @@ export function useUserCrud(): UseUserCrudReturn {
             })
             const data = await response
             if (!data.success) {
-                setError(data.error ?? 'Failed to create user');
-                return data;
+                throw new Error("Failed to create user");
             }
             await fetchUsers(); // 刷新用户列表
             return data;
@@ -104,8 +98,7 @@ export function useUserCrud(): UseUserCrudReturn {
             })
             const data = await response
             if (!data.success) {
-                setError(data.error ?? 'Failed to sync user points');
-                return data;
+                throw new Error("Failed to sync user points");
             }
             return data;
         } catch (err) {
@@ -126,8 +119,7 @@ export function useUserCrud(): UseUserCrudReturn {
             })
             const data = await response
             if (!data.success) {
-                setError(data.error ?? 'Failed to delete user');
-                return data;
+                throw new Error("Failed to delete user");
             }
             return data;
         } catch (err) {
