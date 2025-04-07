@@ -1,11 +1,12 @@
 'use client';
 
-import { createContext, useContext, useCallback, useMemo, useState } from 'react';
+import { createContext, useContext, useCallback, useMemo, useState, useRef } from 'react';
 import { NetworkVariables } from '@/contracts';
-import { getPassportDataFromDB, getStampsData } from '@/contracts/query';
+import { getStampsData } from '@/contracts/query';
 import { DbStampResponse, StampItem } from '@/types/stamp';
 import { useStampCRUD } from '@/hooks/use-stamp-crud';
 import { DbUserResponse } from '@/types/userProfile';
+import { useStreamData } from '@/hooks/use-stream-data';
 
 interface PassportsStampsContextType {
   stamps: StampItem[] | null;
@@ -26,16 +27,43 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
   const [stamps, setStamps] = useState<StampItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [passport, setPassport] = useState<DbUserResponse[] | null>(null);
   const { getStamps } = useStampCRUD();
+  const isProcessingRef = useRef(false);
+  const lastNetworkVariablesRef = useRef<NetworkVariables | null>(null);
+  
+  // 使用自定义 hook 处理流式数据
+  const { 
+    data: passport, 
+    isLoading: isPassportLoading, 
+    error: passportError,
+    processStream: processPassportStream,
+    clearData: clearPassportData
+  } = useStreamData<DbUserResponse>();
 
   const refreshPassportStamps = useCallback(async (networkVariables: NetworkVariables) => {
+    // 防止重复调用
+    if (isProcessingRef.current) return;
+    
+    // 检查 networkVariables 是否发生变化
+    const currentVars = JSON.stringify(networkVariables);
+    const lastVars = JSON.stringify(lastNetworkVariablesRef.current);
+    if (currentVars === lastVars) return;
+    
+    isProcessingRef.current = true;
+    lastNetworkVariablesRef.current = networkVariables;
+
     try {
       setIsLoading(true);
       setError(null);
-      const fetchedStamps = await getStampsData(networkVariables);
-      const fetchedPassport = await getPassportDataFromDB();
-      const claimStamps = await getStamps();
+      clearPassportData();
+
+      // 并行获取 stamps 和 claim stamps
+      const [fetchedStamps, claimStamps] = await Promise.all([
+        getStampsData(networkVariables),
+        getStamps()
+      ]);
+
+      // 处理 stamps 数据
       const updatedStamps = fetchedStamps?.map(stamp => {
         const claimStamp = claimStamps?.find((cs: DbStampResponse) => cs.stamp_id === stamp.id)
         
@@ -55,27 +83,40 @@ export function PassportsStampsProvider({ children }: PassportsStampsProviderPro
       }) ?? [];
       
       setStamps(updatedStamps as StampItem[]);
-      setPassport(fetchedPassport as unknown as DbUserResponse[]);
+
+      // 使用流式处理获取 passport 数据
+      await processPassportStream('/api/user', {
+        onError: (err) => {
+          setError(err);
+          setIsLoading(false);
+          isProcessingRef.current = false;
+        },
+        onComplete: () => {
+          setIsLoading(false);
+          isProcessingRef.current = false;
+        }
+      });
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
-    } finally {
       setIsLoading(false);
+      isProcessingRef.current = false;
     }
   }, []);
 
   const clearStamps = useCallback(() => {
     setStamps(null);
     setError(null);
-  }, []);
+    clearPassportData();
+  }, [clearPassportData]);
 
   const value = useMemo(() => ({
     stamps,
     passport,
-    isLoading,
-    error,
+    isLoading: isLoading || isPassportLoading,
+    error: error || passportError,
     refreshPassportStamps,
     clearStamps,
-  }), [stamps, passport, isLoading, error, refreshPassportStamps, clearStamps]);
+  }), [stamps, passport, isLoading, isPassportLoading, error, passportError, refreshPassportStamps, clearStamps]);
 
   return (
     <PassportsStampsContext.Provider value={value}>

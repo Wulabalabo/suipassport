@@ -8,7 +8,7 @@ interface DbResponse<T> {
     results: T[];
 }
 
-export const getUsers = async () => {
+export const getTopUsers = async () => {
     const cacheKey = 'top_users';
     const cached = await redis.get<DbUserResponse[]>(cacheKey);
     if (cached) {

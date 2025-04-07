@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server';
-import {
-    getStampByIdFromDb,
-    updateStampToDb,
-    deleteStampFromDb
-} from '@/lib/services/stamps';
-import { createOrUpdateStampParams } from '@/types/stamp';
+import { stampService } from '@/lib/db/index';
 
 // 获取单个记录
 export async function GET(
@@ -12,8 +7,8 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        const result = await getStampByIdFromDb(params.id);
-        if (!result.success || !result.data) {
+        const result = await stampService.getById(params.id);
+        if (!result) {
             return NextResponse.json(
                 { success: false, error: 'Claim stamp not found' },
                 { status: 404 }
@@ -36,12 +31,10 @@ export async function PUT(
     try {
       const {id} = await params
       const data = await request.json();
-      const validatedData = createOrUpdateStampParams.parse(data);
-      console.log('Updating claim stamp:', id, validatedData); // 添加日志
-      const result = await updateStampToDb(validatedData);
+      const result = await stampService.update(id, data);
       console.log('Update result:', result); // 添加日志
       
-      if (!result.success || !result.data) {
+      if (!result) {
         return NextResponse.json(
           { success: false, error: 'Claim stamp not found or no changes made' },
           { status: 404 }
@@ -71,8 +64,8 @@ export async function DELETE(
 ) {
     try {
         const {id} = await params
-        const result = await deleteStampFromDb(id);
-        if (!result.success || !result.data) {
+        const result = await stampService.delete(id);
+        if (!result) {
             return NextResponse.json(
                 { success: false, error: 'Claim stamp not found' },
                 { status: 404 }

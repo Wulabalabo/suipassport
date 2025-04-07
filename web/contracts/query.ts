@@ -1,13 +1,12 @@
 import { isValidSuiAddress } from "@mysten/sui/utils";
 import { EventId, SuiObjectData, SuiObjectResponse } from "@mysten/sui/client";
 import { categorizeSuiObjects, CategorizedObjects } from "@/utils/assetsHelpers";
-import { DbResponse, UserProfile } from "@/types";
+import { UserProfile } from "@/types";
 import { StampItem } from "@/types/stamp";
 import { PassportItem } from "@/types/passport";
 import { graphqlClient, NetworkVariables, suiClient } from "@/contracts";
 import { getCollectionDetail, getStampsEventRecordData } from "./graphql";
 import { convertSuiObject } from "@/utils";
-import { apiFetch } from "@/lib/apiClient";
 import { DbUserResponse } from "@/types/userProfile";
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
@@ -336,17 +335,51 @@ export const getPassportData = async (networkVariables: NetworkVariables) => {
 }
 
 export const getPassportDataFromDB = async () => {
-    const users = await apiFetch<DbResponse<DbUserResponse>>('/api/user')
-    if (!users.success) return [];
-    const passport = users.results.map((user) => {
-        return {
+    try {
+        const response = await fetch('/api/users');
+        const reader = response.body?.getReader();
+        
+        if (!reader) {
+            throw new Error('No reader available');
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let allUsers: DbUserResponse[] = [];
+
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+                break;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (line.trim()) {
+                    try {
+                        const batch = JSON.parse(line);
+                        allUsers = allUsers.concat(batch);
+                    } catch (e) {
+                        console.error('Error parsing chunk:', e);
+                    }
+                }
+            }
+        }
+
+        return allUsers.map(user => ({
             address: user.address,
             name: user.name,
             points: user.points,
             stamp_count: user.stamp_count,
-        }
-    })
-    return passport;
+        }));
+    } catch (error) {
+        console.error('Error fetching passport data:', error);
+        return [];
+    }
 }
 
 export const getEventFromDigest = async (digest: string) => {

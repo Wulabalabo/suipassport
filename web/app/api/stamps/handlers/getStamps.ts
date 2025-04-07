@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { getStampsFromDb } from "@/lib/services/stamps";
-import { DbStampResponse } from "@/types/stamp";
+import { stampService } from "@/lib/db/index";
 
 export async function getStamps() {
     try {
-      const result:DbStampResponse[]|undefined = await getStampsFromDb();
+      const result = await stampService.getAll();
       return NextResponse.json(result);
     } catch (error) {
       console.error('Error fetching stamps:', error);
