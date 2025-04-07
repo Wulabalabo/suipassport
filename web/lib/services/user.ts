@@ -21,7 +21,10 @@ export const getUsers = async () => {
     const query = `SELECT * FROM users ORDER BY points DESC LIMIT 100`;
     const users = await queryD1<DbUserResponse[]>(query);
 
-    await redis.set(cacheKey, JSON.stringify(users.data));
+    await redis.set(cacheKey, JSON.stringify(users.data),{
+        ex: 3600,
+        nx: true
+    });
 
     return users.data
 }
