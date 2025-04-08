@@ -10,7 +10,7 @@ const CACHE_TTL = 3600; // 1 hour in seconds
 export const userService = {
   // 获取所有用户（分页）
   async getAll(cursor?: number, limit: number = 100) {
-    const cacheKey = `users:page:${cursor || 0}:${limit}`;
+    const cacheKey = `neon_users:page:${cursor || 0}:${limit}`;
     const cached = await redis.get<DbUserResponse[]>(cacheKey);
     
     if (cached) {
@@ -39,7 +39,7 @@ export const userService = {
 
   // 获取所有用户（流式处理）
   async *getAllStream(batchSize: number = 500) {
-    const cacheKey = 'all_users:chunks';
+    const cacheKey = 'neon_all_users:chunks';
     const cachedChunks = await redis.get<string[]>(cacheKey);
     
     if (cachedChunks) {
@@ -76,7 +76,7 @@ export const userService = {
       currentChunk.push(user);
       
       if (currentChunk.length >= batchSize) {
-        const chunkKey = `all_users:chunk:${chunkIndex}`;
+        const chunkKey = `neon_all_users:chunk:${chunkIndex}`;
         await redis.set(chunkKey, JSON.stringify(currentChunk), { ex: CACHE_TTL });
         chunks.push(chunkKey);
         yield currentChunk;
@@ -88,7 +88,7 @@ export const userService = {
 
     // 处理最后一批数据
     if (currentChunk.length > 0) {
-      const chunkKey = `all_users:chunk:${chunkIndex}`;
+      const chunkKey = `neon_all_users:chunk:${chunkIndex}`;
       await redis.set(chunkKey, JSON.stringify(currentChunk), { ex: CACHE_TTL });
       chunks.push(chunkKey);
       yield currentChunk;
@@ -100,7 +100,7 @@ export const userService = {
 
   // 获取前100名用户
   async getTopUsers() {
-    const cacheKey = 'top_users';
+    const cacheKey = 'neon_top_users';
     const cached = await redis.get<DbUserResponse[]>(cacheKey);
     
     if (cached) {
@@ -143,7 +143,7 @@ export const userService = {
   async create(data: NewUser) {
     const result = await db.insert(users).values(data).returning();
     // 清除相关缓存
-    await redis.del('all_users:chunks', 'top_users');
+    await redis.del('neon_all_users:chunks', 'neon_top_users');
     return result[0];
   },
 
@@ -155,7 +155,7 @@ export const userService = {
       .returning();
     
     // 清除相关缓存
-    await redis.del(`user:${address}`, 'all_users:chunks', 'top_users');
+    await redis.del(`user:${address}`, 'neon_all_users:chunks', 'neon_top_users');
     return result[0];
   },
 
@@ -172,7 +172,7 @@ export const userService = {
       .returning();
     
     // 清除相关缓存
-    await redis.del(`user:${data.address}`, 'all_users:chunks', 'top_users');
+    await redis.del(`user:${data.address}`, 'neon_all_users:chunks', 'neon_top_users');
     return result[0];
   },
 
@@ -183,7 +183,7 @@ export const userService = {
       .returning();
     
     // 清除相关缓存
-    await redis.del(`user:${address}`, 'all_users:chunks', 'top_users');
+    await redis.del(`user:${address}`, 'neon_all_users:chunks', 'neon_top_users');
     return result[0];
   }
 };
@@ -192,7 +192,7 @@ export const userService = {
 export const stampService = {
   // 获取所有印章
   async getAll() {
-    const cacheKey = 'stamps';
+    const cacheKey = 'neon_stamps';
     const cached = await redis.get<DbStampResponse[]>(cacheKey);
     
     if (cached) {
@@ -231,7 +231,7 @@ export const stampService = {
   async create(data: NewStamp) {
     const result = await db.insert(stamps).values(data).returning();
     // 清除相关缓存
-    await redis.del('stamps');
+    await redis.del('neon_stamps');
     return result[0];
   },
 
@@ -243,7 +243,7 @@ export const stampService = {
       .returning();
     
     // 清除相关缓存
-    await redis.del(`stamp:${id}`, 'stamps');
+    await redis.del(`stamp:${id}`, 'neon_stamps');
     return result[0];
   },
 
@@ -254,7 +254,7 @@ export const stampService = {
       .returning();
     
     // 清除相关缓存
-    await redis.del(`stamp:${id}`, 'stamps');
+    await redis.del(`stamp:${id}`, 'neon_stamps');
     return result[0];
   },
 
@@ -285,7 +285,7 @@ export const stampService = {
       .returning();
     
     // 清除相关缓存
-    await redis.del(`stamp:${id}`, 'stamps');
+    await redis.del(`stamp:${id}`, 'neon_stamps');
     return result[0];
   }
 }; 
