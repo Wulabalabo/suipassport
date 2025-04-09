@@ -42,6 +42,43 @@ const neonDb = drizzle({ client: neonSql });
 const strategy: MigrationStrategy = (process.argv[2] || process.env.MIGRATION_STRATEGY || 'incremental') as MigrationStrategy;
 console.log(`Using migration strategy: ${strategy}`);
 
+// 添加常量配置
+const BATCH_SIZE = 1000; // 每批处理的记录数
+const MAX_RETRIES = 3;   // 最大重试次数
+const RETRY_DELAY = 1000; // 重试延迟（毫秒）
+
+// 添加工具函数
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// 添加重试机制的包装函数
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  retries = MAX_RETRIES,
+  delay = RETRY_DELAY
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Retrying operation after ${delay}ms... (${retries} attempts left)`);
+      await sleep(delay);
+      return withRetry(operation, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+}
+
+// 进度显示函数
+function showProgress(current: number, total: number, label: string) {
+  const percentage = Math.round((current / total) * 100);
+  const progress = `[${label}] ${current}/${total} (${percentage}%)`;
+  process.stdout.clearLine(0);
+  process.stdout.cursorTo(0);
+  process.stdout.write(progress);
+}
+
 function parseDate(dateStr?: string): Date | null {
   if (!dateStr) return null;
   try {
@@ -124,115 +161,106 @@ async function migrateData() {
       return;
     }
 
-    // // Migrate users table
-    console.log("Migrating users table...");
+    // Migrate users
+    console.log("\nMigrating users table...");
     const usersResponse = await queryD1<DbResponse<User>>("SELECT * FROM users");
     if (!usersResponse.success || !usersResponse.data) {
-      console.error("Failed to fetch users:", usersResponse.error);
-      return;
+      throw new Error(`Failed to fetch users: ${usersResponse.error}`);
     }
 
     const usersData = usersResponse.data;
-    const userCount = usersData.results.length;
-    console.log(`Found ${userCount} users in D1 database`);
+    const totalUsers = usersData.results.length;
+    console.log(`Found ${totalUsers} users in D1 database`);
 
-    if (userCount > 0) {
-      for (const user of usersData.results) {
-        if (!user.address) {
-          console.error(`Skipping user with null address:`, user);
-          continue;
-        }
-        try {
-          if (strategy === 'incremental') {
-            // Check if user already exists
-            const existingUser = await neonDb.select().from(users).where(sql`address = ${user.address}`);
-            if (existingUser.length > 0) {
-              console.log(`User ${user.address} already exists, skipping`);
-              continue;
-            }
-          }
-          await neonDb.insert(users).values({
-            address: user.address,
-            name: user.name,
-            stamp_count: user.stamp_count,
-            points: user.points,
-            created_at: parseDate(user.created_at) ?? new Date(),
-            updated_at: parseDate(user.updated_at) ?? new Date(),
-          });
-          console.log(`Migrated user: ${user.address}`);
-        } catch (error) {
-          console.error(`Failed to migrate user ${user.address}:`, error);
-          if (error instanceof Error) {
-            console.error("Error details:", {
-              message: error.message,
-              stack: error.stack,
-            });
-          }
-        }
-      }
+    // 获取现有用户（只获取一次）
+    const existingUserAddresses = new Set<string>();
+    if (strategy === 'incremental') {
+      const existingUsers = await neonDb.select({ address: users.address }).from(users);
+      existingUsers.forEach(user => existingUserAddresses.add(user.address));
+      console.log(`Found ${existingUserAddresses.size} existing users in Neon`);
     }
 
-    // Migrate stamps table
-    console.log("Migrating stamps table...");
+    // 分批处理用户数据
+    let processedUsers = 0;
+    for (let i = 0; i < totalUsers; i += BATCH_SIZE) {
+      const batch = usersData.results.slice(i, i + BATCH_SIZE);
+      const usersToInsert = batch
+        .filter(user => user.address && !existingUserAddresses.has(user.address))
+        .map(user => ({
+          address: user.address,
+          name: user.name,
+          stamp_count: user.stamp_count,
+          points: user.points,
+          created_at: parseDate(user.created_at) ?? new Date(),
+          updated_at: parseDate(user.updated_at) ?? new Date(),
+        }));
+
+      if (usersToInsert.length > 0) {
+        await withRetry(async () => {
+          await neonDb.insert(users).values(usersToInsert);
+        });
+      }
+
+      processedUsers += batch.length;
+      showProgress(processedUsers, totalUsers, 'Users Migration');
+    }
+    console.log('\nUsers migration completed!');
+
+    // Migrate stamps
+    console.log("\nMigrating stamps table...");
     const stampsResponse = await queryD1<DbResponse<Stamp>>("SELECT * FROM stamps");
-    console.log("stampsResponse:", stampsResponse);
     if (!stampsResponse.success || !stampsResponse.data) {
-      console.error("Failed to fetch stamps:", stampsResponse.error);
-      return;
+      throw new Error(`Failed to fetch stamps: ${stampsResponse.error}`);
     }
 
     const stampsData = stampsResponse.data.results;
-    const stampCount = stampsData.length;
-    console.log(`Found ${stampCount} stamps in D1 database`);
+    const totalStamps = stampsData.length;
+    console.log(`Found ${totalStamps} stamps in D1 database`);
 
-    if (stampCount > 0) {
-      for (const stamp of stampsData) {
-        if (!stamp.stamp_id) {
-          console.error(`Skipping stamp with null stamp_id:`, stamp.stamp_id);
-          continue;
-        }
-        try {
-          if (strategy === 'incremental') {
-            // Check if stamp already exists
-            const existingStamp = await neonDb.select().from(stamps).where(sql`stamp_id = ${stamp.stamp_id}`);
-            if (existingStamp.length > 0) {
-              console.log(`Stamp ${stamp.stamp_id} already exists, skipping`);
-              continue;
-            }
-          }
-          await neonDb.insert(stamps).values({
-            stamp_id: stamp.stamp_id,
-            claim_code: stamp.claim_code,
-            total_count_limit: stamp.total_count_limit,
-            user_count_limit: stamp.user_count_limit,
-            claim_count: stamp.claim_count,
-            claim_code_start_timestamp: stamp.claim_code_start_timestamp,
-            claim_code_end_timestamp: stamp.claim_code_end_timestamp,
-            public_claim: stamp.public_claim,
-            created_at: parseDate(stamp.created_at) ?? new Date(),
-            updated_at: parseDate(stamp.updated_at) ?? new Date(),
-          });
-          console.log(`Migrated stamp: ${stamp.stamp_id}`);
-        } catch (error) {
-          console.error(`Failed to migrate stamp ${stamp.stamp_id}:`, error);
-          console.error("Stamp data:", stamp);
-          if (error instanceof Error) {
-            console.error("Error details:", {
-              message: error.message,
-              stack: error.stack,
-            });
-          }
-        }
-      }
+    // 获取现有stamps（只获取一次）
+    const existingStampIds = new Set<string>();
+    if (strategy === 'incremental') {
+      const existingStamps = await neonDb.select({ stampId: stamps.stamp_id }).from(stamps);
+      existingStamps.forEach(stamp => existingStampIds.add(stamp.stampId));
+      console.log(`Found ${existingStampIds.size} existing stamps in Neon`);
     }
 
-    console.log("Migration completed!");
-    
-    // Verify the data after migration
-    console.log("\nVerifying data in Neon database...");
+    // 分批处理stamps数据
+    let processedStamps = 0;
+    for (let i = 0; i < totalStamps; i += BATCH_SIZE) {
+      const batch = stampsData.slice(i, i + BATCH_SIZE);
+      const stampsToInsert = batch
+        .filter(stamp => stamp.stamp_id && !existingStampIds.has(stamp.stamp_id))
+        .map(stamp => ({
+          stamp_id: stamp.stamp_id,
+          claim_code: stamp.claim_code,
+          total_count_limit: stamp.total_count_limit,
+          user_count_limit: stamp.user_count_limit,
+          claim_count: stamp.claim_count,
+          claim_code_start_timestamp: stamp.claim_code_start_timestamp,
+          claim_code_end_timestamp: stamp.claim_code_end_timestamp,
+          public_claim: stamp.public_claim,
+          created_at: parseDate(stamp.created_at) ?? new Date(),
+          updated_at: parseDate(stamp.updated_at) ?? new Date(),
+        }));
+
+      if (stampsToInsert.length > 0) {
+        await withRetry(async () => {
+          await neonDb.insert(stamps).values(stampsToInsert);
+        });
+      }
+
+      processedStamps += batch.length;
+      showProgress(processedStamps, totalStamps, 'Stamps Migration');
+    }
+    console.log('\nStamps migration completed!');
+
+    // 验证迁移结果
+    console.log("\nVerifying migration results...");
     await verifyData();
+    
   } catch (error) {
-    console.error("Migration failed:", error);
+    console.error("\nMigration failed:", error);
     if (error instanceof Error) {
       console.error("Error details:", {
         message: error.message,
