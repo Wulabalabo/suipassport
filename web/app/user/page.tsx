@@ -11,14 +11,14 @@ import { PassportFormValues } from '@/components/passport/passport-form'
 import { edit_passport, show_stamp } from '@/contracts/passport'
 import { useBetterSignAndExecuteTransaction } from '@/hooks/use-better-tx'
 import { DisplayStamp } from '@/types/stamp'
-import { usePassportsStamps } from '@/contexts/passports-stamps-context'
+import { useApp } from '@/contexts/app-context'
 import { showToast } from '@/lib/toast'
 
 export default function UserPage() {
   const router = useRouter();
   const currentAccount = useCurrentAccount()
   const { userProfile, refreshProfile } = useUserProfile();
-  const { stamps } = usePassportsStamps();
+  const { stamps } = useApp() 
   const networkVariables = useNetworkVariables();
   const { handleSignAndExecuteTransaction: handleEditStamp, isLoading: isEditingStamp } = useBetterSignAndExecuteTransaction({
     tx: edit_passport
