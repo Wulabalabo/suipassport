@@ -10,7 +10,7 @@ import { batch_send_stamp, create_event_stamp, delete_stamp, send_stamp } from "
 import { useUserProfile } from "@/contexts/user-profile-context"
 import { useBetterSignAndExecuteTransaction } from "@/hooks/use-better-tx"
 import { claim_stamp } from "@/contracts/claim"
-import { usePassportsStamps } from "@/contexts/passports-stamps-context"
+import { useApp } from "@/contexts/app-context"
 import { useNetworkVariables } from "@/contracts"
 import { useCurrentAccount } from "@mysten/dapp-kit"
 import { useStampCRUD } from "@/hooks/use-stamp-crud"
@@ -35,7 +35,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [displayDialog, setDisplayDialog] = useState(false)
     const { userProfile } = useUserProfile();
     const currentAccount = useCurrentAccount()
-    const { refreshPassportStamps } = usePassportsStamps()
+    const { fetchUsers } = useApp()
     const { refreshProfile } = useUserProfile()
     const { verifyClaimStamp, createStamp,deleteStamp } = useStampCRUD()
     const networkVariables = useNetworkVariables()
@@ -98,7 +98,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).onSuccess(async () => {
             showToast.success("Stamp claimed successfully")
             await refreshProfile(currentAccount?.address ?? '', networkVariables)
-            await refreshPassportStamps(networkVariables)
+            await fetchUsers()
         }).execute()
     }
 
@@ -122,7 +122,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             console.log("result", result)
             await Promise.all([                
                 await onStampCreated(result.digest, values),
-                await refreshPassportStamps(networkVariables),
+                await fetchUsers(),
             ])
             showToast.success("Stamp created successfully")
         }).onError((e) => {
@@ -153,7 +153,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             recipient: recipient
         }).onSuccess(async () => {
             showToast.success("Stamp sent successfully")
-            await refreshPassportStamps(networkVariables)
+            await fetchUsers()
         }).execute()
     }
     const handleMultipleSendStamp = async (addresses: string[]) => {
@@ -165,7 +165,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             recipients: addresses
         }).onSuccess(async () => {
             showToast.success("Stamps sent successfully")
-            await refreshPassportStamps(networkVariables)
+            await fetchUsers()
             setDisplayDialog(false)
         }).execute()
     }
@@ -178,7 +178,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         }).onSuccess(async () => {
             showToast.success("Stamp deleted successfully")
             await deleteStamp(selectedStamp?.id)
-            await refreshPassportStamps(networkVariables)
+            await fetchUsers()
         }).onError((e) => {
             showToast.error(e.message)
         }).execute()

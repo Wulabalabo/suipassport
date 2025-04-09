@@ -6,34 +6,107 @@ import { redis } from '../kv-cache';
 
 const CACHE_TTL = 3600; // 1 hour in seconds
 
+// 辅助函数：计算 stamps 分布
+function calculateStampsDistribution(users: { stamp_count: number | null }[]) {
+  const distribution = {
+    '0': 0,
+    '1': 0,
+    '2+': 0
+  };
+
+  users.forEach(user => {
+    const count = user.stamp_count || 0;
+    if (count === 0) distribution['0']++;
+    else if (count === 1) distribution['1']++;
+    else distribution['2+']++;
+  });
+
+  return Object.entries(distribution).map(([range, count]) => ({
+    range,
+    count
+  }));
+}
+
+// 辅助函数：计算积分分布
+function calculatePointsDistribution(users: { points: number | null }[]) {
+  const distribution = {
+    '0': 0,
+    '100': 0,
+    '200': 0,
+    '200+': 0
+  };
+
+  users.forEach(user => {
+    const points = user.points || 0;
+    if (points === 0) distribution['0']++;
+    else if (points === 100) distribution['100']++;
+    else if (points === 200) distribution['200']++;
+    else distribution['200+']++;
+  });
+
+  return Object.entries(distribution).map(([range, count]) => ({
+    range,
+    count
+  }));
+}
+
+// 辅助函数：计算每日增长
+function calculateGrowthByDay(users: { created_at: Date | null }[]) {
+  const growthByDay: { [date: string]: number } = {};
+
+  users.forEach(user => {
+    if (!user.created_at) return;
+    const date = new Date(user.created_at).toISOString().split('T')[0];
+    growthByDay[date] = (growthByDay[date] || 0) + 1;
+  });
+
+  return Object.entries(growthByDay)
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 // 用户相关操作
 export const userService = {
   // 获取所有用户（分页）
   async getAll(cursor?: number, limit: number = 100) {
     const cacheKey = `neon_users:page:${cursor || 0}:${limit}`;
+    const totalCountKey = 'neon_users:total_count';
     const cached = await redis.get<DbUserResponse[]>(cacheKey);
+    const cachedTotal = await redis.get<number>(totalCountKey);
     
-    if (cached) {
+    if (cached && cachedTotal !== null) {
       console.log('[Redis HIT] users page:', cursor);
       return {
         data: cached,
-        nextCursor: cached.length === limit ? (cursor || 0) + limit : null
+        nextCursor: cached.length === limit ? (cursor || 0) + limit : null,
+        total: cachedTotal
       };
     }
 
     console.log('[Redis MISS] Querying database...');
+    
+    // 获取总数
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users);
+    
+    // 获取分页数据
     const result = await db.select()
       .from(users)
       .orderBy(users.id)
       .limit(limit)
       .offset(cursor || 0);
 
-    // 缓存当前页数据
-    await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL, nx: true });
+    // 缓存当前页数据和总数
+    await Promise.all([
+      redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL, nx: true }),
+      redis.set(totalCountKey, count, { ex: CACHE_TTL, nx: true })
+    ]);
 
     return {
       data: result,
-      nextCursor: result.length === limit ? (cursor || 0) + limit : null
+      nextCursor: result.length === limit ? (cursor || 0) + limit : null,
+      total: count
     };
   },
 
@@ -185,6 +258,51 @@ export const userService = {
     // 清除相关缓存
     await redis.del(`user:${address}`, 'neon_all_users:chunks', 'neon_top_users');
     return result[0];
+  },
+
+  // 获取用户统计数据
+  async getStatistics() {
+    const cacheKey = 'neon_users:statistics';
+    const cached = await redis.get<{
+      totalUsers: number;
+      totalStamps: number;
+      totalPoints: number;
+      stampsDistribution: { range: string; count: number }[];
+      pointsDistribution: { range: string; count: number }[];
+      growthByDay: { date: string; count: number }[];
+    }>(cacheKey);
+    
+    if (cached) {
+      console.log('[Redis HIT] users statistics');
+      return cached;
+    }
+
+    console.log('[Redis MISS] Calculating user statistics...');
+
+    // 获取所有用户数据
+    const userData = await db.select({
+      points: users.points,
+      stamp_count: users.stamp_count,
+      created_at: users.created_at
+    }).from(users);
+
+    // 计算统计数据
+    const statistics = {
+      totalUsers: userData.length,
+      totalStamps: userData.reduce((sum, user) => sum + (user.stamp_count || 0), 0),
+      totalPoints: userData.reduce((sum, user) => sum + (user.points || 0), 0),
+      stampsDistribution: calculateStampsDistribution(userData),
+      pointsDistribution: calculatePointsDistribution(userData),
+      growthByDay: calculateGrowthByDay(userData)
+    };
+
+    // 缓存24小时
+    await redis.set(cacheKey, JSON.stringify(statistics), { 
+      ex: 24 * 3600, // 24 hours in seconds
+      nx: true 
+    });
+
+    return statistics;
   }
 };
 

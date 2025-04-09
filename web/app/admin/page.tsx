@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import AdminStamp from '../@stamp/page'
 import AdminDashboard from './@dashboard/page'
-import { useNetworkVariables } from '@/contracts'
-import { usePassportsStamps } from '@/contexts/passports-stamps-context'
+import { useApp } from '@/contexts/app-context'
 import { useUserProfile } from '@/contexts/user-profile-context'
 import { isValidSuiAddress } from '@mysten/sui/utils'
 import { useRouter } from 'next/navigation'
@@ -13,12 +12,13 @@ import { set_admin } from '@/contracts/stamp'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { showToast } from '@/lib/toast'
+import { useNetworkVariables } from '@/contracts'
 
 export default function AdminPage() {
-  const networkVariables = useNetworkVariables()
-  const { refreshPassportStamps, stamps } = usePassportsStamps()
+  const { stamps, fetchUsers,refreshStamps } = useApp()
   const { userProfile } = useUserProfile()
   const router = useRouter()
+  const networkVariables = useNetworkVariables()
   const { handleSignAndExecuteTransaction: handleSetAdminTx } = useBetterSignAndExecuteTransaction({
     tx: set_admin
   })
@@ -46,8 +46,9 @@ export default function AdminPage() {
       router.push('/')
       return
     }
-    refreshPassportStamps(networkVariables)
-  }, [networkVariables, refreshPassportStamps, userProfile, router])
+    fetchUsers()
+    refreshStamps(networkVariables)
+  }, [fetchUsers, refreshStamps, userProfile, router, networkVariables])
 
   return (
     <div className="w-full lg:p-24 lg:pb-48 bg-background space-y-24">

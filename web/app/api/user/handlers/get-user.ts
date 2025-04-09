@@ -1,31 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { userService } from "@/lib/db/index";
 
-export async function getUsers() {
+export async function getUsers(request: NextRequest) {
     try {
-        const stream = new ReadableStream({
-            async start(controller) {
-                try {
-                    // 使用流式处理获取用户数据
-                    for await (const batch of userService.getAllStream(500)) {
-                        // 将每批数据转换为 JSON 字符串
-                        const chunk = JSON.stringify(batch) + '\n';
-                        controller.enqueue(new TextEncoder().encode(chunk));
-                    }
-                    controller.close();
-                } catch (error) {
-                    controller.error(error);
-                }
-            }
-        });
+        const page = parseInt(request.nextUrl.searchParams.get('page') || '1');
+        const limit = parseInt(request.nextUrl.searchParams.get('limit') || '100');
+        const cursor = (page - 1) * limit;
 
-        // 返回流式响应
-        return new Response(stream, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Transfer-Encoding': 'chunked',
-                'Cache-Control': 'no-cache',
-            },
+        const result = await userService.getAll(cursor, limit);
+        
+        return NextResponse.json({
+            data: result.data,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(result.total / limit),
+                totalItems: result.total,
+                itemsPerPage: limit,
+                nextCursor: result.nextCursor
+            }
         });
     } catch (error) {
         console.error('Error in GET /api/users:', error);

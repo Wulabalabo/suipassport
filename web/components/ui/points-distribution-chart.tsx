@@ -2,24 +2,24 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28']
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
 
-interface StampDistributionChartProps {
+interface PointsDistributionChartProps {
   data: {
     range: string
     count: number
-  }[]
+  }[] | undefined
 }
 
-export function StampDistributionChart({ data }: StampDistributionChartProps) {
+export function PointsDistributionChart({ data = [] }: PointsDistributionChartProps) {
   const chartData = data.map(item => ({
-    name: `${item.range} stamps`,
+    name: `${item.range} points`,
     value: item.count
   }))
 
   return (
     <div className="w-full h-[400px] p-4 bg-card rounded-lg border border-border">
-      <h3 className="text-lg font-semibold mb-4">Stamp Distribution</h3>
+      <h3 className="text-lg font-semibold mb-4">Points Distribution</h3>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
