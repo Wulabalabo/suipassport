@@ -94,17 +94,17 @@ export const checkUserState = async (
             const { type, fields } = parsed;
 
             switch (type) {
-                case `${networkVariables.package}::sui_passport::SuiPassport`:
+                case `${networkVariables.originPackage}::sui_passport::SuiPassport`:
                     updateProfileFromPassport(profile, fields as UserProfile);
                     break;
 
-                case `${networkVariables.package}::stamp::SuperAdminCap`:
+                case `${networkVariables.originPackage}::stamp::SuperAdminCap`:
                     const adminCapId = (fields as { id: { id: string } })?.id?.id;
                     if (adminCapId) profile.superAdmincap = adminCapId;
                     profile.is_admin = true;
                     break;
 
-                case `${networkVariables.package}::stamp::Stamp`:
+                case `${networkVariables.originPackage}::stamp::Stamp`:
                     const stamp = createStampFromFields(fields as StampFields);
                     if (stamp) profile.stamps?.push(stamp);
                     break;
@@ -136,9 +136,9 @@ async function fetchAllOwnedObjects(
             options: { showContent: true },
             filter: {
                 MatchAny: [
-                    { StructType: `${networkVariables.package}::stamp::SuperAdminCap` },
-                    { StructType: `${networkVariables.package}::sui_passport::SuiPassport` },
-                    { StructType: `${networkVariables.package}::stamp::Stamp` }
+                    { StructType: `${networkVariables.originPackage}::stamp::SuperAdminCap` },
+                    { StructType: `${networkVariables.originPackage}::sui_passport::SuiPassport` },
+                    { StructType: `${networkVariables.originPackage}::stamp::Stamp` }
                 ]
             },
             cursor: nextCursor,
@@ -287,14 +287,14 @@ export const getStampsData = async (networkVariables: NetworkVariables) => {
     while (hasNextPage) {
         const stampsEvent = await suiClient.queryEvents({
             query: {
-                MoveEventType: `${networkVariables.package}::stamp::SetEventStamp`
+                MoveEventType: `${networkVariables.originPackage}::stamp::SetEventStamp`
             },
             cursor: nextCursor,
         });
         nextCursor = stampsEvent.nextCursor ?? null;
         hasNextPage = stampsEvent.hasNextPage;
         stamps = stamps.concat(stampsEvent.data.map((event) => {
-            if (event.type === `${networkVariables.package}::stamp::SetEventStamp`) {
+            if (event.type === `${networkVariables.originPackage}::stamp::SetEventStamp`) {
                 const stamp = event.parsedJson as StampItem;
                 stamp.timestamp = event.timestampMs ? parseInt(event.timestampMs) : undefined;
                 stamp.id = (event.parsedJson as unknown as { event: string }).event;
@@ -307,7 +307,6 @@ export const getStampsData = async (networkVariables: NetworkVariables) => {
             return stampsEvents.some(event => event.event === stamp.name);
         }) as StampItem[]);
     }
-
     return stamps;
 }
 
@@ -318,7 +317,7 @@ export const getPassportData = async (networkVariables: NetworkVariables) => {
     while (hasNextPage) {
         const passportEvent = await suiClient.queryEvents({
             query: {
-                MoveEventType: `${networkVariables.package}::sui_passport::MintPassportEvent`
+                MoveEventType: `${networkVariables.originPackage}::sui_passport::MintPassportEvent`
             },
             cursor: nextCursor,
         });

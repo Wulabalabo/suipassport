@@ -24,9 +24,10 @@ function createBetterTxFactory<T extends Record<string, unknown>>(
 
 type Network = "mainnet" | "testnet"
 
-//AKW5RUoYgaoT2JebZv3psJBJq8FwkrqfrVRqmWUanQyM
+//9hkC6ge6nQTQL6yKxXTJ36BCA456uorDdkZbsU422S9Q
 const mainnetVariables = {
-    package: "0x352919f09a96e8bca46cd2a9015c5651aed4aa3ca270f8c09c96ef670c8ede59",
+    package: "0x425576f544ee2429feed9a740ad18847a9d8b20be7073ed55e8d253c9a50d0c7",
+    originPackage: "0x352919f09a96e8bca46cd2a9015c5651aed4aa3ca270f8c09c96ef670c8ede59",
     suiPassportRecord: "0xf7bea21283a25287debc250a426a03f68cf9abbf03752094e9072e637058572b",
     stampDisplay: "0x567bb7c25135da029bab6f0871722cc8d9cdf25a0018f57ecee79903a80e11df",
     passportDisplay: "0x57bbe20853c188df34cc9233a5698e311bc646ea5d5d813b89e6c910bcf7216b",
@@ -39,6 +40,7 @@ const mainnetVariables = {
 
 const testnetVariables = {
     package: "0xf2ac2d3278ae3cf559663900c5fb0119e83cf8ed897adb63a94523520ab11c13",
+    originPackage: "0x352919f09a96e8bca46cd2a9015c5651aed4aa3ca270f8c09c96ef670c8ede59",
     suiPassportRecord: "0x9ca4d2804a0711b4d6986aea9c1fe100b20e0dad73b48871624f5e44e8c3c9ef",
     stampDisplay: "0x46d866b486206d26f41a6108b64d7e9e8b4d61ee0b5c9bece1dd92adb07ecd2a",
     passportDisplay: "0xef55028c9ca6925068edafe97739f33dcda97dfc3b40c861df33391b8d46d7e7",
