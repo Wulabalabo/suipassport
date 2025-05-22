@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       {
         hostname: 'images.suipassport.app'
       },
+      {
+        hostname: 'avatar.suipassport.app'
+      },
     ],
   },
   eslint: {
