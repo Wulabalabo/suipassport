@@ -312,7 +312,6 @@ export const stampService = {
   async getAll() {
     const cacheKey = 'neon_stamps';
     const cached = await redis.get<RawStampResponse[]>(cacheKey);
-    console.log('cached', cached)
     if (cached) {
       console.log('[Redis HIT] stamps');
       return cached;
@@ -365,7 +364,10 @@ export const stampService = {
     // 修复缓存清除逻辑
     try {
       // 同时清除全局缓存和特定印章缓存
-      await redis.del('neon_stamps');
+      await Promise.all([
+        redis.del('neon_stamps'),
+        redis.del(`stamp:${id}`)
+      ])
       console.log('[Redis] Successfully cleared cache for stamp:', id);
       
       // 验证缓存是否真的被删除
