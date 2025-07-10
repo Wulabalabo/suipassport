@@ -3,7 +3,7 @@
 import { DisplayStamp } from "@/types/stamp"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { LinkIcon, Loader2 } from "lucide-react"
+import { LinkIcon, Loader2, ExternalLink } from "lucide-react"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
@@ -22,6 +22,7 @@ interface StampDialogProps {
     onDelete?: () => Promise<void>
     onMultipleSend?: (addresses: string[]) => Promise<void>
     onCloseClick?: () => void
+    onUpdatePromoteUrl?: (promoteUrl: string) => Promise<void>
 }
 
 
@@ -34,7 +35,7 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend, onMultipleSend, onCloseClick, onDelete }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend, onMultipleSend, onCloseClick, onDelete, onUpdatePromoteUrl }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [recipient, setRecipient] = useState('')
     const [claimCode, setClaimCode] = useState('')
@@ -42,6 +43,8 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
     const [canClaim, setCanClaim] = useState(false)
     const [alreadyClaimed, setAlreadyClaimed] = useState(false)
     const [addresses, setAddresses] = useState<string[]>([])
+    const [promoteUrl, setPromoteUrl] = useState('')
+    const [isUpdatingPromote, setIsUpdatingPromote] = useState(false)
 
     const handleClaimStamp = async () => {
         if (!claimCode || !stamp?.id) return
@@ -53,12 +56,27 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
         resetAndClose()
     }
 
+    const handleUpdatePromoteUrl = async () => {
+        if (!stamp?.id) return
+        setIsUpdatingPromote(true)
+        if (onUpdatePromoteUrl) {
+            // 传入空字符串表示清除promote URL
+            await onUpdatePromoteUrl(promoteUrl || '')
+        }
+        setIsUpdatingPromote(false)
+        setPromoteUrl('')
+    }
+
+
+
     const resetAndClose = () => {
         setAddresses([])
         setRecipient('')
         setClaimCode('')
         setIsClaiming(false)
         setAlreadyClaimed(false)
+        setPromoteUrl('')
+        setIsUpdatingPromote(false)
         onOpenChange(false)
         onCloseClick?.()
     }
@@ -132,10 +150,8 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                                 style={{ opacity: isImageLoading ? 0 : 1, objectFit: 'contain' }}
                                 onLoad={() => setIsImageLoading(false)}
                             />
-
                         </div>
                     </div>
-
 
                     {/* Details */}
                     <div className="lg:w-1/2 space-y-4 flex flex-col">
@@ -148,6 +164,20 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                             value={stamp?.points}
                         />
                         <Button variant="outline" className="rounded-full bg-transparent border border-gray-400 text-lg font-me" onClick={() => window.open(`https://testnet.suivision.xyz/object/${stamp?.id}`, '_blank')} disabled={isLoading}><LinkIcon className="w-4 h-4 text-gray-400" />SuiVision</Button>
+                        
+                        {/* Promote URL Display */}
+                        {stamp?.promote_url && (
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    className="rounded-full bg-transparent border border-green-400 text-green-600 hover:bg-green-50"
+                                    onClick={() => stamp?.promote_url && window.open(stamp.promote_url, '_blank')}
+                                >
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    Promote Link
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
                 {canClaim && stamp?.hasClaimCode && !admin && !alreadyClaimed && (
@@ -245,6 +275,38 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                             <Button variant="destructive" className="rounded-full text-xl font-bold" onClick={onDelete}>
                                 Delete
                             </Button>
+                        </div>
+                        
+                        {/* Promote URL Management */}
+                        <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1">
+                                        <Input 
+                                            placeholder="Enter promote URL (optional)" 
+                                            value={promoteUrl} 
+                                            onChange={(e) => setPromoteUrl(e.target.value)}
+                                        />
+                                    </div>
+                                    <Button
+                                        className="rounded-full whitespace-nowrap"
+                                        variant="outline"
+                                        onClick={handleUpdatePromoteUrl}
+                                        disabled={isUpdatingPromote}
+                                    >
+                                        {isUpdatingPromote ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            promoteUrl ? 'Set Promote' : 'Clear Promote'
+                                        )}
+                                    </Button>
+                                </div>
+                                {stamp?.promote_url && (
+                                    <div className="text-sm text-gray-500">
+                                        Current promote URL: {stamp.promote_url}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

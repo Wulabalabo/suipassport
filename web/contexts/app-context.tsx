@@ -3,7 +3,7 @@
 import { createContext, useContext, useCallback, useMemo, useState } from 'react';
 import { NetworkVariables } from '@/contracts';
 import { getStampsData } from '@/contracts/query';
-import { DbStampResponse, StampItem } from '@/types/stamp';
+import { StampItem, DbStampResponse } from '@/types/stamp';
 import { useStampCRUD } from '@/hooks/use-stamp-crud';
 import { DbUserResponse } from '@/types/userProfile';
 
@@ -14,7 +14,7 @@ interface AppContextType {
   stampsError: Error | null;
   refreshStamps: (networkVariables: NetworkVariables) => Promise<void>;
   clearStamps: () => void;
-
+  updateStamp: (stampId: string, promoteUrl: string, networkVariables: NetworkVariables ) => Promise<boolean>;
   // Users related
   users: DbUserResponse[];
   usersLoading: boolean;
@@ -65,10 +65,8 @@ export function AppProvider({ children }: AppProviderProps) {
         getStampsData(networkVariables),
         getStamps()
       ]);
-
       const updatedStamps = fetchedStamps?.map(stamp => {
         const claimStamp = claimStamps?.find((cs: DbStampResponse) => cs.stamp_id === stamp.id)
-        
         if (claimStamp) {
           return {
             ...stamp,
@@ -78,7 +76,8 @@ export function AppProvider({ children }: AppProviderProps) {
             totalCountLimit: claimStamp?.total_count_limit ?? null,
             userCountLimit: claimStamp?.user_count_limit ?? null,
             claimCount: claimStamp.claim_count ?? null,
-            publicClaim: claimStamp.public_claim ?? false
+            publicClaim: claimStamp.public_claim ?? false,
+            promote_url: claimStamp.promote_url ?? null
           };
         }
         return stamp;
@@ -96,6 +95,38 @@ export function AppProvider({ children }: AppProviderProps) {
     setStamps(null);
     setStampsError(null);
   }, []);
+
+  const updateStamp = useCallback(async (stampId: string, promoteUrl: string, networkVariables: NetworkVariables) => {
+    try {
+      // 乐观更新：立即更新前端状态
+      if (stamps) {
+        const updatedStamps = stamps.map(stamp => 
+          stamp.id === stampId 
+            ? { ...stamp, promoteUrl } 
+            : stamp
+        );
+        setStamps(updatedStamps);
+      }
+
+      const response = await fetch(`/api/stamps/${stampId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ promote_url: promoteUrl })
+      });
+      
+      if (!response.ok) {
+        // 如果更新失败，恢复原始状态
+        await refreshStamps(networkVariables);
+        throw new Error('Failed to update stamp');
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error updating stamp:', err);
+      // 发生错误时刷新以获取最新状态
+      await refreshStamps(networkVariables);
+      return false;
+    }
+  }, [stamps, refreshStamps]);
 
   // Users methods
   const fetchUsers = useCallback(async (page: number = 1, limit: number = 100) => {
@@ -136,7 +167,7 @@ export function AppProvider({ children }: AppProviderProps) {
     stampsError,
     refreshStamps,
     clearStamps,
-
+    updateStamp,
     // Users
     users,
     usersLoading,
@@ -150,6 +181,7 @@ export function AppProvider({ children }: AppProviderProps) {
     stampsError,
     refreshStamps,
     clearStamps,
+    updateStamp,
     users,
     usersLoading,
     usersError,

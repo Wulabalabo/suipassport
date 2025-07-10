@@ -11,6 +11,7 @@ export const createStampFormSchema = z.object({
     totalCountLimit: z.number().min(0, "Total count limit must be greater than 0 or infinite").optional(),
     userCountLimit: z.number().min(1, "User count limit must be greater than 0 or infinite").optional(),
     publicClaim: z.boolean().optional(),
+    promoteUrl: z.string().optional(),
   })
   
 export type CreateStampFormValues = z.infer<typeof createStampFormSchema>

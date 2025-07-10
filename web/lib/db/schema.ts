@@ -22,4 +22,5 @@ export const stamps = pgTable("stamps", {
   public_claim: boolean("public_claim").default(false),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
+  promote_url: text("promote_url")
 }); 

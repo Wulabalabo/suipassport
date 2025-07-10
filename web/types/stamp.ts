@@ -15,6 +15,7 @@ export type StampItem = {
     claimCount?: number
     event?: string
     publicClaim?: boolean
+    promote_url?: string | null
 }
 
 export interface StampGridProps {
@@ -52,6 +53,18 @@ export type VerifyClaimStampResponse = {
     signature?: Uint8Array;
 }
 
+export const createOrUpdateStampParams = z.object({
+  stamp_id: z.string(),
+  claim_code: z.string().or(z.number()).nullable(),
+  claim_code_start_timestamp: z.string().or(z.number()).nullable(),
+  claim_code_end_timestamp: z.string().or(z.number()).nullable(),
+  total_count_limit: z.number().nullable(),
+  user_count_limit: z.number().nullable(),
+  public_claim: z.boolean(),
+  promote_url: z.string().nullable()
+});
+
+export type CreateOrUpdateStampParams = z.infer<typeof createOrUpdateStampParams>;
 
 export interface DbStampResponse {
     stamp_id: string;
@@ -62,16 +75,5 @@ export interface DbStampResponse {
     user_count_limit: number | null;
     claim_count: number;
     public_claim: boolean;
+    promote_url: string | null; // 添加这个字段
 }
-
-export const createOrUpdateStampParams = z.object({
-  stamp_id: z.string(),
-  claim_code: z.string().or(z.number()).nullable(),
-  claim_code_start_timestamp: z.string().or(z.number()).nullable(),
-  claim_code_end_timestamp: z.string().or(z.number()).nullable(),
-  total_count_limit: z.number().nullable(),
-  user_count_limit: z.number().nullable(),
-  public_claim: z.boolean()
-});
-
-export type CreateOrUpdateStampParams = z.infer<typeof createOrUpdateStampParams>;

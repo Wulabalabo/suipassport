@@ -10,4 +10,4 @@ export type NewStamp = InferInsertModel<typeof stamps>;
 export type UpdateStamp = Partial<NewStamp>;
 
 export type DbUserResponse = User;
-export type DbStampResponse = Stamp; 
+export type RawStampResponse = Stamp; 

@@ -35,7 +35,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const [displayDialog, setDisplayDialog] = useState(false)
     const { userProfile } = useUserProfile();
     const currentAccount = useCurrentAccount()
-    const { fetchUsers } = useApp()
+    const { fetchUsers, updateStamp, refreshStamps } = useApp()
     const { refreshProfile } = useUserProfile()
     const { verifyClaimStamp, createStamp,deleteStamp } = useStampCRUD()
     const networkVariables = useNetworkVariables()
@@ -100,6 +100,18 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             await refreshProfile(currentAccount?.address ?? '', networkVariables)
             await fetchUsers()
         }).execute()
+    }
+
+    const handleUpdatePromoteUrl = async (promoteUrl: string) => {
+        if (!selectedStamp?.id) return
+        const result = await updateStamp(selectedStamp.id, promoteUrl, networkVariables)
+        if (result) {
+            showToast.success("Promote URL updated successfully")
+            // 添加这行：刷新前端状态
+            await refreshStamps(networkVariables)
+        } else {
+            showToast.error("Failed to update promote URL")
+        }
     }
 
     //Todo: what if onStampCreated failed?
@@ -194,7 +206,8 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             claim_code_end_timestamp: values.endDate ? new Date(values.endDate).getTime().toString() : null,
             total_count_limit: values.totalCountLimit ?? null,
             user_count_limit: values.userCountLimit ?? null,
-            public_claim: values.publicClaim ?? false
+            public_claim: values.publicClaim ?? false,
+            promote_url: values.promoteUrl ?? null
         }
         await createStamp(claimStamp)
     }
@@ -205,7 +218,6 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         
         if (userProfile) {
             const stampsWithClaimable = getDisplayStamps(stamps, userProfile);
-            console.log(stampsWithClaimable)
             setDisplayStamps(stampsWithClaimable);
         } else {
             setDisplayStamps(stamps);
@@ -295,6 +307,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                         setDisplayDialog(false)
                         setSelectedStamp(null)
                     }}
+                    onUpdatePromoteUrl={handleUpdatePromoteUrl}
                 />
             </div>
         </div>

@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { apiFetch } from '@/lib/apiClient'
-import { DbStampResponse, VerifyClaimStampResponse, VerifyStampParams, CreateOrUpdateStampParams } from '@/types/stamp'
+import { VerifyClaimStampResponse, VerifyStampParams, CreateOrUpdateStampParams, DbStampResponse } from '@/types/stamp'
+
 
 export function useStampCRUD() {
   const [isLoading, setIsLoading] = useState(false)
@@ -11,12 +12,11 @@ export function useStampCRUD() {
   const getStamps = async () => {
     try {
       setIsLoading(true)
-      const response = await apiFetch<{ results: DbStampResponse[] }>(`/api/stamps`,{
+      const response = await apiFetch(`/api/stamps`,{
         method: 'GET'
       })
       const result = await response
-
-      return result.results as DbStampResponse[]
+      return result as DbStampResponse[]
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch claim stamps'))
       throw err

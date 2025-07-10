@@ -1,7 +1,7 @@
 import { db } from '../neondb';
 import { users, stamps } from './schema';
 import { eq, and, sql } from 'drizzle-orm';
-import type { NewUser, UpdateUser, NewStamp, UpdateStamp, DbUserResponse, DbStampResponse } from '@/types/db';
+import type { NewUser, UpdateUser, NewStamp, UpdateStamp, DbUserResponse, RawStampResponse } from '@/types/db';
 import { redis } from '../kv-cache';
 
 const CACHE_TTL = 3600; // 1 hour in seconds
@@ -289,8 +289,8 @@ export const userService = {
     // 计算统计数据
     const statistics = {
       totalUsers: userData.length,
-      totalStamps: userData.reduce((sum, user) => sum + (user.stamp_count || 0), 0),
-      totalPoints: userData.reduce((sum, user) => sum + (user.points || 0), 0),
+      totalStamps: userData.reduce((sum: number, user: { stamp_count: number | null }) => sum + (user.stamp_count || 0), 0),
+      totalPoints: userData.reduce((sum: number, user: { points: number | null }) => sum + (user.points || 0), 0),
       stampsDistribution: calculateStampsDistribution(userData),
       pointsDistribution: calculatePointsDistribution(userData),
       growthByDay: calculateGrowthByDay(userData)
@@ -311,8 +311,8 @@ export const stampService = {
   // 获取所有印章
   async getAll() {
     const cacheKey = 'neon_stamps';
-    const cached = await redis.get<DbStampResponse[]>(cacheKey);
-    
+    const cached = await redis.get<RawStampResponse[]>(cacheKey);
+    console.log('cached', cached)
     if (cached) {
       console.log('[Redis HIT] stamps');
       return cached;
@@ -320,14 +320,15 @@ export const stampService = {
 
     console.log('[Redis MISS] Querying database...');
     const result = await db.select().from(stamps);
-    await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL, nx: true });
+    // 移除 nx: true，允许覆盖现有缓存
+    await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL });
     return result;
   },
 
   // 根据ID获取印章
   async getById(id: string) {
     const cacheKey = `stamp:${id}`;
-    const cached = await redis.get<DbStampResponse>(cacheKey);
+    const cached = await redis.get<RawStampResponse>(cacheKey);
     
     if (cached) {
       console.log('[Redis HIT] stamp:', id);
@@ -340,7 +341,8 @@ export const stampService = {
       .where(eq(stamps.stamp_id, id));
 
     if (result[0]) {
-      await redis.set(cacheKey, JSON.stringify(result[0]), { ex: CACHE_TTL, nx: true });
+      // 移除 nx: true
+      await redis.set(cacheKey, JSON.stringify(result[0]), { ex: CACHE_TTL });
     }
     return result[0];
   },
@@ -360,8 +362,20 @@ export const stampService = {
       .where(eq(stamps.stamp_id, id))
       .returning();
     
-    // 清除相关缓存
-    await redis.del(`stamp:${id}`, 'neon_stamps');
+    // 修复缓存清除逻辑
+    try {
+      // 同时清除全局缓存和特定印章缓存
+      await redis.del('neon_stamps');
+      console.log('[Redis] Successfully cleared cache for stamp:', id);
+      
+      // 验证缓存是否真的被删除
+      const verify = await redis.get('neon_stamps');
+      console.log('[Redis] Cache after deletion:', verify ? 'STILL EXISTS' : 'SUCCESSFULLY DELETED');
+      
+    } catch (error) {
+      console.error('[Redis] Error clearing cache:', error);
+    }
+    
     return result[0];
   },
 
