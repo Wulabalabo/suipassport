@@ -37,7 +37,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
     const currentAccount = useCurrentAccount()
     const { fetchUsers, updateStamp, refreshStamps } = useApp()
     const { refreshProfile } = useUserProfile()
-    const { verifyClaimStamp, createStamp,deleteStamp } = useStampCRUD()
+    const { verifyClaimStamp, createStamp,deleteStamp,undisplayStamp } = useStampCRUD()
     const networkVariables = useNetworkVariables()
 
     const { handleSignAndExecuteTransaction: handleCreateStampTx } = useBetterSignAndExecuteTransaction({
@@ -212,6 +212,18 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
         await createStamp(claimStamp)
     }
 
+    const handleUndisplayStamp = async (stampId: string) => {
+        if (!userProfile?.is_admin || !stampId) return
+        try {
+            await undisplayStamp(stampId)
+            await refreshStamps(networkVariables)
+            showToast.success("Stamp undisplayed successfully")
+            setDisplayDialog(false)
+        } catch (error) {
+            showToast.error("Failed to undisplay stamp")
+        }
+    }
+
 
     useEffect(() => {
         if (!stamps) return;
@@ -308,6 +320,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
                         setSelectedStamp(null)
                     }}
                     onUpdatePromoteUrl={handleUpdatePromoteUrl}
+                    onUndisplay={handleUndisplayStamp}
                 />
             </div>
         </div>

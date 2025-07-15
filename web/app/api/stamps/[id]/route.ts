@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stampService } from '@/lib/db/index';
+import { undisplayStampFromDb } from '@/lib/services/stamps';
 
 // 获取单个记录
 export async function GET(
@@ -63,7 +64,7 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        const {id} = await params
+        const { id } = params;
         const result = await stampService.delete(id);
         if (!result) {
             return NextResponse.json(
@@ -73,8 +74,45 @@ export async function DELETE(
         }
         return NextResponse.json(result);
     } catch (error) {
+        console.error('DELETE /api/stamps/[id] error:', error);
         return NextResponse.json(
             { success: false, error: error instanceof Error ? error.message : 'Failed to delete claim stamp' },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(
+    request: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const { id } = await params;
+        
+        const result = await undisplayStampFromDb(id);
+        
+        // 检查查询是否成功
+        if (!result.success) {
+            return NextResponse.json(
+                { success: false, error: result.error || 'Database query failed' },
+                { status: 500 }
+            );
+        }
+
+        // 检查是否找到并更新了记录
+        // D1数据库返回格式包含results数组
+        const resultData = result.data as unknown as { results: any[] };
+        if (!resultData?.results || resultData.results.length === 0) {
+            return NextResponse.json(
+                { success: false, error: 'Claim stamp not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json(result);
+    } catch (error) {
+        return NextResponse.json(
+            { success: false, error: error instanceof Error ? error.message : 'Failed to undisplay claim stamp' },
             { status: 500 }
         );
     }

@@ -14,7 +14,7 @@ const verifyStampSchema = z.object({
   claim_code: z.string()
 });
 
-export async function getStampsFromDb(): Promise<DbStampResponse[]|undefined> {
+export async function getStampsFromDb(): Promise<DbStampResponse[] | undefined> {
   const cacheKey = 'stamps';
   const cached = await redis.get<DbStampResponse[]>(cacheKey);
 
@@ -106,30 +106,30 @@ export async function verifyClaimStamp(params: VerifyStampParams) {
 }
 
 const signMessage = async (passport_id: string, last_time: number) => {
-    try {
-        const claim_stamp_info = bcs.struct('ClaimStampInfo', {
-            passport: bcs.Address,
-            last_time: bcs.u64()
-        });
+  try {
+    const claim_stamp_info = bcs.struct('ClaimStampInfo', {
+      passport: bcs.Address,
+      last_time: bcs.u64()
+    });
 
-        const claim_stamp_info_bytes = claim_stamp_info.serialize({
-            passport: passport_id, 
-            last_time
-        }).toBytes();
-        const hash_data = keccak256(claim_stamp_info_bytes);
-        const hash_bytes = fromHex(hash_data);
+    const claim_stamp_info_bytes = claim_stamp_info.serialize({
+      passport: passport_id,
+      last_time
+    }).toBytes();
+    const hash_data = keccak256(claim_stamp_info_bytes);
+    const hash_bytes = fromHex(hash_data);
 
-        if (!process.env.ADDRESS_SECRET_KEY) {
-            throw new Error('STAMP_SECRET_KEY is not set');
-        }
-        const keypair = Ed25519Keypair.fromSecretKey(process.env.ADDRESS_SECRET_KEY);
-        const signature = await keypair.sign(hash_bytes);        
-        return signature;
-    } catch (error) {
-        console.error('Signing error:', error);
-        throw error;
+    if (!process.env.ADDRESS_SECRET_KEY) {
+      throw new Error('STAMP_SECRET_KEY is not set');
     }
-}   
+    const keypair = Ed25519Keypair.fromSecretKey(process.env.ADDRESS_SECRET_KEY);
+    const signature = await keypair.sign(hash_bytes);
+    return signature;
+  } catch (error) {
+    console.error('Signing error:', error);
+    throw error;
+  }
+}
 
 
 export async function getStampByIdFromDb(id: string) {
@@ -171,4 +171,36 @@ export async function deleteStampFromDb(id: string) {
     'DELETE FROM stamps WHERE stamp_id = ? RETURNING *',
     [id]
   );
+}
+
+export async function undisplayStampFromDb(id: string) {
+  console.log('undisplayStampFromDb', id)
+  
+  // 使用Neon数据库的stampService而不是D1数据库
+  const { stampService } = await import('../db/index');
+  
+  try {
+    const result = await stampService.update(id, {
+      public_claim: false,
+      claim_code: null,
+      claim_code_start_timestamp: null,
+      claim_code_end_timestamp: null
+    });
+    
+    console.log('undisplayStampFromDb result:', JSON.stringify(result, null, 2));
+    
+    // 返回兼容的格式
+    return {
+      success: true,
+      data: {
+        results: result ? [result] : []
+      }
+    };
+  } catch (error) {
+    console.error('undisplayStampFromDb error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to undisplay stamp'
+    };
+  }
 }

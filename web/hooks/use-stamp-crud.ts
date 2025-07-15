@@ -125,6 +125,24 @@ export function useStampCRUD() {
     }
   }
 
+  const undisplayStamp = async (id: string) => {
+    try {
+      const response = await apiFetch(`/api/stamps/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      const result = await response
+      return result
+    }
+    catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to undisplay claim stamp'))
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return {
     isLoading,
     error,
@@ -134,6 +152,7 @@ export function useStampCRUD() {
     deleteStamp,
     createStamp,
     increaseStampCount,
-    verifyClaimStamp
+    verifyClaimStamp,
+    undisplayStamp
   }
 }

@@ -23,6 +23,7 @@ interface StampDialogProps {
     onMultipleSend?: (addresses: string[]) => Promise<void>
     onCloseClick?: () => void
     onUpdatePromoteUrl?: (promoteUrl: string) => Promise<void>
+    onUndisplay?: (stampId: string) => Promise<void>
 }
 
 
@@ -35,7 +36,7 @@ function DetailItem({ label, value }: { label: string; value?: string | number }
     )
 }
 
-export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend, onMultipleSend, onCloseClick, onDelete, onUpdatePromoteUrl }: StampDialogProps) {
+export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onClaim, onSend, onMultipleSend, onCloseClick, onDelete, onUpdatePromoteUrl, onUndisplay }: StampDialogProps) {
     const [isImageLoading, setIsImageLoading] = useState(true)
     const [recipient, setRecipient] = useState('')
     const [claimCode, setClaimCode] = useState('')
@@ -272,9 +273,13 @@ export function StampDialog({ stamp, open, admin, isLoading, onOpenChange, onCla
                                 'Send'
                                 )}
                             </Button>
-                            <Button variant="destructive" className="rounded-full text-xl font-bold" onClick={onDelete}>
-                                Delete
-                            </Button>
+                            <div className="flex gap-2">
+                                {stamp?.publicClaim && (
+                                    <Button variant="destructive" className="rounded-full text-xl font-bold" onClick={() => onUndisplay?.(stamp?.id ?? '')} disabled={isLoading}>
+                                        Undisplay
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                         
                         {/* Promote URL Management */}

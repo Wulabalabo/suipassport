@@ -43,6 +43,7 @@ export async function queryD1<T>(
         );
 
         const result = await response.json();
+        
         if (!response.ok) {
             throw new Error(result.errors?.[0]?.message || 'Database query failed');
         }
@@ -56,6 +57,7 @@ export async function queryD1<T>(
             data: normalizedResult as T
         };
     } catch (error) {
+        console.error('queryD1 - Error:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred'
