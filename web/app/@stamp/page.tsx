@@ -220,7 +220,7 @@ export default function AdminStamp({ stamps, admin }: AdminStampProps) {
             showToast.success("Stamp undisplayed successfully")
             setDisplayDialog(false)
         } catch (error) {
-            showToast.error("Failed to undisplay stamp")
+            showToast.error(`Failed to undisplay stamp, Error: ${error}`)
         }
     }
 
