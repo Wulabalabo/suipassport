@@ -225,7 +225,7 @@ const getStampsEventRecord = async (networkVariables: NetworkVariables) => {
     let stamps: string[] = [];
     interface StampsEventResponse {
         data?: {
-            owner?: {
+            address?: {
                 dynamicFields?: {
                     nodes?: Array<{
                         value?: {
@@ -248,9 +248,9 @@ const getStampsEventRecord = async (networkVariables: NetworkVariables) => {
                 after: nextCursor
             }
         }) as StampsEventResponse;
-        nextCursor = stampsData.data?.owner?.dynamicFields?.pageInfo?.endCursor ?? null;
-        hasNextPage = stampsData.data?.owner?.dynamicFields?.pageInfo?.hasNextPage ?? false;
-        stamps = stamps.concat(stampsData.data?.owner?.dynamicFields?.nodes?.map((node) => {
+        nextCursor = stampsData.data?.address?.dynamicFields?.pageInfo?.endCursor ?? null;
+        hasNextPage = stampsData.data?.address?.dynamicFields?.pageInfo?.hasNextPage ?? false;
+        stamps = stamps.concat(stampsData.data?.address?.dynamicFields?.nodes?.map((node) => {
             return node.value?.json as string;
         }) ?? []);
     }

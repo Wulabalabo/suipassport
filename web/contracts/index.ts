@@ -66,8 +66,8 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } = createNetwork
 
 
 // 创建全局 SuiClient 实例
-const suiClient = new SuiClient({ url: "https://sui-mainnet.blockvision.org/v1/31fU95J4118L96xjfZX40iOXMXE" });
-const graphqlClient = new SuiGraphQLClient({ url: `https://graphql.${network === "mainnet" ? "mainnet" : "testnet"}.sui.io/graphql` });
+const suiClient = new SuiClient({ url: `https://fullnode.${network}.sui.io:443` });
+const graphqlClient = new SuiGraphQLClient({ url: `https://graphql.${network}.sui.io/graphql` });
 
 export { useNetworkVariable, useNetworkVariables, networkConfig, network, suiClient, createBetterTxFactory, graphqlClient };
 export type { NetworkVariables };
